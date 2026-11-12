@@ -36,6 +36,25 @@ const img=post(admin,'upload',{dataUrl:'data:image/webp;base64,'+header.toString
 assert.equal(img.status,201);
 const bad=Buffer.from(header);bad.writeUIntLE(799,24,3);
 assert.equal(post(admin,'upload',{dataUrl:'data:image/webp;base64,'+bad.toString('base64')}).status,400);
+
+const alpha=Buffer.alloc(33);
+Buffer.from('89504e470d0a1a0a','hex').copy(alpha,0);
+alpha.writeUInt32BE(13,8);alpha.write('IHDR',12);
+alpha.writeUInt32BE(660,16);alpha.writeUInt32BE(1020,20);
+alpha[24]=8;alpha[25]=6;
+const borderUpload=post(admin,'upload',{kind:'border',dataUrl:'data:image/png;base64,'+alpha.toString('base64')});
+assert.equal(borderUpload.status,201);
+assert.equal(borderUpload.body.kind,'border');
+const opaque=Buffer.from(alpha);opaque[25]=2;
+assert.equal(post(admin,'upload',{kind:'border',dataUrl:'data:image/png;base64,'+opaque.toString('base64')}).status,400);
+assert.equal(post(fan,'upload',{kind:'border',dataUrl:'data:image/png;base64,'+alpha.toString('base64')}).status,403);
+const newBorder=post(admin,'border/save',{name:'Dreamy Pink Frame',rarity:'UR',artId:borderUpload.body.artId});
+assert.equal(newBorder.status,200);
+const borderId=newBorder.body.preset.id;
+assert.ok(borderId.startsWith('border-'));
+assert.ok(get(admin).body.borderPresets.some(b=>b.id===borderId));
+assert.equal(post(admin,'border/save',{name:'Dreamy Pink Frame',artId:borderUpload.body.artId}).status,409);
+assert.equal(post(admin,'border/delete',{id:'R',confirm:'DELETE'}).status,404);
 const card={title:'First',rarity:'SSR',border:'none',artId:img.body.artId};
 const scheduled=post(admin,'save',{id:packId,title:'Test comeback',member:'Kellie',team:'NYC50',subgroup:'NYC50',status:'scheduled',releaseAt:'2099-06-01T12:00:00Z',cards:[card]});
 assert.equal(scheduled.status,200);
@@ -49,6 +68,17 @@ assert.equal(released.status,200);
 assert.equal(app.publicAlbums().find(p=>p.id===packId).available,true);
 assert.equal(app.publicAlbums().find(p=>p.id===packId).odds.SSR,100);
 assert.equal(app.publicCardsByPack()[packId][0].border,'none');
+
+const styled=post(admin,'save',{id:packId,title:'Test comeback',member:'Kellie',team:'NYC50',subgroup:'NYC50',status:'published',
+ cards:[{...released.body.pack.cards[0],border:borderId}]});
+assert.equal(styled.status,200);
+assert.equal(app.publicCardsByPack()[packId][0].borderUrl,'/api/card-studio/art/'+borderUpload.body.artId);
+assert.equal(post(admin,'border/delete',{id:borderId,confirm:'DELETE'}).status,409);
+const unstyled=post(admin,'save',{id:packId,title:'Test comeback',member:'Kellie',team:'NYC50',subgroup:'NYC50',status:'published',
+ cards:[{...styled.body.pack.cards[0],border:'none'}]});
+assert.equal(unstyled.status,200);
+assert.equal(post(admin,'border/delete',{id:borderId,confirm:'DELETE'}).status,200);
+assert.ok(!get(admin).body.borderPresets.some(b=>b.id===borderId));
 const pull={};app.customPull({user:fan},pull,'/api/cards/pull',{albumId:packId},fan);
 assert.equal(pull.status,200);
 assert.equal(pull.body.card.albumId,packId);
