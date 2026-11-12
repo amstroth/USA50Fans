@@ -37,7 +37,7 @@ function officialDiarySection(){
  '<div class="diary-fan-divider"><span>✦ FAN COMMUNITY ✦</span><p>Keep scrolling to see the fan posts below</p></div></section>';
 }
 const previousCommunity=communityScreen;
-communityScreen=function(){return officialDiarySection()+previousCommunity();};
+communityScreen=function(){const page=previousCommunity();return page.includes('class="social-tabs"')?page.replace('<div class="social-tabs"',officialDiarySection()+'<div class="social-tabs"'):page;};
 function diaryNewModal(){
  diaryPhotos=[];
  const options=Object.entries(pageNames).map(([key,label])=>'<option value="'+key+'">'+label+'</option>').join('');
