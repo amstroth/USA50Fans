@@ -102,8 +102,26 @@ document.addEventListener('change',async event=>{
  if(files.length>4){toast('Choose up to 4 photos');event.target.value='';return;}
  try{diaryPhotos=await Promise.all(files.map(resizeDiaryPhoto));const area=document.querySelector('#diary-photo-preview');if(area)area.innerHTML=diaryPhotos.map(x=>'<span>📸 '+textEscape(x.caption)+'</span>').join(' ');}catch(err){diaryPhotos=[];toast(err.message);}
 });
+const previousDiaryAdmin=showAdmin;
+showAdmin=async function(){
+ await previousDiaryAdmin();
+ const host=document.querySelector('#admin-content');
+ if(!host||store.me?.role!=='admin')return;
+ const settings=getData().settings||{};
+ const input=(name,value,placeholder)=>'<label>'+name+'<input name="'+name+'" value="'+textEscape(value||'')+'" placeholder="'+placeholder+'"></label>';
+ host.insertAdjacentHTML('beforeend','<section class="glass panel diary-admin-sources"><span class="eyebrow">USA50 OFFICIAL FEED</span><h3>Connect official channels</h3><p class="lead">YouTube checks for new videos approximately every ten minutes after you enter its channel ID. Instagram and TikTok need their approved platform/webhook integrations to push verified post events into the app.</p><form id="official-source-form" class="diary-form">'+
+ input('youtubeChannelId',settings.youtubeChannelId,'UC… (24 characters)')+
+ input('instagramUsername',settings.instagramUsername,'Official Instagram username')+
+ input('tiktokUsername',settings.tiktokUsername,'Official TikTok username')+
+ '<button class="btn" type="submit">Save official channels</button></form></section>');
+};
 const previousDiarySubmit=submitForm;
 submitForm=async function(form){
+ if(form.id==='official-source-form'){
+  const fd=Object.fromEntries(new FormData(form));
+  await request('/api/official/sources',{method:'POST',body:JSON.stringify(fd)});
+  await refresh();toast('Official channel settings saved');return;
+ }
  if(form.id!=='diary-entry-form')return previousDiarySubmit(form);
  const fd=new FormData(form);
  const stickers=[...form.querySelectorAll('.diary-sticker-pick.selected')].map(x=>x.dataset.value);
