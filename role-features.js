@@ -4,7 +4,7 @@ module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,admi
   db.messagingReports ||= [];
   db.messagingBans ||= {};
   const emailRole=[
-    ["amstrotherUSA50@gmail.com","idol","Arielle","arielle","USA50_IDOL_BOOTSTRAP_PASSWORD"],
+    ["amstrotherusa50@gmail.com","idol","Arielle","arielle","USA50_IDOL_BOOTSTRAP_PASSWORD"],
     ["arielstrotherb@gmail.com","admin","Management",null,"USA50_ADMIN_BOOTSTRAP_PASSWORD"]
   ];
   let mutated=false;
