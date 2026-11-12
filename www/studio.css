@@ -119,3 +119,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .crop-controls select{padding:9px 10px;min-width:0;width:100%;border-radius:11px;border:1px solid #e1ceee;background:#fff;color:#5c4677}
 .crop-controls .crop-distortion .field{min-width:0}
 @media(max-width:720px){.crop-controls .crop-distortion{grid-template-columns:1fr}}
+
+/* Hands-on distortion: resize via eight real grab handles */
+.crop-face .studio-transform-box{position:absolute;border:1.5px dashed rgba(255,255,255,.95);outline:1px solid rgba(89,48,128,.7);pointer-events:none;z-index:5;box-sizing:border-box}
+.crop-face .studio-transform-handle{position:absolute;width:15px;height:15px;padding:0;border:2px solid white;border-radius:3px;background:#9a5ac7;box-shadow:0 0 0 1px #683e8a,0 2px 8px #32214699;pointer-events:auto;touch-action:none;transform:translate(-50%,-50%);cursor:grab}
+.studio-transform-handle:active{background:#efb9ff;cursor:grabbing}
+.handle-nw{left:0;top:0;cursor:nwse-resize!important}.handle-n{left:50%;top:0;cursor:ns-resize!important}.handle-ne{left:100%;top:0;cursor:nesw-resize!important}.handle-e{left:100%;top:50%;cursor:ew-resize!important}.handle-se{left:100%;top:100%;cursor:nwse-resize!important}.handle-s{left:50%;top:100%;cursor:ns-resize!important}.handle-sw{left:0;top:100%;cursor:nesw-resize!important}.handle-w{left:0;top:50%;cursor:ew-resize!important}
+.crop-fit-button{width:100%;border-radius:12px;background:linear-gradient(115deg,#b587da,#ebc0e5);color:#4a3264}
