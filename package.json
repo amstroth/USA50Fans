@@ -1,0 +1,15 @@
+{
+  "name": "usa50-fan-club-railway",
+  "version": "0.1.0",
+  "private": true,
+  "description": "USA50 web-first fan app preview",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "check": "node --check server.js && node --check www/app.js",
+    "test": "node tests/smoke.mjs"
+  }
+}
