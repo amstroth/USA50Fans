@@ -1,0 +1,7 @@
+node_modules
+.local-data
+.env
+.git
+*.zip
+android
+ios
