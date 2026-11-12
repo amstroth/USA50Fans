@@ -99,3 +99,10 @@
   .social-profile-stats strong{font-size:18px}
   .social-profile-stats small{font-size:10px}
 }
+
+/* Short-link fallback when a social redirect doesn't contain an embeddable ID. */
+.social-short-preview{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;min-height:145px;padding:18px;color:#744b9c;text-decoration:none!important}
+.social-short-preview>span:nth-child(2){display:grid;gap:3px;flex:1;min-width:0}
+.social-short-preview strong{font-size:15px}
+.social-short-preview small{color:#8d72a8}
+.social-short-icon{font-size:35px;color:#ae79d2}
