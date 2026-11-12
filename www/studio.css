@@ -126,3 +126,6 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .studio-transform-handle:active{background:#efb9ff;cursor:grabbing}
 .handle-nw{left:0;top:0;cursor:nwse-resize!important}.handle-n{left:50%;top:0;cursor:ns-resize!important}.handle-ne{left:100%;top:0;cursor:nesw-resize!important}.handle-e{left:100%;top:50%;cursor:ew-resize!important}.handle-se{left:100%;top:100%;cursor:nwse-resize!important}.handle-s{left:50%;top:100%;cursor:ns-resize!important}.handle-sw{left:0;top:100%;cursor:nesw-resize!important}.handle-w{left:0;top:50%;cursor:ew-resize!important}
 .crop-fit-button{width:100%;border-radius:12px;background:linear-gradient(115deg,#b587da,#ebc0e5);color:#4a3264}
+
+/* Keep distortion controls visible beside crop preview, including shorter desktop windows */
+.crop-controls{min-width:240px;align-content:start}.crop-panel{width:min(850px,97vw);max-height:calc(100dvh - 24px)}.crop-distortion{background:#f2e6fa;border:1px solid #d9c0ed;border-radius:13px;padding:12px;grid-template-columns:minmax(0,1fr)!important;gap:12px!important}.crop-distortion .field label{color:#72518e;font-weight:850}.crop-controls input[type=range]{display:block;width:100%;height:24px;accent-color:#8d58bc}.crop-controls .field{width:100%}.crop-controls .helper{display:block}
