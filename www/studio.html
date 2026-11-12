@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#f1e6fa">
+<title>USA50 · Card Studio</title>
+<link rel="stylesheet" href="/studio.css?v=1">
+<script defer src="/studio.js?v=1"></script>
+</head>
+<body>
+<div class="desktop-blocker"><div class="blocker-inner"><span class="blocker-mark">✧</span><h1>Card Studio is desktop-only</h1><p>To edit and crop photocard artwork, sign in as USA50 management on a desktop browser with a window at least 1024 pixels wide.</p><a href="/">Return to USA50 Fan Club</a></div></div>
+<div class="studio-workspace" id="studio-workspace">
+  <header class="studio-topbar">
+    <a href="/" class="studio-brand">USA50 <small>FAN CLUB</small></a>
+    <div class="studio-top-label">✦ MANAGEMENT WORKSPACE <span>/ CARD STUDIO</span></div>
+    <div class="studio-top-buttons"><span class="studio-badge">Desktop editor</span><a href="/" class="studio-return">← Fan App</a></div>
+  </header>
+  <div class="studio-main">
+    <aside class="studio-sidebar">
+      <div class="studio-sidebar-top"><div><span class="eyebrow">PACK LIBRARY</span><h2>Collections</h2></div><button id="studio-new" type="button" class="studio-new" title="Create a new cardpack">＋</button></div>
+      <p class="subtle">Draft, schedule and publish without touching the live collection until it's ready.</p>
+      <div id="studio-packs" class="studio-pack-list"><p>Loading packs…</p></div>
+      <div class="studio-sidebar-note">✧ Draft packs remain private even if their release date passes. Only completed scheduled packs launch automatically.</div>
+    </aside>
+    <main class="studio-editor">
+      <div class="studio-heading"><div><span class="eyebrow">USA50 · PHOTOCARDS</span><h1>Card Studio <em>✧</em></h1><p>Build and publish collectible sets, one card at a time.</p></div><span class="studio-dimensions">55 × 85 mm <small>660 × 1020 px</small></span></div>
+      <div id="studio-error" role="alert" class="studio-alert" hidden></div>
+      <div id="studio-main-content"><section class="soft-panel"><p>Select a collection from the left to begin.</p></section></div>
+    </main>
+    <aside class="studio-sidepanel"><div id="studio-publish-panel"></div></aside>
+  </div>
+</div>
+<div class="studio-modal" id="studio-crop-modal" hidden></div>
+<div class="studio-toast" id="studio-toast" aria-live="polite"></div>
+</body>
+</html>
