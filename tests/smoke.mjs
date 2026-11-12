@@ -17,6 +17,15 @@ async function api(route,data=null,token=''){
 async function wait(){for(let i=0;i<45;i++){try{const r=await api('/api/health');if(r.ok)return;}catch{}await new Promise(r=>setTimeout(r,100));}throw Error('Server did not start');}
 try{
  await wait();assert.equal((await api('/api/health')).ok,true);passed++;
+ // File uploads use blob: preview images; static CSP must allow them.
+ const studioPage=await fetch(base+'/studio.html');
+ assert.equal(studioPage.status,200);
+ assert.ok(studioPage.headers.get('content-security-policy')?.includes("img-src 'self' data: blob: https:"));
+ const studioHtml=await studioPage.text();
+ assert.ok(studioHtml.includes('id="studio-art-picker"'));
+ assert.ok(studioHtml.includes('id="studio-border-picker"'));
+ assert.equal((await fetch(base+'/studio.js')).status,200);
+ passed++;
  const username=()=>`fan-${crypto.randomBytes(6).toString('hex')}@example.com`;
  const a=await api('/api/auth/register',{displayName:'Test Fan Alpha',email:username(),password:'a secure demo password!'});
  const b=await api('/api/auth/register',{displayName:'Test Fan Beta',email:username(),password:'a secure demo password!'});
