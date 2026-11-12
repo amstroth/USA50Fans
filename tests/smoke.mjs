@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 const dir=mkdtempSync(path.join(tmpdir(),'usa50-test-'));
 const port=34000+crypto.randomInt(10000);
 const base=`http://127.0.0.1:${port}`;
-const child=spawn(process.execPath,['server.js'],{cwd:path.resolve('.'),env:{...process.env,PORT:String(port),DATA_DIR:dir,SESSION_SECRET:'test-session-secret-long-enough',ADMIN_PASSWORD:'TEST-ONLY-ADMIN-PASSWORD'},stdio:'ignore'});
+const child=spawn(process.execPath,['server.js'],{cwd:path.resolve('.'),env:{...process.env,PORT:String(port),DATA_DIR:dir,SESSION_SECRET:'test-session-secret-long-enough',ADMIN_PASSWORD:'TEST-ONLY-ADMIN-PASSWORD',USA50_IDOL_BOOTSTRAP_PASSWORD:'SeedIdolTemporaryPassword2048',USA50_ADMIN_BOOTSTRAP_PASSWORD:'SeedAdminTemporaryPassword2048'},stdio:'ignore'});
 let passed=0;
 async function api(route,data=null,token=''){
  const r=await fetch(base+route,{method:data===null?'GET':'POST',headers:{...(data===null?{}:{'Content-Type':'application/json'}),...(token?{Authorization:`Bearer ${token}`}:{})},body:data===null?undefined:JSON.stringify(data)});
@@ -40,5 +40,40 @@ try{
  let order=await api('/api/cards/physical-order-preview',{},ta);assert.equal(order.free,true);assert.equal((await api('/api/cards/physical-order-preview',{},ta)).httpStatus,400);passed++;
  const app=await api('/api/fansites/apply',{name:'Camera Fansite',camera:'Sony a7 IV with 70-200mm lens',portfolioUrl:'https://www.instagram.com/example',description:'I photograph USA50 performances and publish high-quality fan edits regularly.'},tb);assert.equal(app.httpStatus,201);passed++;
  const post=await api('/api/posts/create',{text:'A test edit!',url:'https://www.tiktok.com/@example/video/123'},ta);assert.equal(post.httpStatus,201);passed++;
+
+ const idolStart=await api('/api/auth/login',{email:'amstrotherusa50@gmail.com',password:'SeedIdolTemporaryPassword2048'});
+ const adminStart=await api('/api/auth/login',{email:'arielstrotherb@gmail.com',password:'SeedAdminTemporaryPassword2048'});
+ assert.equal(idolStart.me.role,'idol');assert.equal(adminStart.me.role,'admin');passed++;
+ assert.equal((await api('/api/idol/post',{body:'Before reset'},idolStart.token)).httpStatus,403);passed++;
+ const iReset=await api('/api/account/change-password',{currentPassword:'SeedIdolTemporaryPassword2048',newPassword:'UpdatedIdolPassword2048'},idolStart.token);
+ const aReset=await api('/api/account/change-password',{currentPassword:'SeedAdminTemporaryPassword2048',newPassword:'UpdatedAdminPassword2048'},adminStart.token);
+ assert.equal(iReset.httpStatus,200);assert.equal(aReset.httpStatus,200);
+ assert.equal((await api('/api/bootstrap',null,idolStart.token)).me,null);
+ const idol=await api('/api/auth/login',{email:'amstrotherusa50@gmail.com',password:'UpdatedIdolPassword2048'});
+ const admin=await api('/api/auth/login',{email:'arielstrotherb@gmail.com',password:'UpdatedAdminPassword2048'});passed++;
+ const sent=await api('/api/idol/post',{body:'Hello USA50 fans from Arielle!'},idol.token);assert.equal(sent.httpStatus,201);
+ assert.equal((await api('/api/messages/fan-reply',{postId:sent.post.id,text:'Hello!'},tb)).httpStatus,403);
+ await api('/api/demo/subscriber-preview',{enabled:true},tb);
+ const privateReply=await api('/api/messages/fan-reply',{postId:sent.post.id,text:'I am your fan!'},tb);
+ assert.equal(privateReply.httpStatus,201);passed++;
+ const fanA=await api('/api/bootstrap',null,ta);
+ const fanB=await api('/api/bootstrap',null,tb);
+ const idolInbox=await api('/api/bootstrap',null,idol.token);
+ const adminInbox=await api('/api/bootstrap',null,admin.token);
+ assert.equal(fanA.messaging.replies.length,0);
+ assert.ok(fanB.messaging.replies.some(r=>r.id===privateReply.reply.id));
+ assert.ok(idolInbox.messaging.replies.some(r=>r.id===privateReply.reply.id));
+ assert.equal(adminInbox.messaging.replies.length,0);passed++;
+ const privateResponse=await api('/api/idol/reply',{replyId:privateReply.reply.id,text:'Thanks for supporting us!'},idol.token);
+ assert.equal(privateResponse.httpStatus,200);
+ assert.equal((await api('/api/bootstrap',null,tb)).messaging.replies.find(r=>r.id===privateReply.reply.id).idolResponse.text,'Thanks for supporting us!');passed++;
+ const ban=await api('/api/admin/messaging-ban',{userId:b.me.id,banned:true},admin.token);
+ assert.equal(ban.httpStatus,200);
+ assert.equal((await api('/api/messages/fan-reply',{postId:sent.post.id,text:'Hello'},tb)).httpStatus,403);
+ assert.equal((await api('/api/admin/messaging-ban',{userId:b.me.id,banned:false},admin.token)).httpStatus,200);passed++;
+ await api('/api/demo/refill',{},tb);
+ const ten=await api('/api/cards/pull10',{},tb);
+ assert.equal(ten.httpStatus,200);assert.equal(ten.cards.length,10);assert.equal(ten.fancallTicketsAwarded,20);assert.equal(ten.pullPointsAwarded,1000);passed++;
  console.log(`USA50 smoke tests passed: ${passed}`);
+
 }finally{child.kill('SIGTERM');rmSync(dir,{recursive:true,force:true});}

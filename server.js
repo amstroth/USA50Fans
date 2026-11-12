@@ -105,6 +105,7 @@ async function api(req,res,url){
  }
  if(ep.startsWith('/api/admin/')){
    if(!adminFrom(req)&&userFrom(req)?.role!=='admin')return fail(res,403,'Admin login required.');
+   if(userFrom(req)?.mustChangePassword)return fail(res,403,'Change your temporary password before using management tools.');
    if(ep==='/api/admin/overview')return json(res,200,{fansiteApplications:db.fansites,posts:db.posts,reports:db.reports,users:Object.keys(db.users).length});
    if(ep==='/api/admin/fansite-review'){
      let f=db.fansites.find(f=>f.id===data.id);if(!f)return fail(res,404,'Application not found.');
