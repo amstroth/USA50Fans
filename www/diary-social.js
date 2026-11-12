@@ -207,12 +207,7 @@ act=async function(name,node){
  }
  return previousDiaryAct(name,node);
 };
-document.addEventListener('click',event=>{
- const node=event.target.closest('#diary-story-overlay [data-action]');
- if(!node)return;
- event.preventDefault();event.stopPropagation();
- act(node.dataset.action,node).catch(err=>toast(err.message));
-});
+// The app's shared document click delegation handles story actions, including the overlay.
 document.addEventListener('keydown',event=>{
  if(!storyIdol)return;
  if(event.key==='Escape'){if(storyMode==='reader')diaryStoryArchive();else closeDiaryStory();return;}
