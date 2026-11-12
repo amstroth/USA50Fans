@@ -3,6 +3,33 @@ module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,admi
   db.fanReplies ||= [];
   db.messagingReports ||= [];
   db.messagingBans ||= {};
+  // All fan accounts have their own inbox state. Neither read receipts nor
+  // pinned conversations are shared with idols or other fans.
+  const allowedIdols=new Set(['arielle','jaylene','kellie','z','michelle','zoe','miu']);
+  function inboxPrefs(user){
+    user.state||={};
+    user.state.messageReadMarks||={};
+    user.state.messagePinned||=[];
+    return user.state;
+  }
+  function unreadCounts(user){
+    const counts={};
+    const seen=user&&user.role!=='admin'&&user.role!=='idol'?inboxPrefs(user).messageReadMarks:{};
+    for(const post of db.idolPosts){
+      if(!allowedIdols.has(post.idolId))continue;
+      if(Date.parse(post.createdAt)>Date.parse(seen[post.idolId]||0))
+        counts[post.idolId]=(counts[post.idolId]||0)+1;
+    }
+    if(user&&user.role!=='idol'&&user.role!=='admin'){
+      for(const reply of db.fanReplies){
+        if(reply.fanId!==user.id||!reply.idolResponse?.createdAt)continue;
+        if(Date.parse(reply.idolResponse.createdAt)>Date.parse(seen[reply.idolId]||0))
+          counts[reply.idolId]=(counts[reply.idolId]||0)+1;
+      }
+    }
+    return counts;
+  }
+
   const emailRole=[
     ["amstrotherusa50@gmail.com","idol","Arielle","arielle","USA50_IDOL_BOOTSTRAP_PASSWORD"],
     ["arielstrotherb@gmail.com","admin","Management",null,"USA50_ADMIN_BOOTSTRAP_PASSWORD"]
@@ -35,7 +62,8 @@ module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,admi
       if(role==="idol")replies=db.fanReplies.filter(r=>r.idolId===idolId);
       else if(role==="fan")replies=db.fanReplies.filter(r=>r.fanId===user.id);
     }
-    return {posts,replies:replies.map(r=>({...r})),banned:Boolean(user && db.messagingBans[user.id]),role};
+    const prefs=user && role==='fan'?inboxPrefs(user):null;
+    return {posts,replies:replies.map(r=>({...r})),banned:Boolean(user && db.messagingBans[user.id]),role,pinnedIds:prefs?[...prefs.messagePinned]:[],unreadCounts:unreadCounts(user)};
   }
   function isMod(user){return user?.role==="admin";}
   function requiresReset(user,res){
@@ -43,7 +71,7 @@ module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,admi
   }
   function requireUser(req,res){const user=userFrom(req);if(!user)fail(res,401,"Please sign in.");return user;}
   async function handle(req,res,endpoint,data){
-    if(!["/api/account/change-password","/api/idol/post","/api/idol/reply","/api/messages/fan-reply","/api/messages/report","/api/admin/messaging-ban","/api/admin/messaging-resolve","/api/admin/messaging-overview"].includes(endpoint))return false;
+    if(!["/api/account/change-password","/api/idol/post","/api/idol/reply","/api/messages/fan-reply","/api/messages/report","/api/messages/mark-read","/api/messages/pin","/api/admin/messaging-ban","/api/admin/messaging-resolve","/api/admin/messaging-overview"].includes(endpoint))return false;
     const u=requireUser(req,res);if(!u)return true;
     if(endpoint==="/api/account/change-password"){
       const old=String(data.currentPassword||"");
@@ -55,6 +83,24 @@ module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,admi
       return json(res,200,{ok:true,relogin:true}),true;
     }
     if(requiresReset(u,res))return true;
+    if(endpoint==="/api/messages/mark-read" || endpoint==="/api/messages/pin"){
+      if((u.role||"fan")!=="fan")return fail(res,403,"Only fan accounts may change their inbox."),true;
+      const idolId=String(data.idolId||"").toLowerCase();
+      if(!allowedIdols.has(idolId))return fail(res,400,"Unknown idol conversation."),true;
+      const prefs=inboxPrefs(u);
+      if(endpoint==="/api/messages/mark-read"){
+        prefs.messageReadMarks[idolId]=now();save();
+        return json(res,200,{ok:true,idolId,unreadCount:0}),true;
+      }
+      const ids=prefs.messagePinned;
+      const current=ids.indexOf(idolId);
+      if(current>=0)ids.splice(current,1);
+      else {
+        if(ids.length>=7)return fail(res,400,"You can pin at most seven idols."),true;
+        ids.unshift(idolId);
+      }
+      save();return json(res,200,{ok:true,idolId,pinned:current<0,pinnedIds:[...ids]}),true;
+    }
     if(endpoint==="/api/idol/post"){
       if(u.role!=="idol")return fail(res,403,"Idol-only action."),true;
       const body=bodyText(data.body,1200);
