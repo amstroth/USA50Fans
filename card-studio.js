@@ -134,6 +134,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
       createdAt:existing?.createdAt||now(),updatedAt:now(),cards
     };
     if(status!=='draft' && !ready(p))return fail(res,400,'To schedule or publish, every card needs artwork, a title, rarity and border selection.');
+    if(p.id===baseAlbumId && status!=='draft' && RARITIES.some(r=>!cards.some(c=>c.rarity===r)))return fail(res,400,'The original True Love set must keep at least one card of each rarity to match its published pull odds.');
     if(existing)Object.assign(existing,p);else studio.packs.push(p);
     log(existing?'edit':'create',p.id,uid);save();syncBaseCards();
     return json(res,200,{ok:true,pack:{...p,effectiveStatus:effective(p)?'published':p.status,ready:ready(p)}});
@@ -148,6 +149,14 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     for(const user of Object.values(db.users))if(user.state?.owned)for(const key of cardIds)delete user.state.owned[key];
     db.tradeListings=(db.tradeListings||[]).filter(t=>!cardIds.has(t.cardId));
     studio.packs=studio.packs.filter(pack=>pack.id!==p.id);
+    // Delete artwork files only if no remaining pack uses them.
+    const remainingMedia=new Set(studio.packs.flatMap(pack=>pack.cards.map(card=>card.artId)).filter(Boolean));
+    for(const card of p.cards){
+      if(!card.artId||remainingMedia.has(card.artId))continue;
+      const meta=studio.media[card.artId];if(!meta)continue;
+      try{fs.unlinkSync(path.join(artworkDir,meta.filename));}catch(_e){}
+      delete studio.media[card.artId];
+    }
     log('delete-test',p.id,userFrom(req).id);save();syncBaseCards();
     return json(res,200,{ok:true,deleted:p.id});
   }
