@@ -64,19 +64,39 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
     });
     return {posts,profiles,rankings:ranking,following:uid?(state.follows[uid]||[]):[],myProfile:uid?profiles[uid]:null,top100Limit:100,earnings:{postPullPoints:50,dailyCreditedPosts:2,upvotesPerTicket:100},policy:'Demo awards, not real fancall entry or confirmed ticketing.',reports:role(user)==='admin'?state.reports.filter(x=>x.status==='pending').slice(-80):[],bans:role(user)==='admin'?state.bans:{}};
   }
+  // Canonicalize public post links while accepting the short/share links copied on phones.
+  // Short links do not include a media ID, so they are link-only previews until
+  // a trusted redirect is resolved. Never treat arbitrary hosts as social posts.
   function sourceUrl(raw){
-    let u;try{u=new URL(String(raw||''));}catch{return null;}
-    if(u.protocol!=='https:')return null;
+    let u;
+    try{u=new URL(String(raw||'').trim());}catch{return null;}
+    if(u.protocol!=='https:'||u.username||u.password)return null;
     const h=u.hostname.toLowerCase().replace(/^www\./,'');
-    if(h==='tiktok.com'){
-      const m=u.pathname.match(/^\/@[\w.]+\/(?:video|photo)\/(\d{12,25})\/?$/i);
-      if(!m)return null;
-      return {url:'https://www.tiktok.com'+u.pathname,platform:'TikTok',embedKind:'tiktok',embedId:m[1]};
+    const path=u.pathname;
+    if(h==='tiktok.com'||h==='m.tiktok.com'){
+      const m=path.match(/^\/@([A-Za-z0-9._]+)\/(video|photo)\/(\d{12,25})\/?$/i);
+      if(m){
+        const format=m[2].toLowerCase();
+        return {url:'https://www.tiktok.com/@'+m[1]+'/'+format+'/'+m[3],platform:'TikTok',embedKind:format==='video'?'tiktok':'link',embedId:format==='video'?m[3]:null};
+      }
+      const share=path.match(/^\/t\/([A-Za-z0-9_-]{4,80})\/?$/i);
+      if(share)return {url:'https://www.tiktok.com/t/'+share[1]+'/',platform:'TikTok',embedKind:'link',embedId:null};
+      return null;
     }
-    if(h==='instagram.com'){
-      const m=u.pathname.match(/^\/(p|reel|tv)\/([A-Za-z0-9_-]{5,32})\/?$/i);
+    if(h==='vt.tiktok.com'||h==='vm.tiktok.com'){
+      const m=path.match(/^\/([A-Za-z0-9_-]{4,80})\/?$/);
       if(!m)return null;
-      return {url:'https://www.instagram.com/'+m[1]+'/'+m[2]+'/',platform:'Instagram',embedKind:m[1].toLowerCase(),embedId:m[2]};
+      return {url:'https://'+h+'/'+m[1]+'/',platform:'TikTok',embedKind:'link',embedId:null};
+    }
+    if(h==='instagram.com'||h==='m.instagram.com'){
+      const m=path.match(/^\/(p|reel|reels|tv)\/([A-Za-z0-9_-]{5,32})\/?$/i);
+      if(m){
+        const kind=m[1].toLowerCase()==='reels'?'reel':m[1].toLowerCase();
+        return {url:'https://www.instagram.com/'+kind+'/'+m[2]+'/',platform:'Instagram',embedKind:kind,embedId:m[2]};
+      }
+      const share=path.match(/^\/share\/(reel|reels|p|post|tv)\/([A-Za-z0-9_-]{4,100})\/?$/i);
+      if(share)return {url:'https://www.instagram.com/share/'+share[1]+'/'+share[2]+'/',platform:'Instagram',embedKind:'link',embedId:null};
+      return null;
     }
     return null;
   }
@@ -123,7 +143,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
       if(!['fan','idol','admin'].includes(role(u)))return fail(res,403,'Posting is unavailable.'),true;
       const caption=text('caption'),source=sourceUrl(data.url),category=data.category==='fansite'?'fansite':'fan';
       if(caption.length<6||caption.length>650)return fail(res,400,'Add a description between 6 and 650 characters.'),true;
-      if(!source)return fail(res,400,'Enter a public TikTok video or Instagram post/Reel URL.'),true;
+      if(!source)return fail(res,400,'Use a TikTok video, TikTok Share link, or Instagram post/Reel link.'),true;
       if(category==='fansite'&&!approvedFansite(u.id))return fail(res,403,'Fansite publishing requires management approval.'),true;
       if(state.posts.some(p=>p.authorId===u.id&&p.url===source.url&&!p.hidden))return fail(res,409,'You already shared this post.'),true;
       const day=now().slice(0,10);
