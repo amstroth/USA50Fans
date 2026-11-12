@@ -12,25 +12,36 @@
     page=page.replace(/(<button class="btn secondary" data-action="pull-free"[^>]*>.*?<\/button>)/,`$1${button}`);
     return page.replace("Rarity probabilities","Rarity probabilities · Single or 10-pull");
   };
+  let pendingRewards=null;
   dreamReveal=function(result){
     const modal=document.querySelector("#modal-root .modal");
     if(!modal)return;
+    pendingRewards=result;
     const cards=Array.isArray(result.cards)&&result.cards.length?result.cards:[result.card];
-    const isBatch=cards.length>1;
-    modal.classList.toggle("batch-reveal",isBatch);
-    modal.innerHTML=`<div class="modal-head"><h2>${isBatch?'Your 10 Cards ✦':'Your Photocard ✦'}</h2><button class="icon-btn" data-action="close-modal" aria-label="Close dialog">${icon("close")}</button></div>
+    modal.classList.toggle("batch-reveal",cards.length>1);
+    modal.innerHTML=`<div class="modal-head"><h2>${cards.length>1?'Your 10 Cards ✦':'Your Photocard ✦'}</h2><button class="icon-btn" data-action="close-modal" aria-label="Close dialog">${icon("close")}</button></div>
     <div class="reveal-wrap dream-result">
-      <div class="${isBatch?'pull-ten-grid':'pull-single'}" aria-label="Photocards obtained">
-        ${cards.map((card,i)=>`<div class="pull-result-item"><div class="pull-card-scene" style="animation-delay:${i*55}ms">${cardElement(card)}</div><small>${e(card.rarity)} · ${e(card.title)}</small></div>`).join("")}
-      </div>
-      ${result.guaranteed?.length?`<div class="cooldown"><strong>Collector Guarantee! ✧</strong><p class="lead">${result.guaranteed.length} missing album cards were granted.</p></div>`:""}
-      <div class="reward-second"><h3>Plus your rewards ✧</h3><div class="reward-trio"><div class="reward-pill"><strong>+${result.fancallTicketsAwarded}</strong><small>Fancall Tickets</small></div><div class="reward-pill"><strong>+${result.pullPointsAwarded}</strong><small>Pull Points</small></div></div></div>
-      <p class="lead">Paid-style pulls ${result.paidPulls} / 30 · ✦ ${cash(result.stars)} STARS · ◎ ${cash(result.pullPoints)} points</p>
-      <div class="modal-actions"><button class="btn" data-action="${isBatch?'pull10':'pull-from-modal'}">Open ${isBatch?'×10':'another'}</button><button class="btn secondary" data-go="collection">View album</button></div>
-    </div>`;
+    <div class="${cards.length>1?'pull-ten-grid':'pull-single'}" aria-label="Your new photocards">
+    ${cards.map((card,i)=>`<div class="pull-result-item"><div class="pull-card-scene" style="animation-delay:${i*55}ms">${cardElement(card)}</div><small>${e(card.rarity)} · ${e(card.title)}</small></div>`).join("")}
+    </div>${result.guaranteed?.length?`<div class="cooldown"><strong>Collector Guarantee reached ✧</strong><p class="lead">${result.guaranteed.length} missing album cards were granted.</p></div>`:""}
+    <button class="btn full" data-action="next-rewards" style="margin-top:15px">Continue to tickets & points ${icon("arrow",15)}</button></div>`;
   };
+  function showBonusRewards(){
+    const result=pendingRewards,modal=document.querySelector("#modal-root .modal");
+    if(!result||!modal)return;
+    const isBatch=Array.isArray(result.cards)&&result.cards.length>1;
+    modal.classList.remove("batch-reveal");
+    modal.innerHTML=`<div class="modal-head"><h2>Bonus Rewards ✦</h2><button class="icon-btn" data-action="close-modal" aria-label="Close dialog">${icon("close")}</button></div>
+    <div class="reveal-wrap dream-result"><div class="reward-second"><h3>You've also earned ✧</h3><div class="reward-trio">
+    <div class="reward-pill"><strong>+${result.fancallTicketsAwarded}</strong><small>Fancall Tickets</small></div>
+    <div class="reward-pill"><strong>+${result.pullPointsAwarded}</strong><small>Pull Points</small></div>
+    </div></div>
+    <p class="lead">Paid-style pulls: ${result.paidPulls} / 30 · ✦ ${cash(result.stars)} STARS remaining</p>
+    <div class="modal-actions"><button class="btn" data-action="${isBatch?'pull10':'pull-from-modal'}">Open ${isBatch?'×10':'another'}</button><button class="btn secondary" data-go="collection">View album</button></div></div>`;
+  }
   const originalAct=act;
   act=async function(name,node){
+    if(name==="next-rewards")return showBonusRewards();
     if(name==="pull10"){
       if(!store.me)return go("profile");
       const result=await request("/api/cards/pull10",{method:"POST",body:"{}"});
