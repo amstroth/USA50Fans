@@ -54,7 +54,7 @@ module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,admi
       db.idolPosts.push(post);save();return json(res,201,{post}),true;
     }
     if(endpoint==="/api/messages/fan-reply"){
-      if(u.role!=="fan")return fail(res,403,"Only fan accounts can reply."),true;
+      if((u.role||"fan")!=="fan")return fail(res,403,"Only fan accounts can reply."),true;
       if(!u.state?.subscriberPreview)return fail(res,403,"Replies require a subscription. Test subscription preview must be enabled for demos."),true;
       if(db.messagingBans[u.id])return fail(res,403,"Messaging privileges are currently suspended."),true;
       const post=db.idolPosts.find(p=>p.id===data.postId);
@@ -74,7 +74,7 @@ module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,admi
       save();return json(res,200,{ok:true,reply}),true;
     }
     if(endpoint==="/api/messages/report"){
-      if(u.role!=="fan")return fail(res,403,"Fan account required."),true;
+      if((u.role||"fan")!=="fan")return fail(res,403,"Fan account required."),true;
       const post=db.idolPosts.find(p=>p.id===data.postId);
       const ownReply=db.fanReplies.find(r=>r.id===data.replyId&&r.fanId===u.id);
       if(!post&&!ownReply)return fail(res,404,"Message not found."),true;
