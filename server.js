@@ -70,14 +70,16 @@ function resolveUser(id){let u=db.users[id];return u?u.displayName:'Fan';}
 function publicState(u){return {me:u?cleanUser(u):null,members,cards,albums:cardStudio.publicAlbums(),packCards:cardStudio.publicCardsByPack(),rarities:RARITY_WEIGHTS,packCost:PACK_COST,hardPity:HARD_PITY,cooldownDays:90,posts:db.posts.slice().reverse().map(p=>({...p,likedCount:p.likedBy.length,likedBy:undefined,liked:u? p.likedBy.includes(u.id):false})),fansites:db.fansites.filter(f=>f.status==='approved').map(f=>({id:f.id,name:f.name,portfolioUrl:f.portfolioUrl,instagram:f.instagram,tiktok:f.tiktok,description:f.description,votes:Object.values(db.fansiteVotes).filter(id=>id===f.id).length})).sort((a,b)=>b.votes-a.votes),tradeListings:db.tradeListings.map(t=>({...t,ownerName:resolveUser(t.ownerId)})),announcements:db.announcements.slice().reverse(),events:db.events};}
 const roleFeatures=require('./role-features.js')({db,save,id,hashPass,checkPass,userFrom,adminFrom,bodyText,now,json,fail});
 const socialHub=require('./social-hub.js')({db,save,id,bodyText,now,json,fail,userFrom});
+const officialDiary=require('./official-diary.js')({db,save,id,now,json,fail,userFrom,dataDir:DATA_DIR});
 const cardStudio=require('./card-studio.js')({db,save,id,now,bodyText,json,fail,userFrom,dataDir:DATA_DIR,baseCards:cards,baseAlbums:albums,rarityWeights:RARITY_WEIGHTS,packCost:PACK_COST,hardPity:HARD_PITY,baseAlbumId:ALBUM_ID});
 const hits=new Map();function rateLimit(req){let key=req.socket.remoteAddress+':auth',e=hits.get(key)||{at:Date.now(),n:0};if(Date.now()-e.at>60000)e={at:Date.now(),n:0};e.n++;hits.set(key,e);return e.n>12;}
 
 async function api(req,res,url){
  const method=req.method;
  if(method==='GET'&&url.pathname.startsWith('/api/card-studio'))return cardStudio.handleGet(req,res,url.pathname);
+ if(method==='GET'&&url.pathname.startsWith('/api/diary/photo/'))return officialDiary.photo(req,res,url.pathname.slice('/api/diary/photo/'.length));
  if(method==='GET'&&url.pathname==='/api/health')return json(res,200,{ok:true,service:'USA50 web-first development preview',persistence:process.env.DATA_DIR?'configured volume/local directory':'local directory (Railway ephemeral unless DATA_DIR points at volume)'});
- if(method==='GET'&&url.pathname==='/api/bootstrap'){const u=userFrom(req);return json(res,200,{...publicState(u),messaging:roleFeatures.info(u),social:socialHub.info(u)});}
+ if(method==='GET'&&url.pathname==='/api/bootstrap'){const u=userFrom(req);return json(res,200,{...publicState(u),messaging:roleFeatures.info(u),social:socialHub.info(u),officialDiary:officialDiary.info(u)});}
  if(method==='GET'&&url.pathname==='/api/social/resolve'){const id=url.searchParams.get('postId')||'';if(id.length>128)return fail(res,400,'Invalid post ID.');const result=await socialHub.resolveEmbed(id);return result?json(res,200,result):fail(res,404,'Post not found.');}
  if(method==='GET'&&url.pathname==='/api/me')return json(res,200,{me:userFrom(req)?cleanUser(userFrom(req)):null});
  if(method==='GET'&&url.pathname==='/api/admin/overview'){
@@ -89,10 +91,13 @@ async function api(req,res,url){
 
  if(method!=='POST')return fail(res,404,'Unknown API endpoint');
  if(url.pathname==='/api/card-studio/upload' && (userFrom(req)?.role!=='admin'||userFrom(req)?.mustChangePassword))return fail(res,403,'Management login required.');
- const maxPostBytes=url.pathname==='/api/card-studio/upload'?7200000:50000;
+ const maxPostBytes=url.pathname==='/api/card-studio/upload'?7200000:url.pathname==='/api/diary/publish'?3600000:50000;
  let raw='';try{for await (const chunk of req){raw+=chunk;if(raw.length>maxPostBytes)return fail(res,413,'Request is too large.');}}catch{return fail(res,400,'Unreadable request.');}
  let data;try{data=raw?JSON.parse(raw):{};}catch{return fail(res,400,'Invalid JSON.');}
  const ep=url.pathname;
+ if(ep==='/api/diary/publish')return officialDiary.createDiary(req,res,data);
+ if(ep==='/api/diary/delete')return officialDiary.deleteDiary(req,res,data);
+ if(ep==='/api/official/ingest')return officialDiary.ingestOfficial(req,res,data);
  if(cardStudio.handlePost(req,res,ep,data))return;
  if(await roleFeatures.handle(req,res,ep,data))return;
  if(socialHub.handlePost(req,res,ep,data))return;
@@ -264,4 +269,7 @@ const server=http.createServer((req,res)=>{
  else if(req.method==='GET'||req.method==='HEAD')serve(req,res,url);
  else fail(res,405,'Method not allowed');
 });
+// Poll the public official YouTube feed when YOUTUBE_CHANNEL_ID is configured.
+setTimeout(()=>officialDiary.pollYouTube().catch(console.warn),7000);
+setInterval(()=>officialDiary.pollYouTube().catch(console.warn),10*60*1000).unref();
 server.listen(PORT,'0.0.0.0',()=>console.log(`USA50 Fan Club dev listening on http://0.0.0.0:${PORT}`));
