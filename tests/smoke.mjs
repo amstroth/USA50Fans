@@ -74,6 +74,17 @@ try{
  await api('/api/demo/refill',{},tb);
  const ten=await api('/api/cards/pull10',{},tb);
  assert.equal(ten.httpStatus,200);assert.equal(ten.cards.length,10);assert.equal(ten.fancallTicketsAwarded,20);assert.equal(ten.pullPointsAwarded,1000);passed++;
+
+ const linkA=await api('/api/social/post',{caption:'My latest USA50 fancam edit!',url:'https://www.tiktok.com/@creator/video/7341234567890123456'},ta);
+ assert.equal(linkA.httpStatus,201);
+ const voteB=await api('/api/social/vote',{postId:linkA.postId,vote:1},tb);
+ assert.equal(voteB.upvotes,1);
+ const followB=await api('/api/social/follow',{userId:a.me.id},tb);
+ assert.equal(followB.following,true);
+ const hub=await api('/api/bootstrap',null,tb);
+ assert.ok(hub.social.posts.some(p=>p.id===linkA.postId));
+ assert.ok(hub.social.rankings.some(p=>p.id===a.me.id));
+ passed++;
  console.log(`USA50 smoke tests passed: ${passed}`);
 
 }finally{child.kill('SIGTERM');rmSync(dir,{recursive:true,force:true});}
