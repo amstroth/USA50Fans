@@ -51,6 +51,19 @@ try{
  assert.equal((await api('/api/bootstrap',null,idolStart.token)).me,null);
  const idol=await api('/api/auth/login',{email:'amstrotherusa50@gmail.com',password:'UpdatedIdolPassword2048'});
  const admin=await api('/api/auth/login',{email:'arielstrotherb@gmail.com',password:'UpdatedAdminPassword2048'});passed++;
+ // Regression: the management UI reads /api/admin/overview with GET.
+ assert.equal((await api('/api/admin/overview')).httpStatus,403);
+ assert.equal((await api('/api/admin/overview',null,ta)).httpStatus,403);
+ assert.equal((await api('/api/admin/overview',null,adminStart.token)).httpStatus,403);
+ const overview=await api('/api/admin/overview',null,admin.token);
+ assert.equal(overview.httpStatus,200);
+ assert.ok(Array.isArray(overview.fansiteApplications));
+ assert.equal(typeof overview.users,'number');
+ assert.equal((await api('/api/admin/overview',{},admin.token)).httpStatus,200);
+ const studioOverview=await api('/api/card-studio',null,admin.token);
+ assert.equal(studioOverview.httpStatus,200);
+ assert.ok(Array.isArray(studioOverview.packs));
+ passed++;
  const sent=await api('/api/idol/post',{body:'Hello USA50 fans from Arielle!'},idol.token);assert.equal(sent.httpStatus,201);
  assert.equal((await api('/api/messages/fan-reply',{postId:sent.post.id,text:'Hello!'},tb)).httpStatus,403);
  await api('/api/demo/subscriber-preview',{enabled:true},tb);
