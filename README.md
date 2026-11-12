@@ -126,7 +126,7 @@ See [`docs/CODEX_NEXT_STEPS.md`](docs/CODEX_NEXT_STEPS.md). Preserve the current
 
 - Source has been imported to this repo as editable JavaScript/CSS/HTML, with optimized preview art in `www/assets`.
 - The `Expand and test USA50 sources` GitHub Action passed all 10 smoke tests.
-- `Dockerfile` unpacks the verified versioned source bundle and starts `server.js` using Node 22.
+- `Dockerfile` copies the editable `server.js` and `www/` source files and starts the app using Node 22. The `source_payload.b64` file is retained only as a recoverable source snapshot.
 - A **Railway service has not yet been created**. Connect this repo to Railway in your Railway workspace and configure a persistent volume/variables before inviting testers.
 - The optimized preview assets are placeholders, not official member photos or final-resolution print assets.
 
