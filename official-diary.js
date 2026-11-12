@@ -97,7 +97,7 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
    const user=userFrom(req);
    if(!user||user.role!=='admin'||user.mustChangePassword)return fail(res,403,'Management account required');
    const channel=String(data.youtubeChannelId||'').trim();
-   if(channel&&!/^UC[\\w-]{22}$/.test(channel))return fail(res,400,'Enter a valid YouTube channel ID beginning with UC');
+   if(channel&&!/^UC[A-Za-z0-9_-]{22}$/.test(channel))return fail(res,400,'Enter a valid YouTube channel ID beginning with UC');
    state.sources.youtubeChannelId=channel;
    for(const platform of ['instagram','tiktok']){
      const value=String(data[platform+'Username']||'').replace(/^@/,'').trim();
