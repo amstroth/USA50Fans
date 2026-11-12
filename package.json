@@ -1,8 +1,8 @@
 {
   "name": "usa50-fan-club-railway",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
-  "description": "USA50 web-first fan app preview",
+  "description": "USA50 web-first fan application development build (native-ready for Capacitor)",
   "engines": {
     "node": ">=22"
   },

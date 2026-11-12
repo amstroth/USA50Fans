@@ -26,6 +26,15 @@ try{
  const noTrade=await api('/api/trades/create',{cardId:'tl-06'},ta);assert.equal(noTrade.httpStatus,400);passed++;
  const trade=await api('/api/trades/create',{cardId:'tl-01'},ta);assert.equal(trade.httpStatus,200);passed++;
  const code=b.me.state.demoClaimCode;const claim=await api('/api/cards/redeem',{code},tb);assert.equal(claim.httpStatus,200);assert.equal((await api('/api/cards/redeem',{code},tb)).httpStatus,400);passed++;
+ const paidReward=await api('/api/cards/pull',{},tb);
+ assert.equal(paidReward.httpStatus,200);assert.equal(paidReward.fancallTicketsAwarded,2);assert.equal(paidReward.pullPointsAwarded,100);passed++;
+ const freeReward=await api('/api/cards/pull-points',{},tb);
+ assert.equal(freeReward.httpStatus,200);assert.equal(freeReward.fancallTickets,4);assert.equal(freeReward.paidPulls,1);passed++;
+ const task=await api('/api/daily/claim',{task:'checkin'},tb);
+ assert.equal(task.httpStatus,200);assert.equal(task.pullPointsAwarded,100);
+ assert.equal((await api('/api/daily/claim',{task:'checkin'},tb)).httpStatus,400);
+ assert.equal((await api('/api/daily/claim',{task:'fake-task'},tb)).httpStatus,400);passed++;
+
  for(let i=0;i<29;i++){let p=await api('/api/cards/pull',{},ta);assert.equal(p.httpStatus,200);}
  let last=await api('/api/cards/pull',{},ta);assert.equal(last.paidPulls,30);assert.equal(last.albumComplete,true);assert.equal(last.pityAchieved,true);assert.equal(last.stars,0);passed++;
  let order=await api('/api/cards/physical-order-preview',{},ta);assert.equal(order.free,true);assert.equal((await api('/api/cards/physical-order-preview',{},ta)).httpStatus,400);passed++;

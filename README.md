@@ -1,3 +1,15 @@
+# Dreamy UI + Card Opening v0.3.0 (November 2026)
+
+This Railway-ready build adds `www/dream.css` and `www/dream.js` to the existing application: pearlescent glass styling, holographic banners, updated Home/Collection/Card Drops/Shop screens, and a CSS-animated pack spin/tear/reveal. The photo used for Arielle is from the user's provided reference. No prerecorded video is required.
+
+**Demo economy:** 300 STARS = one paid-style demo pull, 300 Pull Points = one free demo pull. Every pull grants one photocard, two **demo** Fancall Tickets, and 100 Pull Points. Three demo daily task claims award 100 points each once per UTC day. Only paid-style pulls advance the 30-pull guaranteed collection. No actual fancall drawing, payment, shipping, or ticket purchase is enabled.
+
+The existing last-copy trade protection, physical set completion requirement, and 90-day reorder block remain in place. The backend still uses a single-process JSON file store; production requires PostgreSQL, transactional inventory, app-store billing/compliance, and free-entry sweepstakes legal review. STARS and Fancall Tickets are not cash equivalents. For this build, the task buttons are **demo claims** rather than independently verified actions.
+
+**Deployment:** Connect `amstroth/USA50Fans` main to Railway via the included Dockerfile, keep `DATA_DIR=/data` and a mounted persistent volume, set `SESSION_SECRET` and `ADMIN_PASSWORD` privately in Railway variables. On commit, Railway rebuilds automatically.
+
+---
+
 # USA50 Fan Club — Railway Development Build v0.1.0
 
 **A working web-first USA50 prototype built like FiftyHQ: standard HTML, CSS, JavaScript, and a Node.js server. React is not required.** The project is organized for Railway deployment and eventual Capacitor packaging into genuine Android/iOS projects.
@@ -122,11 +134,3 @@ npx cap open ios
 ## Next Codex instruction
 
 See [`docs/CODEX_NEXT_STEPS.md`](docs/CODEX_NEXT_STEPS.md). Preserve the current Node/Railway source and improve this foundation rather than starting a second blank app.
-## GitHub deployment status (2026-11-12)
-
-- Source has been imported to this repo as editable JavaScript/CSS/HTML, with optimized preview art in `www/assets`.
-- The `Expand and test USA50 sources` GitHub Action passed all 10 smoke tests.
-- `Dockerfile` copies the editable `server.js` and `www/` source files and starts the app using Node 22. The `source_payload.b64` file is retained only as a recoverable source snapshot.
-- A **Railway service has not yet been created**. Connect this repo to Railway in your Railway workspace and configure a persistent volume/variables before inviting testers.
-- The optimized preview assets are placeholders, not official member photos or final-resolution print assets.
-
