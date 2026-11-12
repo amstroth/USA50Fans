@@ -53,7 +53,8 @@ function newPack(){
 function markDirty(){isDirty=true;renderSidebar();renderPublish();}
 function selectedCard(){return working?.cards?.[cardIndex]||null;}
 function cardArt(card){
- return card.artUrl|| (card.artId?'/api/card-studio/art/'+encodeURIComponent(card.artId):null);
+ return card.artUrl||(card.artId?'/api/card-studio/art/'+encodeURIComponent(card.artId):null)||
+   (card.legacy?'/assets/portraits/arielle_real.webp':null);
 }
 function facePreview(card){
  const src=cardArt(card),border=card.border||'none';
