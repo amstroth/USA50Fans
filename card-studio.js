@@ -7,7 +7,7 @@ const path=require('node:path');
 const crypto=require('node:crypto');
 const FACE={width:660,height:1020,printWidthMm:55,printHeightMm:85};
 const RARITIES=['R','SR','SSR','MR','UR'];
-const BORDERS=['none',...RARITIES];
+const BORDERS=['none'];
 const STATES=['draft','scheduled','published','preview'];
 const MAX_CARDS=50,MAX_IMAGE_BYTES=5000000;
 module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,userFrom,dataDir,baseCards,baseAlbums,rarityWeights,packCost,hardPity,baseAlbumId}){
@@ -20,7 +20,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
       id:baseAlbumId,title:'True Love',member:'Arielle',team:'NYC50',subgroup:'NYC50',
       description:'Arielle · Sweet & Sour collector cards',releaseAt:null,status:'published',
       isTest:false,createdAt:now(),updatedAt:now(),
-      cards:baseCards.map(c=>({...c,border:c.rarity,artId:null,legacy:true}))
+      cards:baseCards.map(c=>({...c,border:'none',artId:null,legacy:true}))
     });
     for(const p of baseAlbums.filter(a=>a.id!==baseAlbumId)){
       studio.packs.push({id:p.id,title:p.title,member:p.member,team:p.team,subgroup:p.team,
@@ -29,21 +29,27 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     }
     save();
   }
+  // Convert existing cards using retired built-in borders to 'none'.
+  let changed=false;
+  for(const pack of studio.packs)for(const card of pack.cards||[]){
+    if(RARITIES.includes(card.border)||!card.border){card.border='none';changed=true;}
+  }
+  if(changed)save();
   function effective(pack,at=Date.now()){
     if(pack.status==='published')return true;
     return pack.status==='scheduled' && Number.isFinite(Date.parse(pack.releaseAt||'')) && Date.parse(pack.releaseAt)<=at && ready(pack);
   }
   function hasBorder(id){return BORDERS.includes(id)||studio.borders.some(b=>b.id===id);}
   function presetFor(id){return studio.borders.find(b=>b.id===id);}
-  function borderUrl(id){if(id==='none')return null;const p=presetFor(id);return p?'/api/card-studio/art/'+p.artId:'/assets/frames/'+id+'.webp';}
-  function borderOptions(){return [...BORDERS.map(id=>({id,name:id==='none'?'No border':id+' preset',url:borderUrl(id),builtin:true,rarity:RARITIES.includes(id)?id:null})),...studio.borders.map(b=>({...b,url:borderUrl(b.id),builtin:false}))];}
+  function borderUrl(id){if(!id||id==='none')return null;const p=presetFor(id);return p?'/api/card-studio/art/'+p.artId:null;}
+  function borderOptions(){return [{id:'none',name:'No border',url:null,builtin:true,rarity:null},...studio.borders.map(b=>({...b,url:borderUrl(b.id),builtin:false}))];}
   function validCard(c,allowLegacy=false){
     return !!c && !!String(c.title||'').trim() && RARITIES.includes(c.rarity) &&
       hasBorder(c.border) && (!!studio.media[c.artId] || (allowLegacy&&c.legacy===true));
   }
   function ready(p){return Array.isArray(p.cards)&&p.cards.length>0&&p.cards.every(c=>validCard(c,p.id===baseAlbumId));}
   function cardPublic(c,p,i){
-    return {id:c.id,albumId:p.id,rarity:c.rarity,border:c.border||c.rarity,borderUrl:borderUrl(c.border||c.rarity),
+    return {id:c.id,albumId:p.id,rarity:c.rarity,border:c.border||'none',borderUrl:borderUrl(c.border||'none'),
       title:c.title,index:i+1,member:p.member,team:p.team,
       artUrl:c.artId?'/api/card-studio/art/'+c.artId:null};
   }
