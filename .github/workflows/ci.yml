@@ -6,6 +6,7 @@ on:
       - server.js
       - role-features.js
       - social-hub.js
+      - card-studio.js
       - www/**
       - package.json
       - tests/**
