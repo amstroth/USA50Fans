@@ -52,3 +52,22 @@ This is a **development environment**: no real currency purchases, prints, or li
 - `tests/card-studio.mjs`: role checks, draft protection, scheduling, image dimensions, custom pulls and delete tests
 
 Images and pack records are currently backed by the same persistent Railway volume used by the v0.1 prototype. Move pack metadata and fan inventory to a transactional database and move art files to durable object storage before opening real purchases or collector fulfillment. Production launch should also add asset moderation, audit review, access logging, and comprehensive print-bleed templates.
+
+## Border Library (v0.9)
+
+From the desktop Card Studio sidebar choose **✦ Border Library**. Select an existing custom preset to rename it or replace its artwork, or choose **Create custom border** to add another preset.
+
+1. Supply a name and optional suggested rarity (R/SR/SSR/MR/UR). The selected rarity is a recommendation only: borders can be applied independently of the card's actual gacha rarity.
+2. Select **Upload transparent border**, then choose a **transparent PNG or WebP** with space for the card photo in the center.
+3. Drag to position, zoom, or rotate the border in the preview. Cropping/export retains transparency, outputting exactly **660 × 1020 px**.
+4. Click **Apply cropped artwork**, then **Save border preset**.
+5. Return to **Collections**, choose a card, and select the custom border under **Face border**. You can also choose **No border — fully custom face**.
+
+Custom border presets can be deleted only after no cards (including draft packs) reference them. The five original built-in rarity borders are protected from deletion so existing collections cannot be broken accidentally.
+
+### Upload troubleshooting
+- If the file selection dialog appears but the crop preview does not, refresh the page with Ctrl+Shift+R. The image preview relies on the browser's `blob:` image URL, which is explicitly permitted by the latest Content Security Policy.
+- Artwork can be JPEG, PNG or WebP. Border overlays should use transparent PNG/WebP, not JPEG.
+- Maximum processed file size is **5 MB**; imports up to 15 MB are cropped and compressed locally.
+- After cropping, **Apply cropped artwork** uploads the file. Then click **Save pack** or **Save border preset** to persist the artwork assignment.
+- Uploads and image metadata currently live on the persistent Railway volume and remain management-only until used in a published pack.
