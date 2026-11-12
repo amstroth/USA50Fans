@@ -36,7 +36,7 @@
    const author=getPerson(p.authorId),isMine=store.me?.id===p.authorId,isAdmin=store.me?.role==='admin';
    if(!author)return '';
    const code='<button class="social-handle" data-action="social-profile" data-value="'+e(author.id)+'">@'+e(author.handle)+'</button>';
-   const mark=author.fansite?'<span class="social-mini-badge">Verified Fansite</span>':'<span class="social-mini-badge">Fan Content</span>';
+   const mark=(author.fansite?'<span class="social-mini-badge">Verified Fansite</span>':'<span class="social-mini-badge">Fan Content</span>')+(p.isFollowing?'<span class="social-mini-badge">Following ✓</span>':'');
    return '<article class="glass social-post" id="socialpost-'+e(p.id)+'">'+
      '<div class="social-post-head"><div class="social-avatar">'+e(author.displayName.slice(0,1).toUpperCase())+'</div><div class="social-post-author">'+code+'<small>'+e(author.displayName)+' · '+e(labelDate(p.createdAt))+'</small></div>'+mark+'</div>'+
      '<p class="social-caption">'+e(p.caption)+'</p>'+socialEmbed(p)+
@@ -121,7 +121,7 @@
       '<p class="social-fineprint">Earn 50 demo Pull Points on each of your first two qualifying posts daily, plus Fan XP. Public links and original content only; 5 posts per day maximum.</p><button class="btn" type="submit">Share post</button></form>');
  }
  function runInstagramEmbeds(){
-   setTimeout(function(){try{if(window.instgrm && window.instgrm.Embeds)window.instgrm.Embeds.process();}catch(_e){}},120);
+   [120,650,1700].forEach(function(ms){setTimeout(function(){try{if(window.instgrm && window.instgrm.Embeds)window.instgrm.Embeds.process();}catch(_e){}},ms);});
  }
  const previousRender=render;
  render=function(){previousRender();if(view==='community')runInstagramEmbeds();};
