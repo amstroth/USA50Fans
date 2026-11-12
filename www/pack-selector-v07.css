@@ -1,0 +1,26 @@
+/* USA50 pack selection carousel, pearlescent styling. */
+.pack-selector{margin:15px 0 19px;padding:16px 20px 17px;text-align:center;overflow:hidden;background:radial-gradient(circle at 18% 0%,#ffffffdb,transparent 35%),linear-gradient(110deg,#e8d4fb,#f8dcef 58%,#e1d7ff)!important}
+.pack-selector-eyebrow{font-size:10px;font-weight:800;letter-spacing:2.5px;color:#a36cb9}
+.pack-selector-row{display:grid;grid-template-columns:48px minmax(0,1fr) 48px;gap:8px;align-items:center;margin:6px 0}
+.pack-arrow{border:1px solid white;border-radius:50%;background:linear-gradient(135deg,#ffffffd9,#f7dbfdd9);box-shadow:0 4px 15px #956ac62b;width:46px;height:46px;display:grid;place-items:center;color:#8760a8;font-size:33px;line-height:1;touch-action:manipulation}
+.pack-arrow:active{transform:scale(.95)}
+.pack-selector-center{min-width:0;padding:2px 0}
+.pack-selector-center h2{font:italic clamp(25px,4vw,35px) Georgia,serif;color:#70518e;margin:5px 0 4px}
+.pack-selector-center h2 span{color:#b58fd4;font-size:19px}
+.pack-selector-center p{color:#816c92;font-size:12px}
+.pack-set-name{font-size:10px;letter-spacing:2px;color:#a37fb2;text-transform:uppercase;font-weight:800;overflow-wrap:anywhere}
+.pack-state{display:inline-block;border-radius:99px;border:1px solid white;padding:6px 12px;margin-top:9px;font-size:11px;font-weight:750}
+.pack-state.ready{background:#f5ddf9;color:#8449a7}
+.pack-state.locked{background:#f4eef9;color:#947ba6}
+.pack-dots{display:flex;justify-content:center;gap:8px;margin-top:8px}
+.pack-dots button{background:#d8c7e8;border:0;border-radius:50%;width:8px;height:8px;padding:0}
+.pack-dots button.on{background:#b174c9;box-shadow:0 0 0 4px #ffffffb0}
+.pack-current-note,.pack-coming-notice{border-radius:14px;background:#fff8;padding:10px 13px;color:#806997;font-size:12px;margin:10px 0 13px;border:1px solid #fff}
+.pack-coming-notice{background:linear-gradient(120deg,#fff7,#ffe8fb94);color:#925b98}
+@media(max-width:600px){
+ .pack-selector{padding:13px 9px 15px;margin:10px 0 14px}
+ .pack-selector-row{grid-template-columns:39px minmax(0,1fr) 39px;gap:3px}
+ .pack-arrow{width:38px;height:38px;font-size:29px}
+ .pack-set-name{font-size:9px;letter-spacing:1.1px}
+ .pack-selector-center h2{font-size:25px}
+}
