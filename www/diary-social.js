@@ -26,7 +26,7 @@ function officialCard(p){
  return '<a class="glass official-social-card" href="'+textEscape(p.url)+'" target="_blank" rel="noopener noreferrer"><div class="official-social-icon">'+symbol+'</div><div><span class="eyebrow">USA50 OFFICIAL · '+textEscape(p.platform)+'</span><h3>'+textEscape(p.title)+'</h3><small>'+diaryDate(p.publishedAt)+'</small></div><span class="official-open">↗</span></a>';
 }
 const storyPalette=['#b88ad7','#ef9cc6','#b29bdf','#91c7bb','#e1b5d2','#a5b6eb'];
-let storyIdol=null,storyIndex=0,storyTimer=null,storyTouchStart=null,storyFocusReturn=null;
+let storyIdol=null,storyIndex=0,storyTimer=null,storyTouchStart=null,storyFocusReturn=null,storyMode='gallery';
 function diaryGroups(){
  const result=new Map(),ordered=(getData().diaries||[]).slice().sort((a,b)=>Date.parse(a.publishedAt)-Date.parse(b.publishedAt));
  for(const d of ordered){
@@ -51,36 +51,71 @@ function diaryStoryStrip(groups,canPost){
 }
 function stopStoryTimer(){if(storyTimer){clearTimeout(storyTimer);storyTimer=null;}}
 function closeDiaryStory(){
- stopStoryTimer();storyIdol=null;storyIndex=0;storyTouchStart=null;
+ stopStoryTimer();storyIdol=null;storyIndex=0;storyTouchStart=null;storyMode='gallery';
  const overlay=document.getElementById('diary-story-overlay');
  if(overlay)overlay.remove();
  document.body.classList.remove('diary-story-open');
  if(storyFocusReturn?.isConnected)storyFocusReturn.focus();
  storyFocusReturn=null;
 }
+function storyOverlay(group){
+ const overlay=document.getElementById('diary-story-overlay')||document.createElement('div');
+ overlay.id='diary-story-overlay';overlay.className='diary-story-overlay';
+ overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+ overlay.setAttribute('aria-label',group.name+' diary entry archive');
+ if(!overlay.isConnected)document.body.appendChild(overlay);
+ document.body.classList.add('diary-story-open');
+ return overlay;
+}
+function diaryStoryArchive(){
+ const group=diaryGroups().find(g=>g.id===storyIdol);
+ if(!group){closeDiaryStory();return}
+ stopStoryTimer();storyMode='gallery';
+ const overlay=storyOverlay(group);
+ const archive=[...group.entries].reverse();
+ const tiles=archive.map(entry=>{
+   const title=(entry.text||'Diary entry').trim().slice(0,110);
+   const firstPhoto=entry.photos?.[0];
+   const photo=firstPhoto?'<img src="'+textEscape(firstPhoto.url)+'" alt="" loading="lazy">':'';
+   return '<button type="button" class="diary-archive-tile" data-action="diary-story-select" data-value="'+textEscape(entry.id)+'" aria-label="Read Entry No. '+String(entry.number).padStart(4,'0')+' dated '+diaryDate(entry.publishedAt)+'">'+
+     '<span class="diary-archive-thumbnail" style="'+paperStyle(entry)+'">'+
+       (photo?'<span class="diary-archive-photo">'+photo+'</span>':'<span class="diary-archive-preview">'+textEscape(title)+'</span>')+
+       '<span class="diary-archive-sticker">'+textEscape(entry.stickers?.[0]||'♡')+'</span>'+
+     '</span><strong>Entry No. '+String(entry.number).padStart(4,'0')+'</strong>'+
+     '<small>'+diaryDate(entry.publishedAt)+'</small></button>';
+ }).join('');
+ overlay.innerHTML='<div class="diary-story-backdrop" data-action="diary-story-close"></div>'+
+  '<section class="diary-story-viewer diary-archive-viewer">'+
+  '<header class="diary-story-header">'+ringAvatar(group,0)+
+   '<div class="diary-story-author"><b>'+textEscape(group.name)+'’s Diary</b><small>'+group.entries.length+' previous '+(group.entries.length===1?'entry':'entries')+'</small></div>'+
+   '<button class="diary-story-close" data-action="diary-story-close" aria-label="Close diary gallery">×</button></header>'+
+  '<div class="diary-archive-heading"><span class="eyebrow">DIARY ARCHIVE</span><h2>All the little moments ♡</h2><p>Select a page to read. Newest entries appear first.</p></div>'+
+  '<div class="diary-archive-grid" role="list" aria-label="'+textEscape(group.name)+' diary entries">'+tiles+'</div>'+
+  '<footer class="diary-story-footer">USA50 · DIARY ENTRIES <span>'+group.entries.length+' pages</span></footer></section>';
+ overlay.querySelector('.diary-archive-tile')?.focus({preventScroll:true});
+}
 function showStory(){
  const group=diaryGroups().find(g=>g.id===storyIdol);
  if(!group||!group.entries.length){closeDiaryStory();return;}
- const entry=group.entries[storyIndex];if(!entry){closeDiaryStory();return;}
- stopStoryTimer();
+ const entry=group.entries[storyIndex];if(!entry){diaryStoryArchive();return;}
+ stopStoryTimer();storyMode='reader';
  const owner=store?.me?.role==='admin'||store?.me?.id===entry.authorId;
  const progress=group.entries.map((p,i)=>'<span class="diary-story-progress '+(i<storyIndex?'complete':i===storyIndex?'current':'')+'" aria-label="Page '+(i+1)+' of '+group.entries.length+'"></span>').join('');
- const overlay=document.getElementById('diary-story-overlay')||document.createElement('div');
- overlay.id='diary-story-overlay';overlay.className='diary-story-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label',group.name+' diary entries');
- const avatar=ringAvatar(group,storyPalette.length-1);
+ const overlay=storyOverlay(group);
+ const avatar=ringAvatar(group,0);
  overlay.innerHTML='<div class="diary-story-backdrop" data-action="diary-story-close"></div>'+
  '<div class="diary-story-viewer"><div class="diary-story-progress-row">'+progress+'</div>'+
  '<header class="diary-story-header">'+avatar+'<div class="diary-story-author"><b>'+textEscape(group.name)+'</b><small>Entry '+String(entry.number).padStart(4,'0')+' · '+diaryDate(entry.publishedAt)+'</small></div>'+
+ '<button type="button" class="diary-story-gallery-back" data-action="diary-story-gallery" aria-label="View all diary entries">▦ All entries</button>'+
  (owner?'<button class="diary-story-menu" data-action="diary-delete" data-value="'+textEscape(entry.id)+'" aria-label="Delete diary entry">Delete</button>':'')+
  '<button class="diary-story-close" data-action="diary-story-close" aria-label="Close diary">×</button></header>'+
  '<div class="diary-story-paper" tabindex="0">'+diaryMarkup(entry)+'</div>'+
  '<button class="diary-story-nav previous" data-action="diary-story-prev" aria-label="Previous diary entry">‹</button>'+
  '<button class="diary-story-nav next" data-action="diary-story-next" aria-label="Next diary entry">›</button>'+
  '<footer class="diary-story-footer">USA50 · DIARY ENTRIES <span>'+String(storyIndex+1)+' / '+group.entries.length+'</span></footer></div>';
- if(!overlay.isConnected)document.body.appendChild(overlay);
- document.body.classList.add('diary-story-open');
- overlay.querySelector('.diary-story-close')?.focus({preventScroll:true});
- storyTimer=setTimeout(()=>moveStory(1),12000);
+ overlay.querySelector('.diary-story-gallery-back')?.focus({preventScroll:true});
+ // Diary pages are permanent posts, not disappearing stories. Do not force
+ // the reader forward while a fan is reading a long notebook entry.
 }
 function moveStory(delta){
  const groups=diaryGroups(),ix=groups.findIndex(g=>g.id===storyIdol);
@@ -95,7 +130,7 @@ function openDiaryStory(id){
  const group=diaryGroups().find(g=>g.id===id);
  if(!group)return;
  storyFocusReturn=document.activeElement;
- storyIdol=id;storyIndex=0;showStory();
+ storyIdol=id;storyIndex=group.entries.length-1;diaryStoryArchive();
 }
 function officialDiarySection(){
  const data=getData(),groups=diaryGroups(),official=data.officialPosts||[];
@@ -159,6 +194,8 @@ function resizeDiaryPhoto(file){
 const previousDiaryAct=act;
 act=async function(name,node){
  if(name==='diary-story-open'){openDiaryStory(node.dataset.value);return;}
+ if(name==='diary-story-gallery'){diaryStoryArchive();return;}
+ if(name==='diary-story-select'){const group=diaryGroups().find(g=>g.id===storyIdol);const index=group?.entries.findIndex(p=>p.id===node.dataset.value)??-1;if(index>=0){storyIndex=index;showStory();}return;}
  if(name==='diary-story-close'){closeDiaryStory();return;}
  if(name==='diary-story-next'){moveStory(1);return;}
  if(name==='diary-story-prev'){moveStory(-1);return;}
@@ -178,9 +215,9 @@ document.addEventListener('click',event=>{
 });
 document.addEventListener('keydown',event=>{
  if(!storyIdol)return;
- if(event.key==='Escape'){closeDiaryStory();return;}
- if(event.key==='ArrowRight'){event.preventDefault();moveStory(1);}
- if(event.key==='ArrowLeft'){event.preventDefault();moveStory(-1);}
+ if(event.key==='Escape'){if(storyMode==='reader')diaryStoryArchive();else closeDiaryStory();return;}
+ if(event.key==='ArrowRight'&&storyMode==='reader'){event.preventDefault();moveStory(1);}
+ if(event.key==='ArrowLeft'&&storyMode==='reader'){event.preventDefault();moveStory(-1);}
 });
 document.addEventListener('touchstart',event=>{
  if(!storyIdol||!event.target.closest('#diary-story-overlay'))return;
@@ -189,7 +226,7 @@ document.addEventListener('touchstart',event=>{
 document.addEventListener('touchend',event=>{
  if(!storyIdol||!storyTouchStart||!event.target.closest('#diary-story-overlay'))return;
  const dx=event.changedTouches[0].clientX-storyTouchStart.x,dy=event.changedTouches[0].clientY-storyTouchStart.y;
- if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.5)moveStory(dx<0?1:-1);
+ if(storyMode==='reader'&&Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.5)moveStory(dx<0?1:-1);
  storyTouchStart=null;
 },{passive:true});
 document.addEventListener('input',event=>{if(event.target.closest('#diary-entry-form'))updateDiaryPreview()});
