@@ -43,10 +43,15 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
       title:c.title,index:i+1,member:p.member,team:p.team,
       artUrl:c.artId?'/api/card-studio/art/'+c.artId:null};
   }
+  function rarityOdds(pack){
+    const choices=RARITIES.filter(r=>pack.cards.some(c=>c.rarity===r));
+    const total=choices.reduce((acc,r)=>acc+(rarityWeights[r]||0),0)||1;
+    return Object.fromEntries(RARITIES.map(r=>[r,choices.includes(r)?Math.round(rarityWeights[r]*10000/total)/100:0]));
+  }
   function publicAlbums(){
     return studio.packs.filter(p=>p.status!=='draft').map(p=>({
       id:p.id,title:p.title,member:p.member,team:p.team,subgroup:p.subgroup,
-      count:p.cards.length,available:effective(p),releaseAt:p.releaseAt||null,
+      count:p.cards.length,available:effective(p),odds:rarityOdds(p),releaseAt:p.releaseAt||null,
       isTest:Boolean(p.isTest)
     }));
   }
@@ -171,7 +176,11 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
   function customPull(req,res,endpoint,data,u){
     if(!['/api/cards/pull','/api/cards/pull-points','/api/cards/pull10'].includes(endpoint))return false;
     const packId=String(data.albumId||baseAlbumId);
-    if(packId===baseAlbumId)return false;
+    if(packId===baseAlbumId){
+      const base=studio.packs.find(x=>x.id===baseAlbumId);
+      if(!base||!effective(base))return fail(res,403,'This pack is currently unpublished.'),true;
+      return false;
+    }
     const p=studio.packs.find(x=>x.id===packId);
     if(!p||!effective(p)||!ready(p))return fail(res,400,'This collection is not released for pulling.'),true;
     if(u.role==='admin'||u.role==='idol')return fail(res,403,'Only fan accounts can pull packs.'),true;
