@@ -30,6 +30,9 @@
    if(['p','reel','tv'].includes(post.embedKind) && /^[a-zA-Z0-9_-]{5,32}$/.test(post.embedId||'')){
      return '<div class="social-embed social-instagram"><blockquote class="instagram-media" data-instgrm-permalink="'+url+'" data-instgrm-captioned="true" data-instgrm-version="14"><a href="'+url+'" target="_blank" rel="noopener noreferrer">Open this Instagram post</a></blockquote><a class="social-embed-fallback" href="'+url+'" target="_blank" rel="noopener noreferrer">View original on Instagram ↗</a></div>';
    }
+   if(post.embedKind==='link'){
+     return '<a class="social-embed social-short-preview" href="'+url+'" target="_blank" rel="noopener noreferrer"><span class="social-short-icon">'+(post.platform==='TikTok'?'♪':'◎')+'</span><span><strong>Open original '+e(post.platform)+' post</strong><small>Shared link · opens in '+e(post.platform)+'</small></span><span aria-hidden="true">↗</span></a>';
+   }
    return '';
  }
  function socialPost(p,compact=false){
@@ -113,9 +116,9 @@
  function newSocialPostModal(){
    if(!store.me)return showModal('Join the community','<p class="lead">Create a free USA50 fan account before sharing your fan content.</p><button class="btn" data-go="profile">Join free</button>');
    const isFansite=getSocial().myProfile?.fansite;
-   showModal('Share your USA50 edit ♡','<p class="lead">Paste a public Instagram post/Reel or TikTok video. Your original post stays on its platform, and fans can visit it directly.</p>'+
+   showModal('Share your USA50 edit ♡','<p class="lead">Paste a TikTok or Instagram link directly from the Share button (short links work too). Fans can open your original post on its platform.</p>'+
       '<form id="social-post-form" class="form-grid"><div class="form-field"><label>Your caption</label><textarea name="caption" required maxlength="650" minlength="6" placeholder="My new USA50 edit… ♡"></textarea></div>'+
-      '<div class="form-field"><label>Original TikTok or Instagram URL</label><input name="url" type="url" required placeholder="https://www.tiktok.com/@yourhandle/video/..."></div>'+
+      '<div class="form-field"><label>Original TikTok or Instagram URL</label><input name="url" type="url" inputmode="url" required placeholder="https://vt.tiktok.com/... or instagram.com/reel/..."><small>Short links (vt.tiktok.com, vm.tiktok.com) and Instagram share links are supported.</small></div>'+
       '<div class="form-field"><label>Publish in</label><select name="category"><option value="fan">Fan Content</option>'+
       (isFansite?'<option value="fansite">Approved Fansites</option>':'')+'</select></div>'+
       '<p class="social-fineprint">Earn 50 demo Pull Points on each of your first two qualifying posts daily, plus Fan XP. Public links and original content only; 5 posts per day maximum.</p><button class="btn" type="submit">Share post</button></form>');
@@ -168,6 +171,17 @@
    }
    return previousAct(name,node);
  };
+ // TikTok's Share action may paste a sentence plus a link on iOS.
+ // Extract the link without relaxing server-side social-domain validation.
+ document.addEventListener('paste',event=>{
+   const field=event.target;
+   if(!(field instanceof HTMLInputElement)||!field.matches('#social-post-form input[name="url"]'))return;
+   const pasted=event.clipboardData?.getData('text')||'';
+   const match=pasted.match(/https:\/\/[^\s<>"']+/i);
+   if(!match)return;
+   const cleaned=match[0].replace(/[),.;]+$/,'');
+   if(cleaned!==pasted.trim()){event.preventDefault();field.value=cleaned;}
+ });
  const previousSubmit=submitForm;
  submitForm=async function(form){
    const v=Object.fromEntries(new FormData(form));
