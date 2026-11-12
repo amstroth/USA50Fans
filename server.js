@@ -98,6 +98,7 @@ async function api(req,res,url){
  if(ep==='/api/diary/publish')return officialDiary.createDiary(req,res,data);
  if(ep==='/api/diary/delete')return officialDiary.deleteDiary(req,res,data);
  if(ep==='/api/official/ingest')return officialDiary.ingestOfficial(req,res,data);
+ if(ep==='/api/official/sources')return officialDiary.setSources(req,res,data);
  if(cardStudio.handlePost(req,res,ep,data))return;
  if(await roleFeatures.handle(req,res,ep,data))return;
  if(socialHub.handlePost(req,res,ep,data))return;
