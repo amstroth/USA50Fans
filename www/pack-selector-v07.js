@@ -1,61 +1,70 @@
-/* USA50 Card Drops v0.7 — switch between current and future albums. */
+/* USA50 gacha carousel — published packs share the same secure server pull endpoints. */
 (function installPackSelector(){
 'use strict';
-let selectedIndex=0;
-const oldDropsScreen=dropsScreen;
-const albums=()=>store?.albums||[];
-const selected=()=>albums()[Math.min(selectedIndex,Math.max(0,albums().length-1))];
-function packSelector(){
- const list=albums(),item=selected();if(!item)return '';
- const i=Math.max(0,list.indexOf(item)),name=item.title||'Photocard Collection';
- const available=!!item.available;
- const viewLabel=item.member==='Arielle'?'Sweet & Sour · Arielle':item.team+' · '+name;
- return '<section class="pack-selector glass" aria-label="Choose a photocard pack">'+
-   '<div class="pack-selector-eyebrow">CHOOSE YOUR PACK · '+(i+1)+' OF '+list.length+'</div>'+
-   '<div class="pack-selector-row">'+
-     '<button class="pack-arrow" data-action="pack-prev" type="button" aria-label="Previous pack">‹</button>'+
-     '<div class="pack-selector-center">'+
-       '<div class="pack-set-name">'+e(viewLabel)+'</div>'+
-       '<h2>'+e(name)+' <span>✧</span></h2>'+
-       '<p>'+e(item.team||'USA50')+' · '+(available?'Now available':'Coming soon')+'</p>'+
-       '<span class="pack-state '+(available?'ready':'locked')+'">'+(available?'Available to pull':'Preview only · Locked')+'</span>'+
-     '</div>'+
-     '<button class="pack-arrow" data-action="pack-next" type="button" aria-label="Next pack">›</button>'+
-   '</div>'+
-   '<div class="pack-dots" aria-label="Pack selection">'+list.map((a,j)=>'<button type="button" aria-label="'+e(a.title)+'" aria-current="'+(j===i?'true':'false')+'" data-action="pack-select" data-value="'+j+'" class="'+(j===i?'on':'')+'"></button>').join('')+'</div>'+
-   '</section>';
+let selectedId='arielle-true-love';
+const priorDrops=dropsScreen;
+const baseId='arielle-true-love';
+const choices=()=>store?.albums||[];
+const selected=()=>choices().find(a=>a.id===selectedId)||choices()[0]||null;
+function nav(){
+  const list=choices(),pack=selected();if(!pack)return '';
+  const i=list.indexOf(pack),available=pack.available;
+  return '<section class="pack-selector glass"><div class="pack-selector-eyebrow">SELECT YOUR PACK · '+(i+1)+' OF '+list.length+'</div>'+
+    '<div class="pack-selector-row"><button class="pack-arrow" type="button" data-action="pack-prev" aria-label="Previous card pack">‹</button>'+
+    '<div class="pack-selector-center"><div class="pack-set-name">'+e(pack.member)+' · '+e(pack.subgroup||pack.team)+'</div>'+
+    '<h2>'+e(pack.title)+' <span>✧</span></h2>'+
+    '<p>'+e(pack.team)+(pack.isTest?' · Development test pack':' · Collector edition')+'</p>'+
+    '<span class="pack-state '+(available?'ready':'locked')+'">'+(available?'Available for pulls':'Not released · Preview')+'</span></div>'+
+    '<button class="pack-arrow" type="button" data-action="pack-next" aria-label="Next card pack">›</button></div>'+
+    '<div class="pack-dots">'+list.map((p,j)=>'<button type="button" class="'+(i===j?'on':'')+'" aria-current="'+(i===j)+'" aria-label="'+e(p.title)+'" data-action="pack-select" data-value="'+e(p.id)+'"></button>').join('')+'</div></section>';
 }
 dropsScreen=function(){
- let output=oldDropsScreen(),item=selected(),active=!!item?.available;
- if(!item)return output;
- // The True Love content currently is the only released banner on the backend.
- // Upcoming sets must never spend STARS or silently award a different set.
- if(!active){
-   output=output.replace(/(<button\b[^>]*\bdata-action="(?:pull|pull10|pull-free)"[^>]*)(>)/g,(m,attrs,end)=>attrs+' disabled aria-disabled="true"'+end);
-   output=output.replace('True Love Photocard Pack',e(item.title)+' · PREVIEW');
-   output=output.replace('<div class="dream-pack-sub">True Love</div>','<div class="dream-pack-sub">'+e(item.title)+'</div>');
-   output=output.replace('Sweet &amp; Sour',e(item.team)+' Photocard Collection');
-   output=output.replace('NEW DROP · ARIELLE','COMING SOON · '+e(item.team));
-   output=output.replace('On paid-style pull 30,','When this album becomes available, on paid-style pull 30,');
-   output=output.replace('<div class="gacha-layout">','<div class="pack-coming-notice">This pack is a preview. Pulls and rarity guarantees will unlock when USA50 releases the set.</div><div class="gacha-layout">');
- } else {
-   output=output.replace('<div class="gacha-layout">','<div class="pack-current-note">Selected: '+e(item.title)+' · pulls will add cards to this album.</div><div class="gacha-layout">');
- }
- return output.replace('<div class="gacha-layout">',packSelector()+'<div class="gacha-layout">');
+  const pack=selected();
+  if(!pack)return priorDrops();
+  const originalOdds=store.rarities;
+  store.rarities=pack.available && pack.odds?pack.odds:originalOdds;
+  let html;try{html=priorDrops();}finally{store.rarities=originalOdds;}
+  const other=pack.id!==baseId;
+  if(other){
+    html=html.replace('NEW DROP · ARIELLE',e((pack.available?'NEW COLLECTION':'COMING SOON')+' · '+pack.member.toUpperCase()));
+    html=html.replace('Sweet &amp; Sour',e(pack.title));
+    html=html.replace('True Love Photocard Pack',e(pack.subgroup||pack.team)+' Photocard Pack');
+    html=html.replace('<div class="dream-pack-sub">True Love</div>','<div class="dream-pack-sub">'+e(pack.title)+'</div>');
+    html=html.replace("Arielle · True Love",e(pack.member)+' · '+e(pack.title));
+    const progress=store.me?.state?.packProgress?.[pack.id]||{paidPulls:0,pityAchieved:false};
+    html=html.replace(/(<div class="pity-number">[\s\S]*?<span>)([^<]*)(<\/span>)/,'$1'+progress.paidPulls+' / 30$3');
+    const percent=Math.min(100,Math.round(100*progress.paidPulls/30));
+    html=html.replace(/(<div class="progress"><span style="width:)(\d+)(%")/,'$1'+percent+'$3');
+  }
+  if(!pack.available){
+    html=html.replace(/(<button\b[^>]*data-action="(?:pull|pull10|pull-free)"[^>]*)(>)/g,(_m,a,z)=>a+' disabled aria-disabled="true"'+z);
+    html=html.replace('<div class="gacha-layout">','<p class="pack-coming-notice">This collection is not released. Management can complete its artwork and schedule publication in Card Studio.</p><div class="gacha-layout">');
+  }else html=html.replace('<div class="gacha-layout">','<p class="pack-current-note">Now selected: '+e(pack.member)+' · '+e(pack.title)+'</p><div class="gacha-layout">');
+  return html.replace('<div class="gacha-layout">',nav()+'<div class="gacha-layout">');
 };
 const oldAct=act;
 act=async function(name,node){
- if(name==='pack-prev'||name==='pack-next'||name==='pack-select'){
-   const list=albums();if(!list.length)return;
-   if(name==='pack-select')selectedIndex=Math.max(0,Math.min(list.length-1,Number(node.dataset.value)||0));
-   else selectedIndex=(selectedIndex+(name==='pack-next'?1:-1)+list.length)%list.length;
-   render();return;
- }
- if(['pull','pull10','pull-free','pull-from-modal'].includes(name)&&!selected()?.available){
-   return toast('This collection has not been released. Select an available pack to pull.');
- }
- return oldAct(name,node);
+  const pack=selected();
+  if(['pack-prev','pack-next','pack-select'].includes(name)){
+    const list=choices();
+    if(!list.length)return;
+    let i=list.findIndex(a=>a.id===selected()?.id);
+    if(name==='pack-next')i=(i+1)%list.length;
+    if(name==='pack-prev')i=(i-1+list.length)%list.length;
+    if(name==='pack-select')i=Math.max(0,list.findIndex(a=>a.id===node.dataset.value));
+    selectedId=list[i].id;render();return;
+  }
+  if(['pull','pull10','pull-free','pull-from-modal'].includes(name)){
+    if(!pack?.available)return toast('This collection is not released. Pick an available pack.');
+    if(pack.id!==baseId){
+      if(!store.me)return go('profile');
+      const ten=name==='pull10',free=name==='pull-free';
+      const endpoint=ten?'/api/cards/pull10':free?'/api/cards/pull-points':'/api/cards/pull';
+      const result=await request(endpoint,{method:'POST',body:JSON.stringify({albumId:pack.id})});
+      await refresh();showPackOpening(result,free);return;
+    }
+  }
+  return oldAct(name,node);
 };
-// Expose the current set to the animation overlay for consistent pack labels.
-window.USA50_SelectedPack=function(){return selected()||null;};
+window.USA50_SelectedPack=()=>selected();
 })();
