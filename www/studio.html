@@ -6,12 +6,14 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#f1e6fa">
 <title>USA50 · Card Studio</title>
-<link rel="stylesheet" href="/studio.css?v=1">
-<script defer src="/studio.js?v=1"></script>
+<link rel="stylesheet" href="/studio.css?v=2">
+<script defer src="/studio.js?v=2"></script>
 </head>
 <body>
 <div class="desktop-blocker"><div class="blocker-inner"><span class="blocker-mark">✧</span><h1>Card Studio is desktop-only</h1><p>To edit and crop photocard artwork, sign in as USA50 management on a desktop browser with a window at least 1024 pixels wide.</p><a href="/">Return to USA50 Fan Club</a></div></div>
 <div class="studio-workspace" id="studio-workspace">
+  <input type="file" id="studio-art-picker" class="studio-native-picker" accept="image/png,image/jpeg,image/webp" aria-label="Choose artwork photo">
+  <input type="file" id="studio-border-picker" class="studio-native-picker" accept="image/png,image/webp" aria-label="Choose transparent border artwork">
   <header class="studio-topbar">
     <a href="/" class="studio-brand">USA50 <small>FAN CLUB</small></a>
     <div class="studio-top-label">✦ MANAGEMENT WORKSPACE <span>/ CARD STUDIO</span></div>
@@ -21,6 +23,8 @@
     <aside class="studio-sidebar">
       <div class="studio-sidebar-top"><div><span class="eyebrow">PACK LIBRARY</span><h2>Collections</h2></div><button id="studio-new" type="button" class="studio-new" title="Create a new cardpack">＋</button></div>
       <p class="subtle">Draft, schedule and publish without touching the live collection until it's ready.</p>
+      <button type="button" class="studio-button secondary block studio-library-switch" id="studio-border-library">✦ Border Library</button>
+      <button type="button" class="studio-button secondary block studio-library-switch" id="studio-pack-library" hidden>← Back to Packs</button>
       <div id="studio-packs" class="studio-pack-list"><p>Loading packs…</p></div>
       <div class="studio-sidebar-note">✧ Draft packs remain private even if their release date passes. Only completed scheduled packs launch automatically.</div>
     </aside>
