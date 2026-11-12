@@ -9,9 +9,18 @@ module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,admi
   ];
   let mutated=false;
   for(const [email,role,displayName,idolId,key] of emailRole){
-    if(Object.values(db.users).some(u=>u.email?.toLowerCase()===email))continue;
+    const existing=Object.values(db.users).find(u=>u.email?.toLowerCase()===email);
     const password=process.env[key];
     if(!password || password.length<14)continue;
+    // Only temporary passwords may be rotated by deployment; changed passwords stay untouched.
+    if(existing){
+      if(existing.role===role && existing.mustChangePassword===true && !checkPass(password,existing.passwordHash)){
+        existing.passwordHash=hashPass(password);
+        existing.sessionVersion=(existing.sessionVersion||0)+1;
+        mutated=true;
+      }
+      continue;
+    }
     const uid=id();
     db.users[uid]={id:uid,email,displayName,role,idolId,passwordHash:hashPass(password),mustChangePassword:true,sessionVersion:0,createdAt:now(),state:{stars:0,pullPoints:0,fancallTickets:0,paidPulls:0,pityAchieved:false,owned:{},physicalOrders:[],freePhysicalUsed:false,subscriberPreview:false,likedPosts:[],favoriteMembers:[idolId||"arielle"],fansiteApplicationId:null,demoClaimCode:"",demoClaimed:false,dailyClaimed:{}}};
     mutated=true;
