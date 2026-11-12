@@ -9,12 +9,12 @@ const FACE={width:660,height:1020,printWidthMm:55,printHeightMm:85};
 const RARITIES=['R','SR','SSR','MR','UR'];
 const BORDERS=['none',...RARITIES];
 const STATES=['draft','scheduled','published','preview'];
-const MAX_CARDS=50,MAX_IMAGE_BYTES=1700000;
+const MAX_CARDS=50,MAX_IMAGE_BYTES=5000000;
 module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,userFrom,dataDir,baseCards,baseAlbums,rarityWeights,packCost,hardPity,baseAlbumId}){
   const artworkDir=path.join(dataDir,'card-studio-art');
   fs.mkdirSync(artworkDir,{recursive:true});
   const studio=db.cardStudio||(db.cardStudio={packs:[],media:{},audit:[]});
-  studio.packs||=[];studio.media||={};studio.audit||=[];
+  studio.packs||=[];studio.media||={};studio.audit||=[];studio.borders||=[];
   if(!studio.packs.length){
     studio.packs.push({
       id:baseAlbumId,title:'True Love',member:'Arielle',team:'NYC50',subgroup:'NYC50',
@@ -33,13 +33,17 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     if(pack.status==='published')return true;
     return pack.status==='scheduled' && Number.isFinite(Date.parse(pack.releaseAt||'')) && Date.parse(pack.releaseAt)<=at && ready(pack);
   }
+  function hasBorder(id){return BORDERS.includes(id)||studio.borders.some(b=>b.id===id);}
+  function presetFor(id){return studio.borders.find(b=>b.id===id);}
+  function borderUrl(id){if(id==='none')return null;const p=presetFor(id);return p?'/api/card-studio/art/'+p.artId:'/assets/frames/'+id+'.webp';}
+  function borderOptions(){return [...BORDERS.map(id=>({id,name:id==='none'?'No border':id+' preset',url:borderUrl(id),builtin:true,rarity:RARITIES.includes(id)?id:null})),...studio.borders.map(b=>({...b,url:borderUrl(b.id),builtin:false}))];}
   function validCard(c,allowLegacy=false){
     return !!c && !!String(c.title||'').trim() && RARITIES.includes(c.rarity) &&
-      BORDERS.includes(c.border) && (!!studio.media[c.artId] || (allowLegacy&&c.legacy===true));
+      hasBorder(c.border) && (!!studio.media[c.artId] || (allowLegacy&&c.legacy===true));
   }
   function ready(p){return Array.isArray(p.cards)&&p.cards.length>0&&p.cards.every(c=>validCard(c,p.id===baseAlbumId));}
   function cardPublic(c,p,i){
-    return {id:c.id,albumId:p.id,rarity:c.rarity,border:c.border||c.rarity,
+    return {id:c.id,albumId:p.id,rarity:c.rarity,border:c.border||c.rarity,borderUrl:borderUrl(c.border||c.rarity),
       title:c.title,index:i+1,member:p.member,team:p.team,
       artUrl:c.artId?'/api/card-studio/art/'+c.artId:null};
   }
@@ -67,13 +71,14 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
   }
   syncBaseCards();
   function statusOverview(){
-    return studio.packs.map(p=>({...p,cards:p.cards.map(c=>({...c,artUrl:c.artId?'/api/card-studio/art/'+c.artId:null})),
+    return studio.packs.map(p=>({...p,cards:p.cards.map(c=>({...c,artUrl:c.artId?'/api/card-studio/art/'+c.artId:null,borderUrl:borderUrl(c.border)})),
       effectiveStatus:effective(p)?'published':p.status,ready:ready(p),cardCount:p.cards.length}));
   }
   function isAdmin(req){const u=userFrom(req);return !!(u?.role==='admin'&&!u.mustChangePassword);}
   function deny(res){return fail(res,403,'Management account required. Change your temporary password before using Card Studio.');}
   function log(action,packId,uid){studio.audit.push({at:now(),action,packId,by:uid});studio.audit=studio.audit.slice(-250);}
   function upload(data,req,res){
+    const kind=data.kind==='border'?'border':'face';
     const match=/^data:image\/(webp|png);base64,([A-Za-z0-9+/=]+)$/.exec(String(data.dataUrl||''));
     if(!match)return fail(res,400,'Export the image from Card Studio as WebP or PNG.');
     const buf=Buffer.from(match[2],'base64');
@@ -91,11 +96,12 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
       width=buf.readUInt32BE(16);height=buf.readUInt32BE(20);
     }
     if(width!==FACE.width||height!==FACE.height)return fail(res,400,'Artwork must be exactly 660 × 1020 px. Crop and export using Card Studio.');
+    if(kind==='border' && match[1]==='png' && ![4,6].includes(buf[25]))return fail(res,400,'Border PNG needs an alpha (transparent) channel.');
     const artId=id(),ext=match[1];
     const filename=artId+'.'+ext;
     fs.writeFileSync(path.join(artworkDir,filename),buf,{flag:'wx'});
-    studio.media[artId]={id:artId,filename,mime:'image/'+ext,bytes:buf.length,createdAt:now(),by:userFrom(req).id};
-    save();return json(res,201,{artId,url:'/api/card-studio/art/'+artId,face:FACE});
+    studio.media[artId]={id:artId,filename,mime:'image/'+ext,kind,bytes:buf.length,createdAt:now(),by:userFrom(req).id};
+    save();return json(res,201,{artId,url:'/api/card-studio/art/'+artId,face:FACE,kind});
   }
   function savePack(data,req,res){
     const uid=userFrom(req).id;
@@ -120,7 +126,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
       if(!title)return fail(res,400,'Every card needs a title (card '+(i+1)+').');
       if(!RARITIES.includes(draft.rarity))return fail(res,400,'Select a valid card rarity.');
       const border=String(draft.border||'none');
-      if(!BORDERS.includes(border))return fail(res,400,'Unknown border selection.');
+      if(!hasBorder(border))return fail(res,400,'Unknown border selection.');
       const artId=String(draft.artId||'');
       if(artId && !studio.media[artId])return fail(res,400,'One of the uploaded card images is missing.');
       const cardId=previousCard?.id||id();
@@ -164,7 +170,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     if(!/^[0-9a-f-]{36}$/i.test(artId))return fail(res,404,'Artwork not found.');
     const meta=studio.media[artId];
     if(!meta)return fail(res,404,'Artwork not found.');
-    const published=studio.packs.some(p=>effective(p)&&p.cards.some(c=>c.artId===artId));
+    const published=studio.packs.some(p=>effective(p)&&p.cards.some(c=>c.artId===artId || presetFor(c.border)?.artId===artId));
     if(!isAdmin(req)&&!published)return fail(res,403,'Artwork is not published.');
     const full=path.join(artworkDir,meta.filename);
     return fs.readFile(full,(err,buf)=>{
@@ -222,10 +228,51 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
       fancallTicketsAwarded:2*count,pullPointsAwarded:100*count,paidPulls:counter.paidPulls,
       albumComplete:complete,pityAchieved:counter.pityAchieved,albumId:packId}),true;
   }
+  function saveBorder(data,req,res){
+    const old=data.id?studio.borders.find(b=>b.id===data.id):null;
+    if(data.id&&!old)return fail(res,404,'Custom border not found.');
+    const name=bodyText(data.name,54);
+    const artId=String(data.artId||'');
+    const rarity=data.rarity===null || data.rarity===''?null:String(data.rarity||'');
+    if(!name||name.length<2)return fail(res,400,'Enter a border name (at least 2 characters).');
+    if(!studio.media[artId])return fail(res,400,'Upload and crop a transparent border first.');
+    if(studio.media[artId].kind!=='border')return fail(res,400,'This image is not a transparent border.');
+    if(rarity&&!RARITIES.includes(rarity))return fail(res,400,'Unknown suggested rarity.');
+    const taken=studio.borders.find(b=>b.name.toLowerCase()===name.toLowerCase()&&b.id!==old?.id);
+    if(taken)return fail(res,409,'A border already has that name.');
+    const preset=old||{id:'border-'+id(),createdAt:now()};
+    const previousArt=old?.artId;
+    Object.assign(preset,{name,rarity,artId,updatedAt:now()});
+    if(!old)studio.borders.push(preset);
+    log(old?'border-edit':'border-create',preset.id,userFrom(req).id);
+    save();
+    if(previousArt&&previousArt!==artId)cleanupMedia(previousArt);
+    return json(res,200,{ok:true,preset:{...preset,url:borderUrl(preset.id),builtin:false}});
+  }
+  function cleanupMedia(artId){
+    if(studio.packs.some(p=>p.cards.some(c=>c.artId===artId)))return;
+    if(studio.borders.some(b=>b.artId===artId))return;
+    const entry=studio.media[artId];if(!entry)return;
+    try{fs.unlinkSync(path.join(artworkDir,entry.filename));}catch(_e){}
+    delete studio.media[artId];
+  }
+  function deleteBorder(data,req,res){
+    const preset=presetFor(String(data.id||''));
+    if(!preset)return fail(res,404,'Custom border not found. Built-in borders cannot be deleted.');
+    const inUse=studio.packs.filter(p=>p.cards.some(c=>c.border===preset.id));
+    if(inUse.length)return fail(res,409,'This border is used by '+inUse.length+' pack(s). Change those cards to another border before deleting it.');
+    if(data.confirm!=='DELETE')return fail(res,400,'Type DELETE to remove the custom border.');
+    studio.borders=studio.borders.filter(b=>b.id!==preset.id);
+    log('border-delete',preset.id,userFrom(req).id);
+    cleanupMedia(preset.artId);save();
+    return json(res,200,{ok:true,deleted:preset.id});
+  }
   function handlePost(req,res,endpoint,data){
     if(!endpoint.startsWith('/api/card-studio/'))return false;
     if(!isAdmin(req))return deny(res),true;
     if(endpoint==='/api/card-studio/upload')return upload(data,req,res),true;
+    if(endpoint==='/api/card-studio/border/save')return saveBorder(data,req,res),true;
+    if(endpoint==='/api/card-studio/border/delete')return deleteBorder(data,req,res),true;
     if(endpoint==='/api/card-studio/save')return savePack(data,req,res),true;
     if(endpoint==='/api/card-studio/delete')return removePack(data,req,res),true;
     return fail(res,404,'Unknown Card Studio action.'),true;
@@ -233,7 +280,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
   function handleGet(req,res,pathname){
     if(pathname==='/api/card-studio'){
       if(!isAdmin(req))return deny(res);
-      return json(res,200,{face:FACE,rarities:RARITIES,borders:BORDERS,
+      return json(res,200,{face:FACE,rarities:RARITIES,borders:BORDERS,borderPresets:borderOptions(),
         packs:statusOverview(),audit:studio.audit.slice(-40).reverse()});
     }
     if(pathname.startsWith('/api/card-studio/art/'))return readArt(req,res,pathname.slice('/api/card-studio/art/'.length));
