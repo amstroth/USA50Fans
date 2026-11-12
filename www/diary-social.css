@@ -92,3 +92,26 @@ body.diary-story-open{overflow:hidden}
  .diary-story-nav.previous{left:12px}.diary-story-nav.next{right:12px}
 }
 @media(prefers-reduced-motion:reduce){.diary-story-button:hover .diary-story-ring{transition:none}}
+
+/* Gallery archive reached from each idol's story circle */
+.diary-archive-viewer{background:linear-gradient(160deg,#30213e,#1c182c);overflow:hidden}
+.diary-archive-viewer .diary-story-header{padding-bottom:14px;border-bottom:1px solid #ffffff25}
+.diary-archive-heading{padding:15px 7px 12px}
+.diary-archive-heading .eyebrow{color:#d7b8ee;font-size:10px;letter-spacing:1.5px}
+.diary-archive-heading h2{font:italic 29px Georgia,serif;color:white;margin:7px 0}
+.diary-archive-heading p{font-size:12px;line-height:1.5;color:#d6cbe0;margin:0}
+.diary-archive-grid{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:15px 12px;padding:9px 6px 24px;overscroll-behavior:contain}
+.diary-archive-tile{appearance:none;display:flex;flex-direction:column;text-align:left;min-width:0;gap:5px;color:#fff;background:transparent;border:0;cursor:pointer;padding:0}
+.diary-archive-thumbnail{width:100%;aspect-ratio:4/5;border-radius:6px;position:relative;overflow:hidden;border:1px solid #ffffff4f;box-shadow:0 5px 16px #0004;padding:16px 12px;display:flex;align-items:flex-start}
+.diary-archive-preview{font:italic 15px/24px 'Segoe Print','Bradley Hand',cursive;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.diary-archive-photo{position:absolute;inset:15% 10%;background:#fff;padding:7px 7px 19px;transform:rotate(-5deg);box-shadow:0 4px 14px #2225}
+.diary-archive-photo img{width:100%;height:100%;object-fit:cover}
+.diary-archive-sticker{position:absolute;bottom:8px;right:10px;font-size:22px;filter:drop-shadow(0 1px 2px #0003)}
+.diary-archive-tile strong{font-size:12px;color:#f5e9ff}
+.diary-archive-tile small{font-size:11px;color:#cab6d7}
+.diary-archive-tile:focus-visible{outline:2px solid #dfc2ff;outline-offset:4px;border-radius:4px}
+.diary-archive-tile:hover .diary-archive-thumbnail{transform:translateY(-2px);border-color:#d9b9f5}
+.diary-story-gallery-back{font-size:11px;border:1px solid #ffffff66;border-radius:999px;background:#ffffff16;color:white;padding:6px 8px;white-space:nowrap;cursor:pointer}
+.diary-story-gallery-back:focus-visible{outline:2px solid #e5cbff;outline-offset:2px}
+@media(min-width:650px){.diary-archive-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.diary-archive-thumbnail{aspect-ratio:3/4}}
+@media(max-width:390px){.diary-story-gallery-back{font-size:10px;padding:5px}.diary-story-header .diary-story-author small{font-size:9px}}
