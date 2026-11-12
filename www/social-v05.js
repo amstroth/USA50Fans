@@ -1,7 +1,7 @@
 /* USA50 Social Hub v0.5 — public fans, fansites, original-platform embeds. */
 (function(){
  'use strict';
- let socialTab='recent',openSocialProfile=null,tourOpen=localStorage.getItem('usa50-social-tour-seen')!=='1';
+ let socialTab='recent',openSocialProfile=null;
  const getSocial=()=>store?.social||{posts:[],profiles:{},rankings:[],following:[]};
  const getPerson=id=>getSocial().profiles[id]||null;
  const getPosts=()=>getSocial().posts||[];
@@ -100,10 +100,10 @@
  const oldCommunity=communityScreen;
  communityScreen=function(){
    const social=getSocial();
-   let page=screenTop('Social Hub','Your favorite USA50 moments, shared by the fans.',btn('How rewards work','social-tour-show','','btn secondary'));
+   let page=screenTop('Social Hub','Your favorite USA50 moments, shared by the fans.',btn('ⓘ','social-tour-show','aria-label="Social tutorial" title="How Social works"','btn secondary social-help-button'));
    if(openSocialProfile)return page+socialProfileView();
    page+='<div class="glass panel social-hero"><div><span class="eyebrow">USA50 · THE SOCIAL UNIVERSE</span><h2>Every fan is part of the story ✦</h2><p>Share your edits and fancams, support the creators you love, and rise through the rankings.</p></div><span class="social-hero-stars">✧ ♡ ✦</span></div>';
-   if(tourOpen)page+=fanTutorial();
+   
    page+=socialTabs();
    page+=socialTab==='rankings'?socialRanking():socialFeed();
    return page;
@@ -139,13 +139,28 @@
  function runInstagramEmbeds(){
    [120,650,1700].forEach(function(ms){setTimeout(function(){try{if(window.instgrm && window.instgrm.Embeds)window.instgrm.Embeds.process();}catch(_e){}},ms);});
  }
+ const socialTourKey='usa50-social-tour-seen-v2';
+ let tutorialQueued=false;
+ function showSocialTutorial(){
+   showModal('Welcome to the Social Hub ✦','<div class="social-tour-popup">'+fanTutorial()+'<button type="button" class="btn social-tour-done" data-action="social-tour-dismiss">Got it ♡</button></div>');
+ }
  const previousRender=render;
- render=function(){previousRender();if(view==='community'){runInstagramEmbeds();loadTikTokPlayers();}};
+ render=function(){
+   previousRender();
+   if(view==='community'){
+     runInstagramEmbeds();loadTikTokPlayers();
+     if(!tutorialQueued && localStorage.getItem(socialTourKey)!=='1'){
+       tutorialQueued=true;
+       localStorage.setItem(socialTourKey,'1');
+       queueMicrotask(()=>{if(view==='community'&&!document.querySelector('.modal-backdrop'))showSocialTutorial();});
+     }
+   }
+ };
  const previousAct=act;
  act=async function(name,node){
    if(name==='social-tab'){socialTab=node.dataset.value;openSocialProfile=null;render();return;}
-   if(name==='social-tour-dismiss'){tourOpen=false;localStorage.setItem('usa50-social-tour-seen','1');render();return;}
-   if(name==='social-tour-show'){tourOpen=true;openSocialProfile=null;render();return;}
+   if(name==='social-tour-dismiss'){hideModal();return;}
+   if(name==='social-tour-show'){showSocialTutorial();return;}
    if(name==='social-new-post')return newSocialPostModal();
    if(name==='social-profile'){openSocialProfile=node.dataset.value;render();return;}
    if(name==='social-back'){openSocialProfile=null;render();return;}
