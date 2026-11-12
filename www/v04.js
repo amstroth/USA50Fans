@@ -2,7 +2,7 @@
   "use strict";
   const oldBottomNav=bottomNav;
   bottomNav=function(){
-    const tabs=[["home","Home","home"],["collection","Collection","layers"],["messages","Messages","message"],["community","Community","users"],["profile","My Page","user"]];
+    const tabs=[["home","Home","home"],["collection","Collection","layers"],["messages","Messages","message"],["community","Social","users"],["profile","My Page","user"]];
     return `<nav class="bottom-nav">${tabs.map(([key,name,ic])=>`<button class="bottom-link ${view===key?'active':''} ${key==='messages'?'messages-center':''}" data-go="${key}" aria-label="${name}">${icon(ic)}<span>${name}</span></button>`).join("")}</nav>`;
   };
   const oldDrops=dropsScreen;
