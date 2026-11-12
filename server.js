@@ -252,7 +252,7 @@ function serve(req,res,url){
     });return;
   }
 
- fs.readFile(full,(err,bytes)=>{if(err)return fail(res,404,'Not found');res.writeHead(200,{'Content-Type':mime[path.extname(full)]||'application/octet-stream','Cache-Control':full.endsWith('index.html')?'no-cache':'public, max-age=3600','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'strict-origin-when-cross-origin','Content-Security-Policy':"default-src 'self'; connect-src 'self' https:; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' https://www.instagram.com; frame-src https://www.tiktok.com https://www.instagram.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"});res.end(bytes);});
+ fs.readFile(full,(err,bytes)=>{if(err)return fail(res,404,'Not found');res.writeHead(200,{'Content-Type':mime[path.extname(full)]||'application/octet-stream','Cache-Control':full.endsWith('index.html')?'no-cache':'public, max-age=3600','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'strict-origin-when-cross-origin','Content-Security-Policy':"default-src 'self'; connect-src 'self' https:; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self' https://www.instagram.com; frame-src https://www.tiktok.com https://www.instagram.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"});res.end(bytes);});
 }
 const server=http.createServer((req,res)=>{
  const origin=req.headers.origin;
