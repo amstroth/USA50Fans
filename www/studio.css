@@ -112,3 +112,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .crop-face.crop-transparent{background-color:#fff;background-image:linear-gradient(45deg,#d9cadf 25%,transparent 25%),linear-gradient(-45deg,#d9cadf 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#d9cadf 75%),linear-gradient(-45deg,transparent 75%,#d9cadf 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0}
 .crop-face.crop-transparent canvas{background:transparent}
 @media(max-width:1100px){.studio-border-large{width:155px}}
+
+/* Card Studio — independent X/Y distortion controls for card faces and borders */
+.crop-controls .crop-distortion{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.crop-controls output{float:right;font-variant-numeric:tabular-nums;color:#71508f;font-weight:800}
+.crop-controls select{padding:9px 10px;min-width:0;width:100%;border-radius:11px;border:1px solid #e1ceee;background:#fff;color:#5c4677}
+.crop-controls .crop-distortion .field{min-width:0}
+@media(max-width:720px){.crop-controls .crop-distortion{grid-template-columns:1fr}}
