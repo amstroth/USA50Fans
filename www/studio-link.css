@@ -1,0 +1,8 @@
+.management-card-studio-entry{display:flex;align-items:center;justify-content:space-between;gap:17px;flex-wrap:wrap;background:linear-gradient(135deg,#ecdafa,#ffe2f2)!important;border:1px solid white}
+.management-card-studio-entry h2{color:#70508c}
+.management-card-studio-entry .management-open-studio{white-space:nowrap;text-decoration:none}
+.studio-desktop-note{display:none}
+.photocard.studio-card{aspect-ratio:11/17}
+.photocard.studio-card .art{inset:0;width:100%;height:100%;object-fit:cover;border-radius:0}
+.photocard.studio-card .frame{inset:0;width:100%;height:100%}
+@media(max-width:1023px){.management-open-studio{display:none!important}.studio-desktop-note{display:block}.management-card-studio-entry{display:block}}
