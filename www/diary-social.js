@@ -25,16 +25,87 @@ function officialCard(p){
  const symbol=p.platform==='YouTube'?'▶':p.platform==='TikTok'?'♪':'◎';
  return '<a class="glass official-social-card" href="'+textEscape(p.url)+'" target="_blank" rel="noopener noreferrer"><div class="official-social-icon">'+symbol+'</div><div><span class="eyebrow">USA50 OFFICIAL · '+textEscape(p.platform)+'</span><h3>'+textEscape(p.title)+'</h3><small>'+diaryDate(p.publishedAt)+'</small></div><span class="official-open">↗</span></a>';
 }
+const storyPalette=['#b88ad7','#ef9cc6','#b29bdf','#91c7bb','#e1b5d2','#a5b6eb'];
+let storyIdol=null,storyIndex=0,storyTimer=null,storyTouchStart=null,storyFocusReturn=null;
+function diaryGroups(){
+ const result=new Map(),ordered=(getData().diaries||[]).slice().sort((a,b)=>Date.parse(a.publishedAt)-Date.parse(b.publishedAt));
+ for(const d of ordered){
+   const key=d.authorId||d.author;
+   if(!result.has(key))result.set(key,{id:key,name:d.author,entries:[]});
+   result.get(key).entries.push(d);
+ }
+ return [...result.values()].sort((a,b)=>Date.parse(b.entries.at(-1).publishedAt)-Date.parse(a.entries.at(-1).publishedAt));
+}
+function ringAvatar(group,index){
+ const member=(store?.members||[]).find(m=>m.name?.toLowerCase()===group.name?.toLowerCase());
+ const emoji=member?.emoji||'✦';
+ const isArielle=(member?.id==='arielle'||group.name?.toLowerCase()==='arielle');
+ const inner=isArielle&&typeof cardPhoto==='string'?'<img src="'+textEscape(cardPhoto)+'" alt="" loading="lazy">':'<span>'+textEscape(emoji)+'</span>';
+ return '<span class="diary-story-ring" style="--diary-ring-color:'+storyPalette[index%storyPalette.length]+'"><span class="diary-story-avatar">'+inner+'</span></span>';
+}
+function diaryStoryStrip(groups,canPost){
+ return '<div class="diary-story-strip" role="group" aria-label="USA50 diary story circles">'+
+ (canPost?'<button class="diary-story-button diary-story-create" data-action="diary-new" aria-label="Write a diary entry"><span class="diary-story-ring create"><span class="diary-story-avatar"><span>＋</span></span></span><small>Your diary</small></button>':'')+
+ groups.map((g,i)=>'<button type="button" class="diary-story-button" data-action="diary-story-open" data-value="'+textEscape(g.id)+'" aria-label="Open '+textEscape(g.name)+' diary, '+g.entries.length+' entries">'+ringAvatar(g,i)+'<small>'+textEscape(g.name)+'</small><span class="diary-story-count">'+g.entries.length+'</span></button>').join('')+
+ '</div>';
+}
+function stopStoryTimer(){if(storyTimer){clearTimeout(storyTimer);storyTimer=null;}}
+function closeDiaryStory(){
+ stopStoryTimer();storyIdol=null;storyIndex=0;storyTouchStart=null;
+ const overlay=document.getElementById('diary-story-overlay');
+ if(overlay)overlay.remove();
+ document.body.classList.remove('diary-story-open');
+ if(storyFocusReturn?.isConnected)storyFocusReturn.focus();
+ storyFocusReturn=null;
+}
+function showStory(){
+ const group=diaryGroups().find(g=>g.id===storyIdol);
+ if(!group||!group.entries.length){closeDiaryStory();return;}
+ const entry=group.entries[storyIndex];if(!entry){closeDiaryStory();return;}
+ stopStoryTimer();
+ const owner=store?.me?.role==='admin'||store?.me?.id===entry.authorId;
+ const progress=group.entries.map((p,i)=>'<span class="diary-story-progress '+(i<storyIndex?'complete':i===storyIndex?'current':'')+'" aria-label="Page '+(i+1)+' of '+group.entries.length+'"></span>').join('');
+ const overlay=document.getElementById('diary-story-overlay')||document.createElement('div');
+ overlay.id='diary-story-overlay';overlay.className='diary-story-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label',group.name+' diary entries');
+ const avatar=ringAvatar(group,storyPalette.length-1);
+ overlay.innerHTML='<div class="diary-story-backdrop" data-action="diary-story-close"></div>'+
+ '<div class="diary-story-viewer"><div class="diary-story-progress-row">'+progress+'</div>'+
+ '<header class="diary-story-header">'+avatar+'<div class="diary-story-author"><b>'+textEscape(group.name)+'</b><small>Entry '+String(entry.number).padStart(4,'0')+' · '+diaryDate(entry.publishedAt)+'</small></div>'+
+ (owner?'<button class="diary-story-menu" data-action="diary-delete" data-value="'+textEscape(entry.id)+'" aria-label="Delete diary entry">Delete</button>':'')+
+ '<button class="diary-story-close" data-action="diary-story-close" aria-label="Close diary">×</button></header>'+
+ '<div class="diary-story-paper" tabindex="0">'+diaryMarkup(entry)+'</div>'+
+ '<button class="diary-story-nav previous" data-action="diary-story-prev" aria-label="Previous diary entry">‹</button>'+
+ '<button class="diary-story-nav next" data-action="diary-story-next" aria-label="Next diary entry">›</button>'+
+ '<footer class="diary-story-footer">USA50 · DIARY ENTRIES <span>'+String(storyIndex+1)+' / '+group.entries.length+'</span></footer></div>';
+ if(!overlay.isConnected)document.body.appendChild(overlay);
+ document.body.classList.add('diary-story-open');
+ overlay.querySelector('.diary-story-close')?.focus({preventScroll:true});
+ storyTimer=setTimeout(()=>moveStory(1),12000);
+}
+function moveStory(delta){
+ const groups=diaryGroups(),ix=groups.findIndex(g=>g.id===storyIdol);
+ if(ix<0){closeDiaryStory();return;}
+ const next=storyIndex+delta;
+ if(next>=0&&next<groups[ix].entries.length){storyIndex=next;showStory();return;}
+ const following=groups[ix+(delta>0?1:-1)];
+ if(!following){closeDiaryStory();return;}
+ storyIdol=following.id;storyIndex=delta>0?0:following.entries.length-1;showStory();
+}
+function openDiaryStory(id){
+ const group=diaryGroups().find(g=>g.id===id);
+ if(!group)return;
+ storyFocusReturn=document.activeElement;
+ storyIdol=id;storyIndex=0;showStory();
+}
 function officialDiarySection(){
- const data=getData(),entries=data.diaries||[],official=data.officialPosts||[];
- const composer=data.canPost?'<button type="button" class="btn diary-publish" data-action="diary-new">✎ Write Diary Entry</button>':'';
- return '<section class="official-diary-section"><div class="social-section-heading"><div><span class="eyebrow">DIRECT FROM THE MEMBERS</span><h2>Diary Entries ♡</h2><p class="lead">Little pages from USA50, written by the idols themselves.</p></div>'+composer+'</div>'+
- (entries.length?'<div class="diary-scroll" aria-label="Idol diary entries">'+entries.map(di=>'<div class="diary-feed-item">'+diaryMarkup(di)+(store.me?.role==='admin'||(store.me?.id===di.authorId)?'<button class="text-btn diary-delete" data-action="diary-delete" data-value="'+textEscape(di.id)+'">Delete entry</button>':'')+'</div>').join('')+'</div>':
- '<div class="glass panel diary-empty">The diary is waiting for its first page. ♡'+(data.canPost?'<p>Write the first entry to introduce your day to fans.</p>':'<p>Check back for handwritten-style updates from your favorite idols.</p>')+'</div>')+
- '<div class="official-social-block"><div class="social-section-heading"><div><span class="eyebrow">AS SOON AS THEY ARE POSTED</span><h2>USA50 Official Channels</h2><p class="lead">New videos and posts from authorized USA50 channels.</p></div></div>'+
+ const data=getData(),groups=diaryGroups(),official=data.officialPosts||[];
+ return '<section class="official-diary-section"><div class="diary-stories-heading"><div><span class="eyebrow">FROM THE IDOLS · USA50</span><h2>Diary Entries ♡</h2></div><span class="diary-story-hint">Tap a story to read</span></div>'+
+ (groups.length||data.canPost?diaryStoryStrip(groups,data.canPost):
+ '<div class="glass panel diary-empty">The diary is waiting for its first page. ♡<p>New pages from the idols will appear here.</p></div>')+
+ '<div class="official-social-block"><div class="social-section-heading"><div><span class="eyebrow">OFFICIAL USA50 UPDATES</span><h2>Official Channels</h2><p class="lead">Latest videos and posts from USA50.</p></div></div>'+
  (official.length?'<div class="official-social-grid">'+official.map(officialCard).join('')+'</div>':
- '<div class="glass panel official-social-empty">Official uploads will appear here when the channels are connected. YouTube feed sync needs its channel ID; Instagram and TikTok need approved provider integrations.</div>')+'</div>'+
- '<div class="diary-fan-divider"><span>✦ FAN COMMUNITY ✦</span><p>Keep scrolling to see the fan posts below</p></div></section>';
+ '<div class="glass panel official-social-empty">Official uploads will appear once the authorized channels are connected.</div>')+'</div>'+
+ '<div class="diary-fan-divider"><span>✦ FAN COMMUNITY ✦</span><p>Continue scrolling for fan posts</p></div></section>';
 }
 const previousCommunity=communityScreen;
 communityScreen=function(){const page=previousCommunity();return page.includes('class="social-tabs"')?page.replace('<div class="social-tabs"',officialDiarySection()+'<div class="social-tabs"'):page;};
@@ -87,14 +158,40 @@ function resizeDiaryPhoto(file){
 }
 const previousDiaryAct=act;
 act=async function(name,node){
+ if(name==='diary-story-open'){openDiaryStory(node.dataset.value);return;}
+ if(name==='diary-story-close'){closeDiaryStory();return;}
+ if(name==='diary-story-next'){moveStory(1);return;}
+ if(name==='diary-story-prev'){moveStory(-1);return;}
  if(name==='diary-new'){if(!getData().canPost)return toast('Only idol accounts can publish diary entries');return diaryNewModal();}
  if(name==='diary-sticker'){node.classList.toggle('selected');updateDiaryPreview();return;}
  if(name==='diary-delete'){
   if(!confirm('Delete this diary entry for everyone?'))return;
-  await request('/api/diary/delete',{method:'POST',body:JSON.stringify({id:node.dataset.value})});await refresh();return;
+  await request('/api/diary/delete',{method:'POST',body:JSON.stringify({id:node.dataset.value})});closeDiaryStory();await refresh();return;
  }
  return previousDiaryAct(name,node);
 };
+document.addEventListener('click',event=>{
+ const node=event.target.closest('#diary-story-overlay [data-action]');
+ if(!node)return;
+ event.preventDefault();event.stopPropagation();
+ act(node.dataset.action,node).catch(err=>toast(err.message));
+});
+document.addEventListener('keydown',event=>{
+ if(!storyIdol)return;
+ if(event.key==='Escape'){closeDiaryStory();return;}
+ if(event.key==='ArrowRight'){event.preventDefault();moveStory(1);}
+ if(event.key==='ArrowLeft'){event.preventDefault();moveStory(-1);}
+});
+document.addEventListener('touchstart',event=>{
+ if(!storyIdol||!event.target.closest('#diary-story-overlay'))return;
+ storyTouchStart={x:event.changedTouches[0].clientX,y:event.changedTouches[0].clientY};
+},{passive:true});
+document.addEventListener('touchend',event=>{
+ if(!storyIdol||!storyTouchStart||!event.target.closest('#diary-story-overlay'))return;
+ const dx=event.changedTouches[0].clientX-storyTouchStart.x,dy=event.changedTouches[0].clientY-storyTouchStart.y;
+ if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.5)moveStory(dx<0?1:-1);
+ storyTouchStart=null;
+},{passive:true});
 document.addEventListener('input',event=>{if(event.target.closest('#diary-entry-form'))updateDiaryPreview()});
 document.addEventListener('change',async event=>{
  if(event.target?.id!=='diary-photo-picker')return;
