@@ -8,7 +8,7 @@ COPY official-diary.js ./
 COPY card-studio.js ./
 COPY www ./www
 # Fail the deployment if Card Studio has a JavaScript parsing error.
-RUN node --check official-diary.js && node --check www/studio.js
+RUN node --check official-diary.js && node --check www/diary-social.js && node --check www/studio.js
 ENV NODE_ENV=production
 EXPOSE 3000
 CMD ["node", "server.js"]
