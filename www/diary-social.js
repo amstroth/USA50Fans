@@ -36,10 +36,8 @@ function officialDiarySection(){
  '<div class="glass panel official-social-empty">Official uploads will appear here when the channels are connected. YouTube feed sync needs its channel ID; Instagram and TikTok need approved provider integrations.</div>')+'</div>'+
  '<div class="diary-fan-divider"><span>✦ FAN COMMUNITY ✦</span><p>Keep scrolling to see the fan posts below</p></div></section>';
 }
-const priorSocialFeed=socialFeed;
-socialFeed=function(){
- return officialDiarySection()+priorSocialFeed();
-};
+const previousCommunity=communityScreen;
+communityScreen=function(){return officialDiarySection()+previousCommunity();};
 function diaryNewModal(){
  diaryPhotos=[];
  const options=Object.entries(pageNames).map(([key,label])=>'<option value="'+key+'">'+label+'</option>').join('');
@@ -111,6 +109,6 @@ submitForm=async function(form){
  const stickers=[...form.querySelectorAll('.diary-sticker-pick.selected')].map(x=>x.dataset.value);
  const data={text:String(fd.get('text')||''),layout:fd.get('layout'),paper:fd.get('paper'),lineColor:fd.get('lineColor'),textColor:fd.get('textColor'),stickers,photos:diaryPhotos};
  await request('/api/diary/publish',{method:'POST',body:JSON.stringify(data)});
- hideModal();diaryPhotos=[];socialTab='recent';await refresh();toast('Diary Entry published! ♡');
+ hideModal();diaryPhotos=[];await refresh();toast('Diary Entry published! ♡');
 };
 })();
