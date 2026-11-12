@@ -210,12 +210,35 @@ async function api(req,res,url){
  return fail(res,404,'Unknown API endpoint');
 }
 
-const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.ico':'image/x-icon','.json':'application/json','.webmanifest':'application/manifest+json'};
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.mp4':'video/mp4','.ico':'image/x-icon','.json':'application/json','.webmanifest':'application/manifest+json'};
 function serve(req,res,url){
  let requestPath;try{requestPath=decodeURIComponent(url.pathname);}catch{return fail(res,400,'Invalid request path');}
  if(requestPath==='/'||!path.extname(requestPath))requestPath='/index.html';
  const full=path.resolve(ROOT,'.'+requestPath);
  if(!full.startsWith(ROOT+path.sep))return fail(res,403,'Forbidden');
+ if(path.extname(full)==='.mp4'){
+    fs.stat(full,(err,stat)=>{
+      if(err||!stat.isFile())return fail(res,404,'Video not found');
+      const size=stat.size;
+      const range=String(req.headers.range||'');
+      let start=0,end=size-1,status=200;
+      if(range){
+        const m=/^bytes=(\d*)-(\d*)$/.exec(range);
+        if(!m)return res.writeHead(416,{'Content-Range':'bytes */'+size}).end();
+        start=m[1]?Number(m[1]):0;
+        end=m[2]?Number(m[2]):size-1;
+        if(!m[1]&&m[2]){start=Math.max(0,size-Number(m[2]));end=size-1;}
+        if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start>end||start>=size)return res.writeHead(416,{'Content-Range':'bytes */'+size}).end();
+        end=Math.min(end,size-1);status=206;
+      }
+      const headers={'Content-Type':'video/mp4','Accept-Ranges':'bytes','Content-Length':end-start+1,'Cache-Control':'public,max-age=86400','X-Content-Type-Options':'nosniff'};
+      if(status===206)headers['Content-Range']='bytes '+start+'-'+end+'/'+size;
+      res.writeHead(status,headers);
+      if(req.method==='HEAD')return res.end();
+      fs.createReadStream(full,{start,end}).pipe(res);
+    });return;
+  }
+
  fs.readFile(full,(err,bytes)=>{if(err)return fail(res,404,'Not found');res.writeHead(200,{'Content-Type':mime[path.extname(full)]||'application/octet-stream','Cache-Control':full.endsWith('index.html')?'no-cache':'public, max-age=3600','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'strict-origin-when-cross-origin','Content-Security-Policy':"default-src 'self'; connect-src 'self' https:; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' https://www.instagram.com; frame-src https://www.tiktok.com https://www.instagram.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"});res.end(bytes);});
 }
 const server=http.createServer((req,res)=>{
