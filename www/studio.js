@@ -193,7 +193,7 @@ function imageEditor(file,mode='face'){
  img.onload=()=>{
    if(img.naturalWidth*img.naturalHeight>38000000){URL.revokeObjectURL(blobUrl);return alertUser('Use an image smaller than 38 megapixels.');}
    const originalIndex=cardIndex;
-   activeCrop={img,blobUrl,cardIndex:originalIndex,mode,zoom:1,angle:0,dx:0,dy:0};
+   activeCrop={img,blobUrl,cardIndex:originalIndex,mode,zoom:1,angle:0,dx:0,dy:0,fit:'cover',stretchX:1,stretchY:1};
    showCrop();
  };
  img.onerror=()=>{URL.revokeObjectURL(blobUrl);alertUser('The image could not be loaded.');};
@@ -201,22 +201,39 @@ function imageEditor(file,mode='face'){
 }
 function canvasDraw(canvas){
  if(!activeCrop)return;
- const {img,angle,zoom}=activeCrop;
+ const crop=activeCrop,{img,angle,zoom}=crop;
  const w=canvas.width=sizes.width,h=canvas.height=sizes.height;
  const ctx=canvas.getContext('2d',{alpha:true});if(!ctx)return;
  ctx.clearRect(0,0,w,h);
- if(activeCrop.mode!=='border'){ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);}
- const radians=angle*Math.PI/180;
- const turned=angle%180!==0;
- const effectiveW=turned?img.naturalHeight:img.naturalWidth;
- const effectiveH=turned?img.naturalWidth:img.naturalHeight;
- const scale=Math.max(w/effectiveW,h/effectiveH)*zoom;
- const maxX=Math.max(0,(effectiveW*scale-w)/2);
- const maxY=Math.max(0,(effectiveH*scale-h)/2);
- activeCrop.dx=Math.min(maxX,Math.max(-maxX,activeCrop.dx));
- activeCrop.dy=Math.min(maxY,Math.max(-maxY,activeCrop.dy));
- ctx.save();ctx.translate(w/2+activeCrop.dx,h/2+activeCrop.dy);ctx.rotate(radians);ctx.scale(scale,scale);
- ctx.drawImage(img,-img.naturalWidth/2,-img.naturalHeight/2);ctx.restore();
+ if(crop.mode!=='border'){ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);}
+ const rotated=angle%180!==0;
+ const imageW=rotated?img.naturalHeight:img.naturalWidth;
+ const imageH=rotated?img.naturalWidth:img.naturalHeight;
+ // Cover keeps the aspect ratio; Stretch fills the entire 11:17 master,
+ // then allows independent horizontal and vertical distortion.
+ const baseX=crop.fit==='stretch'?w/imageW:Math.max(w/imageW,h/imageH);
+ const baseY=crop.fit==='stretch'?h/imageH:Math.max(w/imageW,h/imageH);
+ const sx=baseX*zoom*crop.stretchX,sy=baseY*zoom*crop.stretchY;
+ const visibleW=imageW*sx,visibleH=imageH*sy;
+ // Crop-to-fill may be panned only to the edge; stretch can be repositioned
+ // across the canvas even if that intentionally reveals transparency.
+ if(crop.fit==='cover'){
+   const maxX=Math.max(0,(visibleW-w)/2),maxY=Math.max(0,(visibleH-h)/2);
+   crop.dx=Math.min(maxX,Math.max(-maxX,crop.dx));
+   crop.dy=Math.min(maxY,Math.max(-maxY,crop.dy));
+ }else{
+   crop.dx=Math.min(w,Math.max(-w,crop.dx));
+   crop.dy=Math.min(h,Math.max(-h,crop.dy));
+ }
+ ctx.save();
+ ctx.translate(w/2+crop.dx,h/2+crop.dy);
+ ctx.rotate(angle*Math.PI/180);
+ // For 90° rotations, swap the scale factors to keep stretch X/Y aligned
+ // with the card's horizontal/vertical axes rather than the source axes.
+ ctx.scale(rotated?sy:sx,rotated?sx:sy);
+ ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+ ctx.drawImage(img,-img.naturalWidth/2,-img.naturalHeight/2);
+ ctx.restore();
 }
 function showCrop(){
  const modal=byId('studio-crop-modal');const border=activeCrop.mode==='border'?'none':selectedCard()?.border||'none';
@@ -225,7 +242,11 @@ function showCrop(){
  '<div class="crop-body"><div class="crop-face '+(activeCrop.mode==='border'?'crop-transparent':'')+'"><canvas id="studio-crop-canvas" width="660" height="1020" aria-label="Drag the photo to reposition the crop"></canvas>'+
  (border==='none'?'':'<img class="frame" src="'+esc(borderURL(border))+'" alt="">')+'</div>'+
  '<div class="crop-controls"><p>'+(activeCrop.mode==='border'?'Position your border while preserving its transparent center. The checkerboard means transparency, and it will overlay the photo without covering it.':'Drag to reposition your artwork within a 55 × 85 mm photocard.')+' Zoom or rotate, then export exactly <strong>660 × 1020 px</strong>.</p>'+
- '<div class="field"><label>Zoom</label><input id="studio-crop-zoom" type="range" min="1" max="3" step=".02" value="1"></div>'+
+ '<div class="field"><label>Fit method</label><select id="studio-crop-fit"><option value="cover">Crop to fill · keep proportions</option><option value="stretch">Stretch to fit · fill full card</option></select><span class="helper">Stretch mode fills the entire card, including transparent border artwork, without trimming edges.</span></div>'+
+ '<div class="field"><label>Zoom <output id="studio-zoom-value">100%</output></label><input id="studio-crop-zoom" type="range" min=".25" max="3" step=".01" value="1"></div>'+
+ '<div class="crop-distortion"><div class="field"><label>Horizontal stretch <output id="studio-stretch-x-value">100%</output></label><input id="studio-stretch-x" type="range" min=".25" max="3" step=".01" value="1" aria-label="Horizontal stretch of artwork"></div>'+
+ '<div class="field"><label>Vertical stretch <output id="studio-stretch-y-value">100%</output></label><input id="studio-stretch-y" type="range" min=".25" max="3" step=".01" value="1" aria-label="Vertical stretch of artwork"></div></div>'+
+ '<span class="helper">X and Y stretch separately. Values above 100% widen or lengthen; below 100% compress.</span>'+
  '<button class="studio-button secondary" type="button" data-studio-action="rotate">Rotate 90° ↻</button>'+
  '<button class="studio-button secondary" type="button" data-studio-action="crop-reset">Reset crop</button>'+
  '<p class="helper">The border is preview-only and stays separate from the saved photo. Choose “No border” for custom artwork that already includes your own design.</p>'+
@@ -243,7 +264,13 @@ function showCrop(){
  });
  canvas.addEventListener('pointerup',()=>moving=null);
  canvas.addEventListener('pointercancel',()=>moving=null);
- byId('studio-crop-zoom').addEventListener('input',ev=>{activeCrop.zoom=Number(ev.target.value);canvasDraw(canvas)});
+ const updateValue=(id,value)=>{const label=byId(id);if(label)label.textContent=Math.round(value*100)+'%';};
+ byId('studio-crop-fit').addEventListener('change',e=>{
+   activeCrop.fit=e.target.value;activeCrop.dx=0;activeCrop.dy=0;canvasDraw(canvas);
+ });
+ byId('studio-crop-zoom').addEventListener('input',e=>{activeCrop.zoom=Number(e.target.value);updateValue('studio-zoom-value',activeCrop.zoom);canvasDraw(canvas)});
+ byId('studio-stretch-x').addEventListener('input',e=>{activeCrop.stretchX=Number(e.target.value);updateValue('studio-stretch-x-value',activeCrop.stretchX);canvasDraw(canvas)});
+ byId('studio-stretch-y').addEventListener('input',e=>{activeCrop.stretchY=Number(e.target.value);updateValue('studio-stretch-y-value',activeCrop.stretchY);canvasDraw(canvas)});
  canvasDraw(canvas);
 }
 function closeCrop(){
@@ -358,7 +385,13 @@ document.addEventListener('click',async event=>{
    if(a==='delete-pack')return await deletePack();
    if(a==='close-crop')return closeCrop();
    if(a==='rotate'){activeCrop.angle=(activeCrop.angle+90)%360;activeCrop.dx=0;activeCrop.dy=0;return canvasDraw(byId('studio-crop-canvas'));}
-   if(a==='crop-reset'){activeCrop.zoom=1;activeCrop.angle=0;activeCrop.dx=0;activeCrop.dy=0;byId('studio-crop-zoom').value='1';return canvasDraw(byId('studio-crop-canvas'));}
+   if(a==='crop-reset'){
+     Object.assign(activeCrop,{zoom:1,angle:0,dx:0,dy:0,fit:'cover',stretchX:1,stretchY:1});
+     for(const id of ['studio-crop-zoom','studio-stretch-x','studio-stretch-y'])byId(id).value='1';
+     byId('studio-crop-fit').value='cover';
+     for(const id of ['studio-zoom-value','studio-stretch-x-value','studio-stretch-y-value'])byId(id).textContent='100%';
+     return canvasDraw(byId('studio-crop-canvas'));
+   }
    if(a==='crop-export')return await exportCrop(target);
  }catch(err){alertUser(err.message);}
 });
