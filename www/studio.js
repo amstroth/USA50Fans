@@ -10,6 +10,7 @@ const defaultCard=()=>({id:null,title:'New photocard',rarity:'R',border:'R',artI
 const token=()=>localStorage.getItem('usa50_dev_token')||'';
 const sizes={width:660,height:1020};
 let catalogue=null,working=null,cardIndex=0,isDirty=false,activeCrop=null;
+let studioMode='packs',borderDraft=null;
 async function api(url,payload){
   const res=await fetch(url,{method:payload===undefined?'GET':'POST',credentials:'include',
     headers:{...(payload!==undefined?{'Content-Type':'application/json'}:{}),...(token()?{Authorization:'Bearer '+token()}:{})},
@@ -56,11 +57,12 @@ function cardArt(card){
  return card.artUrl||(card.artId?'/api/card-studio/art/'+encodeURIComponent(card.artId):null)||
    (card.legacy?'/assets/portraits/arielle_real.webp':null);
 }
+function borderURL(border){return catalogue?.borderPresets?.find(b=>b.id===border)?.url||(border==='none'?null:'/assets/frames/'+border+'.webp');}
 function facePreview(card){
  const src=cardArt(card),border=card.border||'none';
  return '<div class="card-preview">'+
    (src?'<img class="face" src="'+esc(src)+'" alt="Photocard artwork preview">':'<span class="preview-label">'+(card.legacy?'Existing image':'Upload artwork')+'</span>')+
-   (border==='none'?'':'<img class="frame" src="/assets/frames/'+esc(border)+'.webp" alt="">')+
+   (border==='none'?'':'<img class="frame" src="'+esc(borderURL(border))+'" alt="">')+
    '</div>';
 }
 function renderSidebar(){
@@ -98,11 +100,11 @@ function renderCardEditor(){
  '<div class="editor-fields">'+
  '<div class="field"><label>Card title</label><input data-card-field="title" maxlength="80" value="'+esc(c.title)+'"></div>'+
  '<div class="field"><label>Rarity / gacha probability tier</label><select data-card-field="rarity">'+catalogue.rarities.map(r=>'<option value="'+r+'" '+(c.rarity===r?'selected':'')+'>'+r+'</option>').join('')+'</select></div>'+
- '<div class="field"><label>Face border</label><select data-card-field="border"><option value="none" '+(c.border==='none'?'selected':'')+'>No border — fully custom face</option>'+
- catalogue.rarities.map(r=>'<option value="'+r+'" '+(c.border===r?'selected':'')+'>'+r+' preset border</option>').join('')+'</select>'+
+ '<div class="field"><label>Face border</label><select data-card-field="border">'+
+ catalogue.borderPresets.map(b=>'<option value="'+esc(b.id)+'" '+(c.border===b.id?'selected':'')+'>'+esc(b.name)+(b.builtin?' · Default':' · Custom')+'</option>').join('')+'</select>'+
  '<span class="helper">Border style is independent of rarity. Your artwork remains unchanged.</span></div>'+
- '<button type="button" class="studio-button" data-studio-action="upload-art">'+(c.artId?'Replace / recrop artwork':'Upload, crop & resize artwork')+'</button>'+
- '<input id="studio-art-file" type="file" accept="image/png,image/jpeg,image/webp" hidden>'+
+ '<label class="studio-button studio-file-label" for="studio-art-picker">'+(c.artId?'Replace / recrop artwork':'Upload, crop & resize artwork')+'</label>'+
+ '<span class="helper">Choose a JPG, PNG or WebP image. The crop editor opens immediately after selection.</span>'+
  (c.legacy?'<span class="helper">Legacy True Love card: the existing default image stays until you upload new artwork.</span>':'')+
  '</div></div></section>';
 }
@@ -126,7 +128,18 @@ function renderPublish(){
  '</div><div class="studio-sidebar-note" style="padding:18px 0"><strong>Printing standard</strong><p>Face: 55 × 85 mm. Cropped master: 660 × 1020 px. Preset borders are separate app overlays; export the original clean master for production printing.</p></div>';
 }
 function render(){
- if(!catalogue||!working)return;
+ if(!catalogue)return;
+ const borders=studioMode==='borders';
+ byId('studio-border-library').hidden=borders;
+ byId('studio-pack-library').hidden=!borders;
+ byId('studio-new').hidden=borders;
+ byId('studio-packs').hidden=borders;
+ if(borders){
+   byId('studio-main-content').innerHTML=renderBorderLibrary();
+   byId('studio-publish-panel').innerHTML=borderHelp();
+   return;
+ }
+ if(!working)return;
  renderSidebar();renderPublish();
  byId('studio-main-content').innerHTML=renderMeta()+renderCardList()+renderCardEditor();
 }
@@ -170,16 +183,17 @@ async function deletePack(){
  toast('Test collection deleted.');
  await load();
 }
-function imageEditor(file){
+function imageEditor(file,mode='face'){
  if(!file)return;
  if(file.size>15000000)return alertUser('Choose an image smaller than 15 MB.');
  if(!/^image\/(png|jpeg|webp)$/.test(file.type))return alertUser('Use a PNG, JPEG or WebP file.');
+ if(mode==='border' && file.type==='image/jpeg')return alertUser('Border overlays need transparency. Use PNG or WebP, not JPEG.');
  const blobUrl=URL.createObjectURL(file);
  const img=new Image();
  img.onload=()=>{
    if(img.naturalWidth*img.naturalHeight>38000000){URL.revokeObjectURL(blobUrl);return alertUser('Use an image smaller than 38 megapixels.');}
    const originalIndex=cardIndex;
-   activeCrop={img,blobUrl,cardIndex:originalIndex,zoom:1,angle:0,dx:0,dy:0};
+   activeCrop={img,blobUrl,cardIndex:originalIndex,mode,zoom:1,angle:0,dx:0,dy:0};
    showCrop();
  };
  img.onerror=()=>{URL.revokeObjectURL(blobUrl);alertUser('The image could not be loaded.');};
@@ -189,8 +203,9 @@ function canvasDraw(canvas){
  if(!activeCrop)return;
  const {img,angle,zoom}=activeCrop;
  const w=canvas.width=sizes.width,h=canvas.height=sizes.height;
- const ctx=canvas.getContext('2d',{alpha:false});if(!ctx)return;
- ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
+ const ctx=canvas.getContext('2d',{alpha:true});if(!ctx)return;
+ ctx.clearRect(0,0,w,h);
+ if(activeCrop.mode!=='border'){ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);}
  const radians=angle*Math.PI/180;
  const turned=angle%180!==0;
  const effectiveW=turned?img.naturalHeight:img.naturalWidth;
@@ -204,12 +219,12 @@ function canvasDraw(canvas){
  ctx.drawImage(img,-img.naturalWidth/2,-img.naturalHeight/2);ctx.restore();
 }
 function showCrop(){
- const modal=byId('studio-crop-modal');const border=selectedCard()?.border||'none';
+ const modal=byId('studio-crop-modal');const border=activeCrop.mode==='border'?'none':selectedCard()?.border||'none';
  modal.hidden=false;
  modal.innerHTML='<div class="crop-panel"><div class="crop-top"><div><span class="eyebrow">CROP & RESIZE</span><h2>Frame your card ✧</h2></div><button data-studio-action="close-crop" type="button" class="studio-button secondary small">Close ✕</button></div>'+
- '<div class="crop-body"><div class="crop-face"><canvas id="studio-crop-canvas" width="660" height="1020" aria-label="Drag the photo to reposition the crop"></canvas>'+
- (border==='none'?'':'<img class="frame" src="/assets/frames/'+esc(border)+'.webp" alt="">')+'</div>'+
- '<div class="crop-controls"><p>Drag the image to position it within the <strong>55 × 85 mm</strong> photocard. Zoom or rotate, then export an exact <strong>660 × 1020 px</strong> cropped face.</p>'+
+ '<div class="crop-body"><div class="crop-face '+(activeCrop.mode==='border'?'crop-transparent':'')+'"><canvas id="studio-crop-canvas" width="660" height="1020" aria-label="Drag the photo to reposition the crop"></canvas>'+
+ (border==='none'?'':'<img class="frame" src="'+esc(borderURL(border))+'" alt="">')+'</div>'+
+ '<div class="crop-controls"><p>'+(activeCrop.mode==='border'?'Position your border while preserving its transparent center. The checkerboard means transparency, and it will overlay the photo without covering it.':'Drag to reposition your artwork within a 55 × 85 mm photocard.')+' Zoom or rotate, then export exactly <strong>660 × 1020 px</strong>.</p>'+
  '<div class="field"><label>Zoom</label><input id="studio-crop-zoom" type="range" min="1" max="3" step=".02" value="1"></div>'+
  '<button class="studio-button secondary" type="button" data-studio-action="rotate">Rotate 90° ↻</button>'+
  '<button class="studio-button secondary" type="button" data-studio-action="crop-reset">Reset crop</button>'+
@@ -241,22 +256,93 @@ async function exportCrop(button){
  button.disabled=true;button.textContent='Processing artwork…';
  try{
    const canvas=byId('studio-crop-canvas');canvasDraw(canvas);
-   let dataUrl=canvas.toDataURL('image/webp',.86);
-   if(dataUrl.startsWith('data:image/webp')&&dataUrl.length>2200000)dataUrl=canvas.toDataURL('image/webp',.72);
-   if(!dataUrl.startsWith('data:image/webp'))dataUrl=canvas.toDataURL('image/png');
-   const {artId,url}=await api('/api/card-studio/upload',{dataUrl});
-   const card=working?.cards?.[activeCrop.cardIndex];
-   if(!card)throw new Error('Card no longer exists.');
-   card.artId=artId;card.artUrl=url;card.legacy=false;isDirty=true;closeCrop();render();
-   toast('Artwork uploaded. Save the pack to keep your changes.');
+   const kind=activeCrop.mode==='border'?'border':'face';
+   let dataUrl=kind==='border'?canvas.toDataURL('image/png'):canvas.toDataURL('image/webp',.87);
+   if(kind==='face'&&dataUrl.length>2400000)dataUrl=canvas.toDataURL('image/webp',.72);
+   if(kind==='border'&&dataUrl.length>6800000){
+     // WebP retains transparent pixels on supported browsers and is smaller.
+     const compressed=canvas.toDataURL('image/webp',.94);
+     if(compressed.startsWith('data:image/webp'))dataUrl=compressed;
+   }
+   if(kind==='face'&&!dataUrl.startsWith('data:image/webp'))dataUrl=canvas.toDataURL('image/png');
+   if(dataUrl.length>7100000)throw new Error('Cropped image is too large. Try a simpler image or compress the source.');
+   const {artId,url}=await api('/api/card-studio/upload',{dataUrl,kind});
+   if(kind==='border'){
+     if(!borderDraft)throw new Error('Border editor was closed.');
+     borderDraft.artId=artId;borderDraft.url=url;
+     isDirty=true;closeCrop();render();
+     toast('Transparent border uploaded. Click Save border to keep it.');
+   }else{
+     const card=working?.cards?.[activeCrop.cardIndex];
+     if(!card)throw new Error('Card no longer exists.');
+     card.artId=artId;card.artUrl=url;card.legacy=false;
+     isDirty=true;closeCrop();render();
+     toast('Artwork uploaded. Click Save pack to keep changes.');
+   }
  }catch(err){alertUser(err.message);button.disabled=false;button.textContent='Apply cropped artwork';}
 }
+
+function switchMode(mode){
+ if(mode===studioMode)return;
+ if(isDirty && !confirm('Discard unsaved Card Studio changes?'))return;
+ studioMode=mode;isDirty=false;alertUser('');
+ if(mode==='borders')borderDraft={id:null,name:'New custom border',rarity:'',artId:null,url:null};
+ render();
+}
+function borderHelp(){
+ return '<span class="eyebrow">BORDER LIBRARY</span><h2 style="font:italic 29px Georgia,serif">Preset overlays ✧</h2>'+
+ '<div class="soft-panel"><p class="subtle">Every border is a reusable transparent overlay at 660 × 1020 px.</p>'+
+ '<p class="subtle">Crop and resize transparent PNG or WebP designs here, then apply them to any R, SR, SSR, MR or UR card.</p>'+
+ '<p class="subtle">Default borders are protected. A custom preset must be removed from all card designs before you can delete it.</p></div>';
+}
+function renderBorderLibrary(){
+ const presets=catalogue.borderPresets||[];
+ const chosen=borderDraft||{id:null,name:'New custom border',rarity:'',artId:null,url:null};
+ const gallery=presets.filter(b=>b.id!=='none').map(b=>
+ '<button type="button" class="studio-border-tile" data-studio-action="pick-border" data-id="'+esc(b.id)+'" aria-current="'+String(b.id===chosen.id)+'">'+
+ '<span class="studio-border-thumb"><img src="/assets/portraits/arielle_real.webp" alt="">'+(b.url?'<img class="studio-border-overlay" src="'+esc(b.url)+'" alt="">':'')+'</span>'+
+ '<strong>'+esc(b.name)+'</strong><small>'+(b.builtin?'Protected default':'Custom preset')+(b.rarity?' · '+esc(b.rarity):'')+'</small></button>').join('');
+ const preview='<div class="card-preview studio-border-large"><img class="face" src="/assets/portraits/arielle_real.webp" alt="Example photocard">'+
+ (chosen.url?'<img class="frame" src="'+esc(chosen.url)+'" alt="Border overlay preview">':'')+'</div>';
+ return '<section class="soft-panel"><div class="studio-toolbar"><div><h2 style="margin:0">Border Library</h2><span class="helper">Upload, crop, resize, and reuse transparent borders across packs.</span></div>'+
+ '<button type="button" class="studio-button" data-studio-action="new-border">+ Create custom border</button></div>'+
+ '<div class="studio-border-grid">'+gallery+'</div></section>'+
+ '<section class="soft-panel"><h2>'+(chosen.id?'Preset details':'New custom border')+'</h2>'+
+ '<div class="editor-grid"><div>'+preview+'<p class="card-preview-note">Transparent overlay · 660 × 1020 px</p></div><div class="editor-fields">'+
+ '<div class="field"><label>Preset name</label><input data-border-field="name" maxlength="54" value="'+esc(chosen.name)+'" '+(chosen.builtin?'disabled':'')+'></div>'+
+ '<div class="field"><label>Suggested rarity (optional)</label><select data-border-field="rarity" '+(chosen.builtin?'disabled':'')+'><option value="">Any rarity</option>'+
+ catalogue.rarities.map(r=>'<option value="'+r+'" '+(chosen.rarity===r?'selected':'')+'>'+r+'</option>').join('')+'</select></div>'+
+ (chosen.builtin?'<p class="helper">Built-in borders cannot be replaced or deleted. Create a new custom preset instead.</p>':
+ '<label class="studio-button studio-file-label" for="studio-border-picker">'+(chosen.artId?'Replace / recrop border':'Upload transparent border')+'</label>'+
+ '<p class="helper">PNG or WebP with a transparent center. Drag, rotate, and zoom before exporting. Artwork stays separate from the photocard image.</p>'+
+ '<button class="studio-button" data-studio-action="save-border" type="button">Save border preset ✧</button>'+
+ (chosen.id?'<button class="studio-button danger" data-studio-action="delete-border" type="button">Delete custom border</button>':''))+
+ '</div></div></section>';
+}
+async function saveBorder(){
+ if(!borderDraft||borderDraft.builtin)return;
+ const result=await api('/api/card-studio/border/save',{id:borderDraft.id||null,name:borderDraft.name,rarity:borderDraft.rarity||null,artId:borderDraft.artId});
+ catalogue=await api('/api/card-studio');borderDraft={...result.preset};
+ isDirty=false;render();toast('Border preset saved. It is now available for card faces.');
+}
+async function deleteBorder(){
+ if(!borderDraft?.id||borderDraft.builtin)return;
+ if(prompt('Type DELETE to permanently remove this custom border:')!=='DELETE')return;
+ await api('/api/card-studio/border/delete',{id:borderDraft.id,confirm:'DELETE'});
+ catalogue=await api('/api/card-studio');borderDraft={id:null,name:'New custom border',rarity:'',artId:null,url:null};
+ isDirty=false;render();toast('Custom border deleted.');
+}
+
 document.addEventListener('click',async event=>{
  const target=event.target.closest('[data-studio-action]');if(!target)return;
  event.preventDefault();
  const a=target.dataset.studioAction;
  try{
    if(a==='select')return choose(target.dataset.id);
+   if(a==='pick-border'){const p=catalogue.borderPresets.find(b=>b.id===target.dataset.id);if(!p)return;if(isDirty&&!confirm('Discard unsaved border edits?'))return;borderDraft={...p};isDirty=false;return render();}
+   if(a==='new-border'){if(isDirty&&!confirm('Discard unsaved border edits?'))return;borderDraft={id:null,name:'New custom border',rarity:'',artId:null,url:null};isDirty=false;return render();}
+   if(a==='save-border')return await saveBorder();
+   if(a==='delete-border')return await deleteBorder();
    if(a==='new')return newPack();
    if(a==='add-card'){
      if(working.cards.length>=50)return toast('Maximum 50 cards in one pack.');
@@ -267,7 +353,7 @@ document.addEventListener('click',async event=>{
      if(!confirm('Remove this card from the pack?'))return;
      working.cards.splice(cardIndex,1);cardIndex=Math.max(0,Math.min(cardIndex,working.cards.length-1));markDirty();return render();
    }
-   if(a==='upload-art')return byId('studio-art-file')?.click();
+   if(a==='upload-art')return byId('studio-art-picker')?.click();
    if(a==='save')return await savePack();
    if(a==='delete-pack')return await deletePack();
    if(a==='close-crop')return closeCrop();
@@ -278,7 +364,9 @@ document.addEventListener('click',async event=>{
 });
 document.addEventListener('change',event=>{
  const target=event.target;
- if(target.id==='studio-art-file'){imageEditor(target.files[0]);target.value='';return;}
+ if(target.id==='studio-art-picker'){imageEditor(target.files[0],'face');target.value='';return;}
+ if(target.id==='studio-border-picker'){imageEditor(target.files[0],'border');target.value='';return;}
+ if(target.matches('[data-border-field]')){if(borderDraft){borderDraft[target.dataset.borderField]=target.value;isDirty=true;}return;}
  if(target.matches('[data-pack-field], [data-card-field]')){
    try{updateFormField(target);}catch(err){alertUser(err.message);}
    // Card labels and border options update when selecting cards or saving to avoid input focus loss.
@@ -287,6 +375,7 @@ document.addEventListener('change',event=>{
 });
 document.addEventListener('input',event=>{
  const target=event.target;
+ if(target.matches('input[data-border-field]')){if(borderDraft){borderDraft[target.dataset.borderField]=target.value;isDirty=true;}return;}
  if(!target.matches('input[data-pack-field],textarea[data-pack-field],input[data-card-field]'))return;
  // Do not rerender while typing.
  if(target.dataset.packField&&target.dataset.packField!=='releaseAt'){
@@ -296,6 +385,8 @@ document.addEventListener('input',event=>{
  }
 });
 byId('studio-new').addEventListener('click',newPack);
+byId('studio-border-library').addEventListener('click',()=>switchMode('borders'));
+byId('studio-pack-library').addEventListener('click',()=>switchMode('packs'));
 window.addEventListener('beforeunload',event=>{if(isDirty){event.preventDefault();event.returnValue='';}});
 load().catch(error=>{
  alertUser(error.message);
