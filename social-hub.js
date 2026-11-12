@@ -97,6 +97,23 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
     if(u){u.state.fancallTickets=(u.state.fancallTickets||0)+delta;}
     return delta;
   }
+  // One-time import of the earlier Community feed. No automatic paid-value rewards.
+  if(!state.importedLegacy){
+    for(const previous of (db.posts||[])){
+      if(!previous.authorId||!previous.url||!account(previous.authorId))continue;
+      const source=sourceUrl(previous.url);
+      if(!source||state.posts.some(p=>p.authorId===previous.authorId&&p.url===source.url))continue;
+      const legacyId='legacy-'+previous.id;
+      state.posts.push({id:legacyId,authorId:previous.authorId,category:'fan',
+        caption:bodyText(previous.text,650)||'USA50 fan edit',url:source.url,
+        platform:source.platform,embedKind:source.embedKind,embedId:source.embedId,
+        createdAt:previous.createdAt||now(),hidden:false});
+      const validLikers=(previous.likedBy||[]).filter(uid=>account(uid)&&uid!==previous.authorId);
+      if(validLikers.length)state.votes[legacyId]=Object.fromEntries(validLikers.map(uid=>[uid,1]));
+      profileFor(previous.authorId).xp+=15+validLikers.length*2;
+    }
+    state.importedLegacy=true;save();
+  }
   function handlePost(req,res,ep,data){
     if(!ep.startsWith('/api/social/'))return false;
     const u=requireFan(req,res);if(!u)return true;
