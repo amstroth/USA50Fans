@@ -20,8 +20,8 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
  function isIdol(u){return Boolean(u&&u.role==='idol'&&!u.mustChangePassword);}
  function authorName(u){return u?.idolName||u?.memberName||u?.displayName||'USA50 Idol';}
  function publicEntry(e){return {id:e.id,authorId:e.authorId,author:e.author,number:e.number,publishedAt:e.publishedAt,text:e.text,layout:e.layout,paper:e.paper,lineColor:e.lineColor,textColor:e.textColor,stickers:e.stickers,photos:e.photos.map(p=>({id:p.id,url:'/api/diary/photo/'+p.id,caption:p.caption}))};}
- function view(){return {diaries:state.diaries.slice(-100).reverse().map(publicEntry),officialPosts:state.officialPosts.slice(-100).reverse(),canPost:false,sourceStatus:{youtube:Boolean(process.env.YOUTUBE_CHANNEL_ID),instagram:Boolean(process.env.USA50_OFFICIAL_WEBHOOK_SECRET),tiktok:Boolean(process.env.USA50_OFFICIAL_WEBHOOK_SECRET)}};}
- function info(u){return {...view(),canPost:isIdol(u)};}
+ function view(){return {diaries:state.diaries.slice(-100).reverse().map(publicEntry),officialPosts:state.officialPosts.slice(-100).reverse(),canPost:false,sourceStatus:{youtube:Boolean(state.sources.youtubeChannelId||process.env.YOUTUBE_CHANNEL_ID),instagram:Boolean(process.env.USA50_OFFICIAL_WEBHOOK_SECRET),tiktok:Boolean(process.env.USA50_OFFICIAL_WEBHOOK_SECRET)}};}
+ function info(u){return {...view(),canPost:isIdol(u),settings:u?.role==='admin'?{youtubeChannelId:state.sources.youtubeChannelId||process.env.YOUTUBE_CHANNEL_ID||'',instagramUsername:state.sources.instagramUsername||'',tiktokUsername:state.sources.tiktokUsername||''}:null};}
  function photoUpload(item){
    if(!item||!['image/jpeg','image/png','image/webp'].includes(item.mime)||typeof item.data!=='string')throw Error('Choose a JPG, PNG or WebP photo');
    if(item.data.length>950000)throw Error('Compress diary photos before uploading');
@@ -75,7 +75,7 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
    state.officialPosts=state.officialPosts.slice(-300);save();return true;
  }
  async function pollYouTube(){
-   const channel=process.env.YOUTUBE_CHANNEL_ID||'';
+   const channel=state.sources.youtubeChannelId||process.env.YOUTUBE_CHANNEL_ID||'';
    if(!/^UC[\w-]{22}$/.test(channel))return;
    try{
      const url='https://www.youtube.com/feeds/videos.xml?channel_id='+encodeURIComponent(channel);
@@ -93,6 +93,21 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
      state.sources.youtubeLastChecked=now();save();
    }catch(err){console.warn('USA50 YouTube feed check:',err.message);}
  }
+ function setSources(req,res,data){
+   const user=userFrom(req);
+   if(!user||user.role!=='admin'||user.mustChangePassword)return fail(res,403,'Management account required');
+   const channel=String(data.youtubeChannelId||'').trim();
+   if(channel&&!/^UC[\\w-]{22}$/.test(channel))return fail(res,400,'Enter a valid YouTube channel ID beginning with UC');
+   state.sources.youtubeChannelId=channel;
+   for(const platform of ['instagram','tiktok']){
+     const value=String(data[platform+'Username']||'').replace(/^@/,'').trim();
+     if(value&&!/^[a-zA-Z0-9_.]{1,40}$/.test(value))return fail(res,400,'Invalid '+platform+' username');
+     state.sources[platform+'Username']=value;
+   }
+   save();
+   pollYouTube().catch(console.warn);
+   return json(res,200,{ok:true,sourceStatus:view().sourceStatus});
+ }
  function ingestOfficial(req,res,data){
    const secret=process.env.USA50_OFFICIAL_WEBHOOK_SECRET;
    if(!secret)return fail(res,503,'Official provider ingestion is not configured');
@@ -100,9 +115,9 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
    const x=Buffer.from(provided),y=Buffer.from(secret);
    if(x.length!==y.length||!crypto.timingSafeEqual(x,y))return fail(res,403,'Unauthorized source');
    const src=canonical(data.url);if(!src||!['Instagram','TikTok','YouTube'].includes(src.platform))return fail(res,400,'Invalid official post URL');
-   const allowed=src.platform==='Instagram'?process.env.USA50_INSTAGRAM_USERNAME:src.platform==='TikTok'?process.env.USA50_TIKTOK_USERNAME:null;
+   const allowed=src.platform==='Instagram'?(state.sources.instagramUsername||process.env.USA50_INSTAGRAM_USERNAME):src.platform==='TikTok'?(state.sources.tiktokUsername||process.env.USA50_TIKTOK_USERNAME):null;
    if(allowed&&String(data.account||'').replace(/^@/,'').toLowerCase()!==allowed.replace(/^@/,'').toLowerCase())return fail(res,403,'Not an authorized official channel');
    return json(res,200,{ok:true,imported:addOfficial(data)});
  }
- return {info,createDiary,deleteDiary,photo,ingestOfficial,pollYouTube};
+ return {info,createDiary,deleteDiary,photo,ingestOfficial,setSources,pollYouTube};
 };
