@@ -1,0 +1,41 @@
+/* USA50 Diary Entries and Official Channel updates */
+.official-diary-section{display:block;margin:0 0 30px}
+.diary-scroll{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:20px;padding:10px 3px 24px;scrollbar-color:#c49acb transparent;overscroll-behavior-inline:contain}
+.diary-feed-item{min-width:min(88vw,440px);max-width:440px;flex:0 0 min(88vw,440px);scroll-snap-align:start}
+.diary-sheet{min-height:520px;box-shadow:0 10px 35px #9074a535,0 2px 3px #926b8a1d;border:1px solid #e7d6e1;border-radius:3px;padding:25px 26px 34px;position:relative;overflow:hidden;background-position:0 0;background-repeat:repeat}
+.diary-sheet-heading{display:flex;justify-content:space-between;gap:15px;align-items:start;border-bottom:1px solid #977b9c50;padding-bottom:13px;margin-bottom:21px;background:inherit}
+.diary-sheet-heading small{font-size:9px;letter-spacing:1.4px;text-transform:uppercase;font-weight:800}
+.diary-sheet-heading h3{font:italic 24px Georgia,serif;margin:7px 0 0}
+.diary-sheet-heading time{font:12px Georgia,serif;white-space:nowrap}
+.diary-handwriting{font:17px/29px 'Segoe Print','Bradley Hand','Comic Sans MS',cursive;min-height:175px;overflow-wrap:anywhere;white-space:normal}
+.diary-polaroids{display:flex;justify-content:center;align-items:start;gap:10px;flex-wrap:wrap;margin-top:24px}
+.diary-polaroid{background:#fffaf7;box-shadow:0 5px 12px #4a36502c;padding:8px 8px 19px;margin:0;width:calc(50% - 7px);max-width:165px;transform:rotate(-3deg)}
+.diary-polaroid:nth-child(even){transform:rotate(4deg)}
+.diary-polaroid img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover}
+.diary-polaroid figcaption{font:11px 'Segoe Print',cursive;color:#5a4654;text-align:center;margin-top:8px;overflow-wrap:anywhere}
+.diary-stickers{font-size:24px;letter-spacing:4px;margin:18px 0}
+.diary-signature{font:italic 17px Georgia,serif;text-align:right;margin-top:24px}
+.diary-delete{font-size:11px;margin-top:8px}
+.diary-empty{text-align:center;padding:34px!important;color:#876f92;font:italic 21px Georgia,serif}
+.diary-empty p{font:13px/1.5 system-ui,sans-serif;margin-top:10px}
+.official-social-block{margin-top:24px}
+.official-social-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.official-social-card{display:flex;align-items:center;gap:13px;padding:16px;border-radius:15px;text-decoration:none;color:inherit}
+.official-social-icon{flex:0 0 46px;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:#ead7f6;color:#784797;font-size:27px}
+.official-social-card h3{font-size:14px;margin:5px 0;overflow-wrap:anywhere}
+.official-social-card small{font-size:11px;color:#876b92}
+.official-open{font-size:20px;margin-left:auto}
+.official-social-empty{padding:22px!important;color:#897596;font-size:13px}
+.diary-fan-divider{text-align:center;margin:36px 0 28px;padding:19px 0;border-top:1px solid #dfcde8;border-bottom:1px solid #dfcde8}
+.diary-fan-divider span{font-size:13px;font-weight:850;letter-spacing:3px;color:#997bb4}
+.diary-fan-divider p{font-size:11px;margin:6px 0 0;color:#9d87a4}
+.diary-form{display:grid;gap:15px}
+.diary-form label{display:grid;gap:6px;font-size:12px;font-weight:800;color:#70547d}
+.diary-form textarea,.diary-form select,.diary-form input{max-width:100%;padding:9px;border:1px solid #dcbce8;border-radius:9px;background:white;color:#4c3c53}
+.diary-form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.diary-sticker-options{display:flex;flex-wrap:wrap;gap:5px}
+.diary-sticker-pick{border:1px solid #eee1ef;border-radius:10px;background:#fff;padding:7px;font-size:20px;min-width:38px}
+.diary-sticker-pick.selected{background:#f1dafa;border-color:#9564bb;box-shadow:0 0 0 2px #a787cc}
+.diary-upload-preview{font-size:11px;color:#836c91}
+.diary-preview{max-height:360px;overflow-y:auto}.diary-preview .diary-sheet{min-height:350px}
+@media(max-width:650px){.diary-feed-item{flex-basis:88vw;max-width:88vw}.diary-sheet{padding:21px 19px}.diary-sheet-heading h3{font-size:21px}.diary-handwriting{font-size:16px}.diary-form-row{grid-template-columns:1fr 1fr}}
