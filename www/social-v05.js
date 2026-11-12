@@ -123,11 +123,24 @@
       (isFansite?'<option value="fansite">Approved Fansites</option>':'')+'</select></div>'+
       '<p class="social-fineprint">Earn 50 demo Pull Points on each of your first two qualifying posts daily, plus Fan XP. Public links and original content only; 5 posts per day maximum.</p><button class="btn" type="submit">Share post</button></form>');
  }
+ const tikTokResolutionTried=new Set();
+ function loadTikTokPlayers(){
+   const links=(store?.social?.posts||[]).filter(p=>p.platform==='TikTok'&&p.embedKind==='link');
+   for(const post of links.slice(0,20)){
+     if(tikTokResolutionTried.has(post.id))continue;
+     tikTokResolutionTried.add(post.id);
+     request('/api/social/resolve?postId='+encodeURIComponent(post.id)).then(result=>{
+       if(result.embedKind!=='tiktok'||!result.embedId)return;
+       const existing=(store?.social?.posts||[]).find(p=>p.id===post.id);
+       if(existing){existing.embedKind=result.embedKind;existing.embedId=result.embedId;existing.url=result.url;render();}
+     }).catch(()=>{});
+   }
+ }
  function runInstagramEmbeds(){
    [120,650,1700].forEach(function(ms){setTimeout(function(){try{if(window.instgrm && window.instgrm.Embeds)window.instgrm.Embeds.process();}catch(_e){}},ms);});
  }
  const previousRender=render;
- render=function(){previousRender();if(view==='community')runInstagramEmbeds();};
+ render=function(){previousRender();if(view==='community'){runInstagramEmbeds();loadTikTokPlayers();}};
  const previousAct=act;
  act=async function(name,node){
    if(name==='social-tab'){socialTab=node.dataset.value;openSocialProfile=null;render();return;}
