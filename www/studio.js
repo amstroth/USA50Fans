@@ -193,11 +193,41 @@ function imageEditor(file,mode='face'){
  img.onload=()=>{
    if(img.naturalWidth*img.naturalHeight>38000000){URL.revokeObjectURL(blobUrl);return alertUser('Use an image smaller than 38 megapixels.');}
    const originalIndex=cardIndex;
-   activeCrop={img,blobUrl,cardIndex:originalIndex,mode,zoom:1,angle:0,dx:0,dy:0,fit:'cover',stretchX:1,stretchY:1};
+   activeCrop={img,blobUrl,cardIndex:originalIndex,mode,zoom:1,angle:0,dx:0,dy:0,fit:'stretch',stretchX:1,stretchY:1};
    showCrop();
  };
  img.onerror=()=>{URL.revokeObjectURL(blobUrl);alertUser('The image could not be loaded.');};
  img.src=blobUrl;
+}
+function cropGeometry(){
+ if(!activeCrop)return null;
+ const crop=activeCrop,img=crop.img,turned=crop.angle%180!==0;
+ const imageW=turned?img.naturalHeight:img.naturalWidth;
+ const imageH=turned?img.naturalWidth:img.naturalHeight;
+ const uniform=Math.max(sizes.width/imageW,sizes.height/imageH);
+ const baseX=crop.fit==='stretch'?sizes.width/imageW:uniform;
+ const baseY=crop.fit==='stretch'?sizes.height/imageH:uniform;
+ return {width:imageW*baseX*crop.zoom*crop.stretchX,
+         height:imageH*baseY*crop.zoom*crop.stretchY,
+         baseX,baseY,imageW,imageH};
+}
+function redrawTransformHandles(){
+ const box=byId('studio-transform-box'),crop=activeCrop;
+ if(!box||!crop)return;
+ const g=cropGeometry();
+ box.style.left=((sizes.width/2+crop.dx-g.width/2)/sizes.width*100)+'%';
+ box.style.top=((sizes.height/2+crop.dy-g.height/2)/sizes.height*100)+'%';
+ box.style.width=(g.width/sizes.width*100)+'%';
+ box.style.height=(g.height/sizes.height*100)+'%';
+}
+function stretchToWindow(){
+ if(!activeCrop)return;
+ Object.assign(activeCrop,{fit:'stretch',zoom:1,stretchX:1,stretchY:1,dx:0,dy:0});
+ const fit=byId('studio-crop-fit');if(fit)fit.value='stretch';
+ const slider=byId('studio-crop-zoom');if(slider)slider.value='1';
+ for(const suffix of ['x','y']){const el=byId('studio-stretch-'+suffix);if(el)el.value='1';}
+ for(const id of ['studio-zoom-value','studio-stretch-x-value','studio-stretch-y-value']){const el=byId(id);if(el)el.textContent='100%';}
+ canvasDraw(byId('studio-crop-canvas'));
 }
 function canvasDraw(canvas){
  if(!activeCrop)return;
@@ -234,18 +264,21 @@ function canvasDraw(canvas){
  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
  ctx.drawImage(img,-img.naturalWidth/2,-img.naturalHeight/2);
  ctx.restore();
+ redrawTransformHandles();
 }
 function showCrop(){
  const modal=byId('studio-crop-modal');const border=activeCrop.mode==='border'?'none':selectedCard()?.border||'none';
  modal.hidden=false;
  modal.innerHTML='<div class="crop-panel"><div class="crop-top"><div><span class="eyebrow">CROP & RESIZE</span><h2>Frame your card ✧</h2></div><button data-studio-action="close-crop" type="button" class="studio-button secondary small">Close ✕</button></div>'+
- '<div class="crop-body"><div class="crop-face '+(activeCrop.mode==='border'?'crop-transparent':'')+'"><canvas id="studio-crop-canvas" width="660" height="1020" aria-label="Drag the photo to reposition the crop"></canvas>'+
+ '<div class="crop-body"><div class="crop-face '+(activeCrop.mode==='border'?'crop-transparent':'')+'"><canvas id="studio-crop-canvas" width="660" height="1020" aria-label="Drag the photo to reposition it"></canvas><div class="studio-transform-box" id="studio-transform-box" aria-label="Drag the handles to freely squash or stretch the image">${['nw','n','ne','e','se','s','sw','w'].map(h=>`<button type="button" class="studio-transform-handle handle-${h}" data-transform-handle="${h}" aria-label="Drag ${h} handle to reshape image"></button>`).join('')}</div>'+
  (border==='none'?'':'<img class="frame" src="'+esc(borderURL(border))+'" alt="">')+'</div>'+
  '<div class="crop-controls"><p>'+(activeCrop.mode==='border'?'Position your border while preserving its transparent center. The checkerboard means transparency, and it will overlay the photo without covering it.':'Drag to reposition your artwork within a 55 × 85 mm photocard.')+' Zoom or rotate, then export exactly <strong>660 × 1020 px</strong>.</p>'+
- '<div class="field"><label>Fit method</label><select id="studio-crop-fit"><option value="cover">Crop to fill · keep proportions</option><option value="stretch">Stretch to fit · fill full card</option></select><span class="helper">Stretch mode fills the entire card, including transparent border artwork, without trimming edges.</span></div>'+
+ '<button type="button" class="studio-button crop-fit-button" data-studio-action="fit-window">Fit whole image into card (squish)</button>'+
+ '<p class="helper">Drag the small square handles around the picture to squish it horizontally or vertically. Drag inside the image to move it. This works on borders and card faces.</p>'+
+ '<div class="field"><label>Fit method</label><select id="studio-crop-fit"><option value="stretch" selected>Stretch to fit · whole image</option><option value="cover">Crop to fill · keep proportions</option></select></div>'+
  '<div class="field"><label>Zoom <output id="studio-zoom-value">100%</output></label><input id="studio-crop-zoom" type="range" min=".25" max="3" step=".01" value="1"></div>'+
- '<div class="crop-distortion"><div class="field"><label>Horizontal stretch <output id="studio-stretch-x-value">100%</output></label><input id="studio-stretch-x" type="range" min=".25" max="3" step=".01" value="1" aria-label="Horizontal stretch of artwork"></div>'+
- '<div class="field"><label>Vertical stretch <output id="studio-stretch-y-value">100%</output></label><input id="studio-stretch-y" type="range" min=".25" max="3" step=".01" value="1" aria-label="Vertical stretch of artwork"></div></div>'+
+ '<div class="crop-distortion"><div class="field"><label>Horizontal stretch <output id="studio-stretch-x-value">100%</output></label><input id="studio-stretch-x" type="range" min=".1" max="5" step=".01" value="1" aria-label="Horizontal stretch of artwork"></div>'+
+ '<div class="field"><label>Vertical stretch <output id="studio-stretch-y-value">100%</output></label><input id="studio-stretch-y" type="range" min=".1" max="5" step=".01" value="1" aria-label="Vertical stretch of artwork"></div></div>'+
  '<span class="helper">X and Y stretch separately. Values above 100% widen or lengthen; below 100% compress.</span>'+
  '<button class="studio-button secondary" type="button" data-studio-action="rotate">Rotate 90° ↻</button>'+
  '<button class="studio-button secondary" type="button" data-studio-action="crop-reset">Reset crop</button>'+
@@ -264,6 +297,50 @@ function showCrop(){
  });
  canvas.addEventListener('pointerup',()=>moving=null);
  canvas.addEventListener('pointercancel',()=>moving=null);
+ const handles=modal.querySelectorAll('[data-transform-handle]');
+ handles.forEach(handle=>{
+   let start=null;
+   handle.addEventListener('pointerdown',event=>{
+     event.preventDefault();event.stopPropagation();
+     handle.setPointerCapture(event.pointerId);
+     const g=cropGeometry();
+     start={pointer:event.pointerId,x:event.clientX,y:event.clientY,
+       width:g.width,height:g.height,dx:activeCrop.dx,dy:activeCrop.dy,
+       zoom:activeCrop.zoom,stretchX:activeCrop.stretchX,stretchY:activeCrop.stretchY,
+       imageW:g.imageW,imageH:g.imageH,baseX:g.baseX,baseY:g.baseY};
+   });
+   handle.addEventListener('pointermove',event=>{
+     if(!start||event.pointerId!==start.pointer)return;
+     event.preventDefault();
+     const bounds=canvas.getBoundingClientRect();
+     const deltaX=(event.clientX-start.x)*sizes.width/bounds.width;
+     const deltaY=(event.clientY-start.y)*sizes.height/bounds.height;
+     const direction=handle.dataset.transformHandle;
+     const hx=direction.includes('w')?-1:direction.includes('e')?1:0;
+     const hy=direction.includes('n')?-1:direction.includes('s')?1:0;
+     // Dragging an edge moves ONLY that edge; the opposite side stays anchored.
+     if(hx){
+       const changeX=Math.max(24-start.width,hx*deltaX);
+       activeCrop.stretchX=Math.min(5,Math.max(.05,(start.width+changeX)/(start.imageW*start.baseX*start.zoom)));
+       activeCrop.dx=start.dx+changeX*hx/2;
+     }
+     if(hy){
+       const changeY=Math.max(24-start.height,hy*deltaY);
+       activeCrop.stretchY=Math.min(5,Math.max(.05,(start.height+changeY)/(start.imageH*start.baseY*start.zoom)));
+       activeCrop.dy=start.dy+changeY*hy/2;
+     }
+     activeCrop.fit='stretch';byId('studio-crop-fit').value='stretch';
+     byId('studio-stretch-x').value=String(Math.max(.1,Math.min(5,activeCrop.stretchX)));
+     byId('studio-stretch-y').value=String(Math.max(.1,Math.min(5,activeCrop.stretchY)));
+     byId('studio-stretch-x-value').textContent=Math.round(activeCrop.stretchX*100)+'%';
+     byId('studio-stretch-y-value').textContent=Math.round(activeCrop.stretchY*100)+'%';
+     canvasDraw(canvas);
+   });
+   const stop=()=>{start=null};
+   handle.addEventListener('pointerup',stop);
+   handle.addEventListener('pointercancel',stop);
+   handle.addEventListener('lostpointercapture',stop);
+ });
  const updateValue=(id,value)=>{const label=byId(id);if(label)label.textContent=Math.round(value*100)+'%';};
  byId('studio-crop-fit').addEventListener('change',e=>{
    activeCrop.fit=e.target.value;activeCrop.dx=0;activeCrop.dy=0;canvasDraw(canvas);
@@ -385,10 +462,11 @@ document.addEventListener('click',async event=>{
    if(a==='delete-pack')return await deletePack();
    if(a==='close-crop')return closeCrop();
    if(a==='rotate'){activeCrop.angle=(activeCrop.angle+90)%360;activeCrop.dx=0;activeCrop.dy=0;return canvasDraw(byId('studio-crop-canvas'));}
+   if(a==='fit-window')return stretchToWindow();
    if(a==='crop-reset'){
-     Object.assign(activeCrop,{zoom:1,angle:0,dx:0,dy:0,fit:'cover',stretchX:1,stretchY:1});
+     Object.assign(activeCrop,{zoom:1,angle:0,dx:0,dy:0,fit:'stretch',stretchX:1,stretchY:1});
      for(const id of ['studio-crop-zoom','studio-stretch-x','studio-stretch-y'])byId(id).value='1';
-     byId('studio-crop-fit').value='cover';
+     byId('studio-crop-fit').value='stretch';
      for(const id of ['studio-zoom-value','studio-stretch-x-value','studio-stretch-y-value'])byId(id).textContent='100%';
      return canvasDraw(byId('studio-crop-canvas'));
    }
