@@ -1,0 +1,30 @@
+name: Import USA50 opening animation
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/import-pack-animation.yml"]
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download finished Runway video and verify format
+        env:
+          SOURCE: "https://dnznrvs05pmza.cloudfront.net/seedance_2_mini/cgt-20261113020705-kazod/A_clean_single_shot_6_second_product_animation_for_a_collectible_photocard_gacha_mobile_game__vertic.mp4?_jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXlIYXNoIjoiMGFiMGQ4MGM5YThhODE2NiIsImJ1Y2tldCI6InJ1bndheS10YXNrLWFydGlmYWN0cyIsInN0YWdlIjoicHJvZCIsImV4cCI6MTc5NDYwOTgwNH0.lr59iBhTbf1Jl8tx1DWnHDXTkfw0ATXAYE3lDMMfHeU"
+        run: |
+          set -euo pipefail
+          mkdir -p www/assets/video
+          curl --fail --silent --show-error --location --retry 3 --max-time 180 "$SOURCE" -o www/assets/video/pack-opening-v07.mp4
+          file --mime-type www/assets/video/pack-opening-v07.mp4 | grep -q "video/mp4"
+          test "$(stat -c%s www/assets/video/pack-opening-v07.mp4)" -gt 10000
+          test "$(stat -c%s www/assets/video/pack-opening-v07.mp4)" -lt 100000000
+          ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1 www/assets/video/pack-opening-v07.mp4
+      - name: Commit permanent MP4 asset for Railway
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add www/assets/video/pack-opening-v07.mp4
+          git diff --cached --quiet || git commit -m "assets: install Runway photocard pack-opening animation"
+          git push origin HEAD:main
