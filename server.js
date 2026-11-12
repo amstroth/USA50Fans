@@ -80,6 +80,13 @@ async function api(req,res,url){
  if(method==='GET'&&url.pathname==='/api/bootstrap'){const u=userFrom(req);return json(res,200,{...publicState(u),messaging:roleFeatures.info(u),social:socialHub.info(u)});}
  if(method==='GET'&&url.pathname==='/api/social/resolve'){const id=url.searchParams.get('postId')||'';if(id.length>128)return fail(res,400,'Invalid post ID.');const result=await socialHub.resolveEmbed(id);return result?json(res,200,result):fail(res,404,'Post not found.');}
  if(method==='GET'&&url.pathname==='/api/me')return json(res,200,{me:userFrom(req)?cleanUser(userFrom(req)):null});
+ if(method==='GET'&&url.pathname==='/api/admin/overview'){
+   const u=userFrom(req);
+   if(!adminFrom(req)&&u?.role!=='admin')return fail(res,403,'Management login required.');
+   if(u?.mustChangePassword)return fail(res,403,'Change your temporary password before using management tools.');
+   return json(res,200,{fansiteApplications:db.fansites,posts:db.posts,reports:db.reports,users:Object.keys(db.users).length});
+ }
+
  if(method!=='POST')return fail(res,404,'Unknown API endpoint');
  if(url.pathname==='/api/card-studio/upload' && (userFrom(req)?.role!=='admin'||userFrom(req)?.mustChangePassword))return fail(res,403,'Management login required.');
  const maxPostBytes=url.pathname==='/api/card-studio/upload'?2600000:50000;
