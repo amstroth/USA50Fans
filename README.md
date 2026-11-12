@@ -134,3 +134,14 @@ npx cap open ios
 ## Next Codex instruction
 
 See [`docs/CODEX_NEXT_STEPS.md`](docs/CODEX_NEXT_STEPS.md). Preserve the current Node/Railway source and improve this foundation rather than starting a second blank app.
+
+
+## Official Channels and Diary Entries (Social Hub)
+
+- Idol accounts can publish **Diary Entries**. Each idol has a separate, monotonically increasing entry number starting at `0001`, with the publication date assigned by the server. Entries appear ahead of ordinary fan content in the Social tab. Fans cannot publish entries.
+- Diary editor: ruled, boxed (grid), dotted and blank sheets; six paper presets; selectable line and ink color; text, emoji stickers, and up to four uploaded photos displayed as polaroids. Photos are resized client-side and saved on `DATA_DIR/diary-uploads`; keep this on the persistent Railway volume. The server enforces upload type/size and author permissions. Management can remove entries; deleting does not reuse numbers.
+- **USA50 official channel cards** are kept separate from fan posts and deduplicated by platform and external media ID.
+- YouTube polling is supported through the public RSS feed using a `UC...` channel ID. A management account can configure this through **Management → Connect official channels**. The worker checks approximately every ten minutes (and when configured), so updates are not instantaneous.
+- Instagram and TikTok need **approved account-authorized integrations**. The `POST /api/official/ingest` route is a gateway for those integrations; it requires `USA50_OFFICIAL_WEBHOOK_SECRET` sent via `X-USA50-Webhook-Secret`, validates official usernames if configured and only accepts canonical platform post URLs. Adding usernames alone does **not** activate Instagram/TikTok syncing. Connect the provider APIs and a verifier/adapter before enabling an external event source.
+- Official post records are metadata and outbound links, not unauthorized reposts/downloads of third-party media.
+- For production-grade operation, migrate the development JSON storage to a transactional database and use verified platform webhooks/jobs with retries, access-token refresh, and delivery/audit status. Do not treat public handles as sufficient authorization.
