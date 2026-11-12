@@ -189,8 +189,15 @@
    if(!el||store.me?.role!=='admin')return;
    const social=getSocial();
    const pending=social.reports||[];
+   const posters=[...new Set((social.posts||[]).map(p=>p.authorId))].filter(uid=>uid!==store.me.id && social.profiles[uid]);
    el.insertAdjacentHTML('beforeend','<section class="glass panel" style="margin-top:18px"><div class="eyebrow">SOCIAL CONTENT MODERATION</div><h3>Fan Content reports</h3>'+
     (pending.length?pending.map(r=>'<div class="social-mod-report"><strong>'+e(r.reason)+'</strong><span>Post '+e(r.postId.slice(0,8))+'</span><button class="btn secondary tiny" data-action="social-mod-resolve" data-value="'+e(r.id)+'">Resolve</button><button class="btn tiny" data-action="social-admin-hide" data-value="'+e(r.postId)+'">Remove Post</button></div>').join(''):'<p class="lead">No outstanding social reports.</p>')+
-    '<p class="social-fineprint">Management can remove reported posts and suspend offending accounts. Staff do not receive unrelated private idol conversations.</p></section>');
+    '<div class="divider"></div><h3>Fan posting permissions</h3>'+
+    (posters.length?posters.map(uid=>{
+      const profile=social.profiles[uid],banned=Boolean(social.bans?.[uid]);
+      return '<div class="social-mod-report"><strong>@'+e(profile.handle)+'</strong>'+
+      '<button class="btn tiny '+(banned?'secondary':'')+'" data-action="social-mod-ban" data-value="'+e(uid)+'" data-banned="'+(banned?'false':'true')+'">'+(banned?'Restore posting':'Suspend posting')+'</button></div>';
+    }).join(''):'<p class="lead">No fan posts to review yet.</p>')+
+    '<p class="social-fineprint">Management can remove posts and suspend offending fan accounts. Staff cannot view unrelated private idol conversations.</p></section>');
  };
 })();
