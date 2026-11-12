@@ -1,0 +1,75 @@
+/* USA50 mobile width fix v0.5.1
+   Keep all pages within the phone viewport; the Messages inbox is a wrapping
+   vertical grid rather than a horizontal carousel. */
+html,body{max-width:100%;overflow-x:clip}
+#app,.app-shell,.content-area,.screen{min-width:0;max-width:100%}
+.screen,.screen-header,.top-bar,.dev-banner,.glass.panel,.messages-layout,
+.messages-layout>*{min-width:0}
+.messages-layout,.messages-layout>*{max-width:100%}
+.messages-layout .idol-update,
+.messages-layout .private-reply,
+.messages-layout .private-threads,
+.messages-layout .row,
+.messages-layout .chat-compose,
+.messages-layout .message-members{min-width:0;max-width:100%}
+.messages-layout .idol-update,
+.messages-layout .idol-update p,
+.messages-layout .private-reply,
+.messages-layout .private-reply p,
+.messages-layout .lead,
+.messages-layout strong,
+.messages-layout small{overflow-wrap:anywhere;word-break:normal}
+.messages-layout .idol-update>p{white-space:pre-wrap}
+.messages-layout .row>div{min-width:0}
+.messages-layout .message-row>span{min-width:0}
+.messages-layout .message-row strong,
+.messages-layout .message-row small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.messages-layout .chat-compose>input{min-width:0;width:100%}
+@media(max-width:780px){
+  body,#app,.app-shell,.content-area,.screen{width:100%;max-width:100%;min-width:0}
+  .sidebar{display:none!important}
+  .content-area{flex:1 1 auto;min-width:0;width:100%;overflow-x:clip}
+  .screen{overflow-x:clip}
+  .top-bar,.dev-banner,.screen-header{width:100%;max-width:100%;min-width:0}
+  /* A 1fr column has an automatic minimum width. minmax(0,1fr) may shrink. */
+  .messages-layout{display:grid!important;grid-template-columns:minmax(0,1fr)!important;width:100%;gap:14px}
+  .messages-layout>.glass.panel{min-width:0;max-width:100%;width:100%;overflow-wrap:anywhere}
+  /* All idols visible without swiping the whole page sideways. */
+  .messages-layout .message-members{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:9px!important;
+    overflow:visible!important;
+    width:100%;
+    padding:7px 0 0!important;
+  }
+  .messages-layout .message-members .message-row{
+    display:flex;align-items:center;justify-content:flex-start;
+    width:100%!important;max-width:100%;min-width:0!important;
+    flex:initial!important;gap:8px;margin:0!important;padding:10px 8px!important;
+    overflow:hidden;
+  }
+  .messages-layout .message-members .member-avatar{
+    margin:0;flex:0 0 38px!important;width:38px!important;height:38px!important;
+  }
+  .messages-layout .message-members .message-row>span{flex:1;min-width:0}
+  .messages-layout .message-members .message-row strong{font-size:12px}
+  .messages-layout .message-members .message-row small{font-size:10px}
+  .messages-layout .row{min-width:0;max-width:100%}
+  .messages-layout .row>.member-avatar{flex-shrink:0}
+  .messages-layout .chat-compose{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px}
+  .messages-layout .chat-compose input{min-width:0;max-width:100%;width:100%}
+  .messages-layout .chat-compose .btn{white-space:nowrap}
+  .messages-layout .idol-update{padding:13px!important;margin:12px 0!important}
+  .messages-layout .private-threads{grid-template-columns:minmax(0,1fr)}
+  /* Other grids and flex items must not force a wider document. */
+  .screen>.grid,.screen>.gacha-layout,.screen>.social-feed{max-width:100%;min-width:0}
+  .top-actions{min-width:0}
+  .top-actions .stars-pill{min-width:0;flex-shrink:1}
+}
+@media(max-width:365px){
+  .messages-layout .message-members{gap:6px!important}
+  .messages-layout .message-members .message-row{padding:9px 6px!important;gap:6px}
+  .messages-layout .message-members .member-avatar{flex-basis:32px!important;width:32px!important;height:32px!important}
+  .messages-layout .message-members .message-row strong{font-size:11px}
+}
