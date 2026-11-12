@@ -276,10 +276,10 @@ function showCrop(){
  '<button type="button" class="studio-button crop-fit-button" data-studio-action="fit-window">Fit whole image into card (squish)</button>'+
  '<p class="helper">Drag the small square handles around the picture to squish it horizontally or vertically. Drag inside the image to move it. This works on borders and card faces.</p>'+
  '<div class="field"><label>Fit method</label><select id="studio-crop-fit"><option value="stretch" selected>Stretch to fit · whole image</option><option value="cover">Crop to fill · keep proportions</option></select></div>'+
- '<div class="field"><label>Zoom <output id="studio-zoom-value">100%</output></label><input id="studio-crop-zoom" type="range" min=".25" max="3" step=".01" value="1"></div>'+
- '<div class="crop-distortion"><div class="field"><label>Horizontal stretch <output id="studio-stretch-x-value">100%</output></label><input id="studio-stretch-x" type="range" min=".1" max="5" step=".01" value="1" aria-label="Horizontal stretch of artwork"></div>'+
+ '<div class="field"><label>Zoom <output id="studio-zoom-value">100%</output></label><input id="studio-crop-zoom" type="range" min=".1" max="1.9" step=".01" value="1"><span class="helper">100% is the center; slide left to shrink or right to enlarge.</span></div>'+
+ '<div class="crop-distortion" role="group" aria-label="Squish and stretch controls"><div class="field"><label>Horizontal stretch <output id="studio-stretch-x-value">100%</output></label><input id="studio-stretch-x" type="range" min=".1" max="5" step=".01" value="1" aria-label="Horizontal stretch of artwork"></div>'+
  '<div class="field"><label>Vertical stretch <output id="studio-stretch-y-value">100%</output></label><input id="studio-stretch-y" type="range" min=".1" max="5" step=".01" value="1" aria-label="Vertical stretch of artwork"></div></div>'+
- '<span class="helper">X and Y stretch separately. Values above 100% widen or lengthen; below 100% compress.</span>'+
+ '<span class="helper">Width and height are independent. Drag edges of the image or use these two sliders. Reset returns to 100%.</span>'+
  '<button class="studio-button secondary" type="button" data-studio-action="rotate">Rotate 90° ↻</button>'+
  '<button class="studio-button secondary" type="button" data-studio-action="crop-reset">Reset crop</button>'+
  '<p class="helper">The border is preview-only and stays separate from the saved photo. Choose “No border” for custom artwork that already includes your own design.</p>'+
