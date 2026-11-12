@@ -100,6 +100,58 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
     }
     return null;
   }
+  const embedRequests=new Map();
+  // TikTok's official player requires a numeric media ID. Short share links
+  // have no ID; resolve through TikTok oEmbed or a strictly whitelisted redirect.
+  async function resolveTikTokShort(post){
+    if(!post||post.platform!=='TikTok'||post.embedKind!=='link')return false;
+    const cache=embedRequests.get(post.id);
+    if(cache && Date.now()-cache<300000)return false;
+    embedRequests.set(post.id,Date.now());
+    let id=null,canonicalUrl=null;
+    try{
+      const endpoint=new URL('https://www.tiktok.com/oembed');
+      endpoint.searchParams.set('url',post.url);
+      const res=await fetch(endpoint,{headers:{accept:'application/json'},signal:AbortSignal.timeout(3500)});
+      if(res.ok){
+        const data=await res.json();
+        const candidate=String(data.embed_product_id||'');
+        if(/^\d{12,25}$/.test(candidate)){
+          id=candidate;
+          const match=String(data.author_url||'').match(/^https:\/\/www\.tiktok\.com\/@[A-Za-z0-9._]+/);
+          canonicalUrl=match?match[0]+'/video/'+id:post.url;
+        }
+      }
+    }catch(_e){}
+    if(!id){
+      // Manual redirect checks never follow or request non-TikTok destinations.
+      let target=post.url;
+      for(let step=0;step<4;step++){
+        try{
+          const url=new URL(target);
+          if(url.protocol!=='https:'||!['vt.tiktok.com','vm.tiktok.com','www.tiktok.com','tiktok.com','m.tiktok.com'].includes(url.hostname.toLowerCase()))break;
+          const res=await fetch(url,{method:'HEAD',redirect:'manual',signal:AbortSignal.timeout(2500),headers:{'user-agent':'Mozilla/5.0'}});
+          const location=res.headers.get('location');
+          if(!location)break;
+          target=new URL(location,url).toString();
+          const canonical=sourceUrl(target);
+          if(canonical && canonical.platform==='TikTok'&&canonical.embedId){
+            id=canonical.embedId;canonicalUrl=canonical.url;break;
+          }
+        }catch(_e){break;}
+      }
+    }
+    if(!id)return false;
+    post.embedKind='tiktok';post.embedId=id;
+    if(canonicalUrl)post.url=canonicalUrl;
+    save();return true;
+  }
+  async function resolveEmbed(postId){
+    const p=state.posts.find(x=>x.id===postId&&!x.hidden);
+    if(!p)return null;
+    if(p.embedKind==='link'&&p.platform==='TikTok')await resolveTikTokShort(p);
+    return {postId:p.id,embedId:p.embedId||null,embedKind:p.embedKind,platform:p.platform,url:p.url};
+  }
   function requireFan(req,res){
     const u=userFrom(req);
     if(!u){fail(res,401,'Sign in to participate in the social hub.');return null;}
@@ -218,5 +270,5 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
     }
     return fail(res,404,'Unknown social endpoint.'),true;
   }
-  return {info,handlePost};
+  return {info,handlePost,resolveEmbed};
 };
