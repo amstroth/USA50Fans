@@ -50,7 +50,7 @@ function checkPass(password,hash){let [salt,digest]=String(hash||'').split(':');
 function sign(payload){const b=Buffer.from(JSON.stringify(payload)).toString('base64url');return b+'.'+crypto.createHmac('sha256',SECRET).update(b).digest('base64url');}
 function verify(token){if(!token||typeof token!=='string')return null;let [b,s]=token.split('.');if(!b||!s)return null;let expect=crypto.createHmac('sha256',SECRET).update(b).digest('base64url');if(s.length!==expect.length||!crypto.timingSafeEqual(Buffer.from(s),Buffer.from(expect)))return null;try{let obj=JSON.parse(Buffer.from(b,'base64url').toString());return obj.exp>Date.now()?obj:null;}catch{return null;}}
 function cookies(req){return Object.fromEntries(String(req.headers.cookie||'').split(';').map(v=>v.trim().split('=')).filter(p=>p.length===2));}
-function userFrom(req){const auth=String(req.headers.authorization||'');let token=auth.startsWith('Bearer ')?auth.slice(7):cookies(req).usa50_session;let payload=verify(token);return payload?.uid&&db.users[payload.uid]||null;}
+function userFrom(req){const auth=String(req.headers.authorization||'');let token=auth.startsWith('Bearer ')?auth.slice(7):cookies(req).usa50_session;let payload=verify(token);const u=payload?.uid&&db.users[payload.uid];return u && (payload.sv||0)===(u.sessionVersion||0)?u:null;}
 function adminFrom(req){let token=cookies(req).usa50_admin;return verify(token)?.admin===true;}
 function cookie(name,value,req,maxAge=2592000){let secure=String(req.headers['x-forwarded-proto']||'').includes('https')||!!req.socket.encrypted;return `${name}=${value}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}`+(secure?'; Secure':'');}
 function cleanUser(user){const {passwordHash,...rest}=user;return rest;}
@@ -68,29 +68,32 @@ function now(){return new Date().toISOString();}
 function getProfileState(){return {stars:9000,pullPoints:300,fancallTickets:0,paidPulls:0,pityAchieved:false,owned:{'tl-01':2,'tl-02':1,'tl-06':1},physicalOrders:[],freePhysicalUsed:false,subscriberPreview:false,likedPosts:[],favoriteMembers:['arielle'],fansiteApplicationId:null,demoClaimCode:'USA50-DEMO-'+crypto.randomBytes(4).toString('hex').toUpperCase(),demoClaimed:false,dailyClaimed:{}};}
 function resolveUser(id){let u=db.users[id];return u?u.displayName:'Fan';}
 function publicState(u){return {me:u?cleanUser(u):null,members,cards,albums,rarities:RARITY_WEIGHTS,packCost:PACK_COST,hardPity:HARD_PITY,cooldownDays:90,posts:db.posts.slice().reverse().map(p=>({...p,likedCount:p.likedBy.length,likedBy:undefined,liked:u? p.likedBy.includes(u.id):false})),fansites:db.fansites.filter(f=>f.status==='approved').map(f=>({id:f.id,name:f.name,portfolioUrl:f.portfolioUrl,instagram:f.instagram,tiktok:f.tiktok,description:f.description,votes:Object.values(db.fansiteVotes).filter(id=>id===f.id).length})).sort((a,b)=>b.votes-a.votes),tradeListings:db.tradeListings.map(t=>({...t,ownerName:resolveUser(t.ownerId)})),announcements:db.announcements.slice().reverse(),events:db.events};}
+const roleFeatures=require('./role-features.js')({db,save,id,hashPass,checkPass,userFrom,adminFrom,bodyText,now,json,fail});
 const hits=new Map();function rateLimit(req){let key=req.socket.remoteAddress+':auth',e=hits.get(key)||{at:Date.now(),n:0};if(Date.now()-e.at>60000)e={at:Date.now(),n:0};e.n++;hits.set(key,e);return e.n>12;}
 
 async function api(req,res,url){
  const method=req.method;
  if(method==='GET'&&url.pathname==='/api/health')return json(res,200,{ok:true,service:'USA50 web-first development preview',persistence:process.env.DATA_DIR?'configured volume/local directory':'local directory (Railway ephemeral unless DATA_DIR points at volume)'});
- if(method==='GET'&&url.pathname==='/api/bootstrap')return json(res,200,publicState(userFrom(req)));
+ if(method==='GET'&&url.pathname==='/api/bootstrap'){const u=userFrom(req);return json(res,200,{...publicState(u),messaging:roleFeatures.info(u)});}
  if(method==='GET'&&url.pathname==='/api/me')return json(res,200,{me:userFrom(req)?cleanUser(userFrom(req)):null});
  if(method!=='POST')return fail(res,404,'Unknown API endpoint');
  let raw='';try{for await (const chunk of req){raw+=chunk;if(raw.length>50000)return fail(res,413,'Request is too large.');}}catch{return fail(res,400,'Unreadable request.');}
  let data;try{data=raw?JSON.parse(raw):{};}catch{return fail(res,400,'Invalid JSON.');}
  const ep=url.pathname;
+ if(await roleFeatures.handle(req,res,ep,data))return;
  if(ep==='/api/auth/register'){
    if(rateLimit(req))return fail(res,429,'Please try again shortly.');
    let email=bodyText(data.email,160).toLowerCase(),displayName=bodyText(data.displayName,36),password=String(data.password||'');
    if(!/^\S+@\S+\.\S+$/.test(email)||displayName.length<2||password.length<8||password.length>128)return fail(res,400,'Enter a valid email, display name (2+ letters), and password (8+ characters).');
+   if(['amstrotherusa50@gmail.com','arielstrotherb@gmail.com'].includes(email))return fail(res,403,'This email is reserved for an authorized USA50 account.');
    if(Object.values(db.users).some(u=>u.email===email))return fail(res,409,'Email already registered.');
    let u={id:id(),email,displayName,passwordHash:hashPass(password),createdAt:now(),state:getProfileState()};db.users[u.id]=u;save();
-   let token=sign({uid:u.id,exp:Date.now()+30*86400000});return json(res,201,{me:cleanUser(u),token}, {'Set-Cookie':cookie('usa50_session',token,req)});
+   let token=sign({uid:u.id,sv:u.sessionVersion||0,exp:Date.now()+30*86400000});return json(res,201,{me:cleanUser(u),token}, {'Set-Cookie':cookie('usa50_session',token,req)});
  }
  if(ep==='/api/auth/login'){
    if(rateLimit(req))return fail(res,429,'Please try again shortly.');
    let u=Object.values(db.users).find(u=>u.email===bodyText(data.email,160).toLowerCase());if(!u||!checkPass(String(data.password||''),u.passwordHash))return fail(res,401,'Invalid email or password.');
-   let token=sign({uid:u.id,exp:Date.now()+30*86400000});return json(res,200,{me:cleanUser(u),token},{'Set-Cookie':cookie('usa50_session',token,req)});
+   let token=sign({uid:u.id,sv:u.sessionVersion||0,exp:Date.now()+30*86400000});return json(res,200,{me:cleanUser(u),token},{'Set-Cookie':cookie('usa50_session',token,req)});
  }
  if(ep==='/api/auth/logout')return json(res,200,{ok:true},{'Set-Cookie':cookie('usa50_session','',req,0)});
  if(ep==='/api/admin/login'){
@@ -101,7 +104,7 @@ async function api(req,res,url){
    return json(res,200,{ok:true},{'Set-Cookie':cookie('usa50_admin',sign({admin:true,exp:Date.now()+7*86400000}),req,604800)});
  }
  if(ep.startsWith('/api/admin/')){
-   if(!adminFrom(req))return fail(res,403,'Admin login required.');
+   if(!adminFrom(req)&&userFrom(req)?.role!=='admin')return fail(res,403,'Admin login required.');
    if(ep==='/api/admin/overview')return json(res,200,{fansiteApplications:db.fansites,posts:db.posts,reports:db.reports,users:Object.keys(db.users).length});
    if(ep==='/api/admin/fansite-review'){
      let f=db.fansites.find(f=>f.id===data.id);if(!f)return fail(res,404,'Application not found.');
@@ -124,6 +127,18 @@ async function api(req,res,url){
    u.state.subscriberPreview=!!data.enabled;save();return json(res,200,{ok:true});
  }
  function grantPullRewards(u, source='stars'){ if(source==='stars'){ if(u.state.stars<PACK_COST)return {error:'Not enough demo STARS. Refill your test balance in My Page.'}; u.state.stars-=PACK_COST; u.state.paidPulls++; } else { if((u.state.pullPoints||0)<PACK_COST)return {error:'Not enough Pull Points for a free pull.'}; u.state.pullPoints-=PACK_COST; } let rarity=drawRarity(),c=cardForRarity(rarity); u.state.owned[c.id]=(u.state.owned[c.id]||0)+1; u.state.fancallTickets=(u.state.fancallTickets||0)+2; u.state.pullPoints=(u.state.pullPoints||0)+100; let guaranteed=[]; if(source==='stars' && u.state.paidPulls===HARD_PITY && !u.state.pityAchieved){ for(let x of cards)if(!ownCard(u,x.id)){u.state.owned[x.id]=1;guaranteed.push(x.id);} u.state.pityAchieved=true; } save(); return {card:c,guaranteed,stars:u.state.stars,pullPoints:u.state.pullPoints,fancallTickets:u.state.fancallTickets,fancallTicketsAwarded:2,pullPointsAwarded:100,paidPulls:u.state.paidPulls,albumComplete:complete(u),pityAchieved:u.state.pityAchieved}; }
+ if(ep==='/api/cards/pull10'){
+   if(u.state.stars<PACK_COST*10)return fail(res,400,'You need 3,000 demo STARS for ten pulls.');
+   const pulled=[];let guaranteed=[];
+   for(let i=0;i<10;i++){
+     u.state.stars-=PACK_COST;u.state.paidPulls++;
+     const card=cardForRarity(drawRarity());u.state.owned[card.id]=(u.state.owned[card.id]||0)+1;pulled.push(card);
+     if(u.state.paidPulls===HARD_PITY&&!u.state.pityAchieved){for(const missing of cards){if(!ownCard(u,missing.id)){u.state.owned[missing.id]=1;guaranteed.push(missing.id);}}u.state.pityAchieved=true;}
+   }
+   u.state.fancallTickets=(u.state.fancallTickets||0)+20;
+   u.state.pullPoints=(u.state.pullPoints||0)+1000;
+   save();return json(res,200,{card:pulled[0],cards:pulled,guaranteed,stars:u.state.stars,paidPulls:u.state.paidPulls,fancallTickets:u.state.fancallTickets,pullPoints:u.state.pullPoints,fancallTicketsAwarded:20,pullPointsAwarded:1000,albumComplete:complete(u),pityAchieved:u.state.pityAchieved});
+ }
  if(ep==='/api/cards/pull'){ const result=grantPullRewards(u,'stars'); if(result.error)return fail(res,400,result.error); return json(res,200,result); }
  if(ep==='/api/cards/pull-points'){ const result=grantPullRewards(u,'points'); if(result.error)return fail(res,400,result.error); return json(res,200,result); }
  if(ep==='/api/daily/claim'){ let task=bodyText(data.task,40)||'task'; if(!['checkin','share','message'].includes(task))return fail(res,400,'Invalid daily task.'); let today=new Date().toISOString().slice(0,10); if(!u.state.dailyClaimed)u.state.dailyClaimed={}; if(u.state.dailyClaimed[task]===today)return fail(res,400,'Task already claimed today.'); u.state.dailyClaimed[task]=today; u.state.pullPoints=(u.state.pullPoints||0)+100; save(); return json(res,200,{ok:true,pullPoints:u.state.pullPoints,pullPointsAwarded:100}); }
