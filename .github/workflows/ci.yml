@@ -5,6 +5,7 @@ on:
     paths:
       - server.js
       - role-features.js
+      - social-hub.js
       - www/**
       - package.json
       - tests/**
