@@ -93,3 +93,22 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .crop-buttons{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}
 @media(max-width:1100px){.studio-main{grid-template-columns:205px minmax(400px,1fr) 230px}.studio-editor{padding:28px 20px}.studio-sidebar,.studio-sidepanel{padding:25px 12px}.editor-grid{grid-template-columns:160px minmax(0,1fr)}.card-preview,.card-preview-note{width:157px}}
 @media(max-width:1023px){.studio-workspace{display:none!important}.desktop-blocker{display:grid;min-height:100dvh;place-items:center;padding:25px}.blocker-inner{background:#fffa;border:1px solid white;border-radius:28px;padding:36px 27px;text-align:center;max-width:500px}.blocker-inner h1{font:italic 31px Georgia,serif}.blocker-inner p{color:#907e9b;font-size:14px;line-height:1.7}.blocker-mark{font:50px Georgia,serif;color:#bb86d6}}
+
+/* Card Studio v0.9 — persistent file inputs, transparent border previews */
+.studio-native-picker{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;pointer-events:none}
+.studio-file-label{display:inline-block;text-align:center;cursor:pointer;user-select:none}
+.studio-file-label:hover,.studio-file-label:focus-visible{filter:brightness(1.04);box-shadow:0 5px 16px #ae81cf55}
+.studio-file-label:active{transform:scale(.99)}
+.studio-library-switch{margin-top:16px}
+.studio-border-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:13px}
+.studio-border-tile{min-width:0;display:flex;flex-direction:column;gap:4px;align-items:stretch;text-align:left;background:#fffb;border:1px solid white;border-radius:16px;padding:9px;color:#6d5289}
+.studio-border-tile[aria-current="true"]{outline:2px solid #ad82d0;box-shadow:0 5px 18px #b48bcb4d}
+.studio-border-tile strong{font-size:12px;overflow-wrap:anywhere;margin-top:4px}
+.studio-border-tile small{font-size:10px;color:#9580aa}
+.studio-border-thumb{display:block;width:100%;aspect-ratio:11/17;border-radius:10px;position:relative;overflow:hidden;background:linear-gradient(135deg,#ddc3f3,#fee0f3);border:1px solid #fff}
+.studio-border-thumb>img:first-child{width:100%;height:100%;object-fit:cover}
+.studio-border-thumb>img.studio-border-overlay{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
+.studio-border-large{width:186px;max-width:100%}
+.crop-face.crop-transparent{background-color:#fff;background-image:linear-gradient(45deg,#d9cadf 25%,transparent 25%),linear-gradient(-45deg,#d9cadf 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#d9cadf 75%),linear-gradient(-45deg,transparent 75%,#d9cadf 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0}
+.crop-face.crop-transparent canvas{background:transparent}
+@media(max-width:1100px){.studio-border-large{width:155px}}
