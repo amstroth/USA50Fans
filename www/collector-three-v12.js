@@ -1,7 +1,7 @@
 /* USA50 Three.js renderer: authenticated front/back, physical card edge and masked foil materials. */
 (function(){
 'use strict';
-const WIDTH=2.2,HEIGHT=3.4,DEPTH=.065;
+const WIDTH=2.2,HEIGHT=3.4,DEPTH=.065,CORNER_RADIUS=.19;
 const KIND={holographic:0,iridescent:1,glitter:2};
 const token=()=>localStorage.getItem('usa50_dev_token')||'';
 let modulePromise;
@@ -84,6 +84,25 @@ const FRAG=[
  'gl_FragColor=vec4(pigment,clamp(coverage*alpha,0.0,.93));',
  '}'
 ].join('\n');
+// Shared curved silhouette for front, reverse, side thickness and foil masks.
+function roundedCardShape(THREE){
+ const shape=new THREE.Shape(),x=-WIDTH/2,y=-HEIGHT/2,w=WIDTH,h=HEIGHT,r=CORNER_RADIUS;
+ shape.moveTo(x+r,y);
+ shape.lineTo(x+w-r,y);shape.quadraticCurveTo(x+w,y,x+w,y+r);
+ shape.lineTo(x+w,y+h-r);shape.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+ shape.lineTo(x+r,y+h);shape.quadraticCurveTo(x,y+h,x,y+h-r);
+ shape.lineTo(x,y+r);shape.quadraticCurveTo(x,y,x+r,y);
+ shape.closePath();return shape;
+}
+function cardFaceGeometry(THREE,shape){
+ const geom=new THREE.ShapeGeometry(shape,16),pos=geom.getAttribute('position');
+ const uvs=new Float32Array(pos.count*2);
+ for(let i=0;i<pos.count;i++){
+  uvs[i*2]=(pos.getX(i)+WIDTH/2)/WIDTH;
+  uvs[i*2+1]=(pos.getY(i)+HEIGHT/2)/HEIGHT;
+ }
+ geom.setAttribute('uv',new THREE.BufferAttribute(uvs,2));return geom;
+}
 async function create({container,card={},layers=[],onWarning=()=>{},onSide=()=>{},initialRotation=12}){
  const THREE=await three();
  if(!container?.isConnected)throw Error('Card preview has closed.');
@@ -103,18 +122,20 @@ async function create({container,card={},layers=[],onWarning=()=>{},onSide=()=>{
  const fill=new THREE.DirectionalLight(0xe9d7ff,.6);fill.position.set(-5,-2,3);scene.add(fill);
  const group=new THREE.Group();scene.add(group);
  const resources=[];
+ const shape=roundedCardShape(THREE),faceGeometry=cardFaceGeometry(THREE,shape);
  const shellMaterial=new THREE.MeshPhysicalMaterial({color:0xece3f9,metalness:.18,roughness:.24,clearcoat:1,clearcoatRoughness:.16});
- const shellGeometry=new THREE.BoxGeometry(WIDTH,HEIGHT,DEPTH);
- resources.push(shellMaterial,shellGeometry);
+ const shellGeometry=new THREE.ExtrudeGeometry(shape,{depth:DEPTH,steps:1,curveSegments:16,
+   bevelEnabled:true,bevelSize:.004,bevelThickness:.004,bevelSegments:2});
+ shellGeometry.translate(0,0,-DEPTH/2);
+ resources.push(shellMaterial,shellGeometry,faceGeometry);
  group.add(new THREE.Mesh(shellGeometry,shellMaterial));
  let destroyed=false,animation=0,rx=-7,ry=initialRotation,sideName='FRONT',revision=0;
  const effects=new Map(),maskCache=new Map();
  function materialCanvas(input){const t=new THREE.CanvasTexture(input);t.colorSpace=THREE.SRGBColorSpace;resources.push(t);return t;}
  function addSurface(input,isBack=false){
   const material=new THREE.MeshBasicMaterial({map:materialCanvas(input),transparent:true,side:THREE.FrontSide});
-  const geometry=new THREE.PlaneGeometry(WIDTH,HEIGHT);
-  const mesh=new THREE.Mesh(geometry,material);
-  resources.push(material,geometry);
+  const mesh=new THREE.Mesh(faceGeometry,material);
+  resources.push(material);
   if(isBack){mesh.rotation.y=Math.PI;mesh.position.z=-DEPTH/2-.003;}
   else mesh.position.z=DEPTH/2+.003;
   group.add(mesh);
@@ -141,7 +162,7 @@ async function create({container,card={},layers=[],onWarning=()=>{},onSide=()=>{
  addSurface(back,true);
  const blankMask=canvas(2,2);blankMask.getContext('2d').fillStyle='#fff';blankMask.getContext('2d').fillRect(0,0,2,2);
  const whiteTexture=materialCanvas(blankMask);
- const effectGeometry=new THREE.PlaneGeometry(WIDTH,HEIGHT);resources.push(effectGeometry);
+ const effectGeometry=faceGeometry;
  function color(x,fallback){
   return new THREE.Color(/^#[0-9a-f]{6}$/i.test(String(x||''))?x:fallback);
  }
@@ -188,7 +209,14 @@ async function create({container,card={},layers=[],onWarning=()=>{},onSide=()=>{
    };
    const material=new THREE.ShaderMaterial({vertexShader:VERT,fragmentShader:FRAG,uniforms,transparent:true,
      depthWrite:false,side:THREE.FrontSide,blending:THREE.NormalBlending});
-   const mesh=new THREE.Mesh(effectGeometry,material);mesh.position.z=DEPTH/2+.009+i*.0014;mesh.renderOrder=25+i;group.add(mesh);
+   const mesh=new THREE.Mesh(effectGeometry,material);
+   if(layer.side==='back'){
+     mesh.rotation.y=Math.PI;
+     mesh.position.z=-DEPTH/2-.009-i*.0014;
+   }else{
+     mesh.position.z=DEPTH/2+.009+i*.0014;
+   }
+   mesh.renderOrder=25+i;group.add(mesh);
    const record={mesh,material,ownMask:mask.owned?mask.texture:null};
    effects.set(layer.id||String(i),record);updateParams(layer,record);
   }
