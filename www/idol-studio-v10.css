@@ -6,10 +6,10 @@
  transform-origin:50% 95%;transition:transform .22s ease,box-shadow .22s ease;
 }
 .dream-home-banner .nyc-predebut-fan .nyc-predebut-card img{position:static!important;inset:auto!important;right:auto!important;bottom:auto!important;filter:none!important;width:100%!important;height:100%!important;display:block!important;object-fit:fill!important;object-position:center!important;border-radius:0!important}
-.nyc-predebut-card.card-1{z-index:1;transform:translateX(-109%) rotate(-27deg) translateY(4%)}
-.nyc-predebut-card.card-2{z-index:2;transform:translateX(-74%) rotate(-9deg) translateY(-1%)}
-.nyc-predebut-card.card-3{z-index:3;transform:translateX(-29%) rotate(10deg) translateY(-1%)}
-.nyc-predebut-card.card-4{z-index:4;transform:translateX(11%) rotate(27deg) translateY(4%)}
+.nyc-predebut-card.card-1{z-index:1;transform:translateX(-150%) rotate(-27deg) translateY(5%)}
+.nyc-predebut-card.card-2{z-index:2;transform:translateX(-97%) rotate(-10deg) translateY(-2%)}
+.nyc-predebut-card.card-3{z-index:3;transform:translateX(-12%) rotate(10deg) translateY(-2%)}
+.nyc-predebut-card.card-4{z-index:4;transform:translateX(42%) rotate(27deg) translateY(5%)}
 .nyc-predebut-placeholder{height:100%;width:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;
  gap:8px;text-align:center;color:#795795;background:linear-gradient(145deg,#f3dafa,#c9b6e6,#f7e7fb);
  border:7px solid #f9efff;padding:8px;font-size:12px;letter-spacing:1px}
@@ -21,10 +21,10 @@
  .dream-home-banner .dream-feature-copy{min-width:0;padding-right:0}
  .dream-home-banner .nyc-predebut-fan{min-height:260px}
  .dream-home-banner .nyc-predebut-card{width:clamp(76px,21vw,118px);bottom:8%}
- .nyc-predebut-card.card-1{transform:translateX(-98%) rotate(-25deg) translateY(8%)}
- .nyc-predebut-card.card-2{transform:translateX(-66%) rotate(-10deg)}
- .nyc-predebut-card.card-3{transform:translateX(-33%) rotate(8deg)}
- .nyc-predebut-card.card-4{transform:translateX(1%) rotate(23deg) translateY(8%)}
+ .nyc-predebut-card.card-1{transform:translateX(-137%) rotate(-23deg) translateY(6%)}
+ .nyc-predebut-card.card-2{transform:translateX(-88%) rotate(-8deg)}
+ .nyc-predebut-card.card-3{transform:translateX(-13%) rotate(8deg)}
+ .nyc-predebut-card.card-4{transform:translateX(36%) rotate(23deg) translateY(6%)}
  .nyc-predebut-placeholder{border-width:4px;padding:3px;gap:3px;font-size:9px}
  .nyc-predebut-placeholder strong{font-size:15px}.nyc-predebut-placeholder small{font-size:7px}
 }
@@ -97,3 +97,12 @@
  .idol-studio-bubble{max-width:87%}
  .idol-studio-compose{padding:10px 12px 12px}
 }
+
+/* Border overlays use the exact same 660 × 1020 coordinates as Card Studio. */
+.dream-home-banner .nyc-predebut-fan .nyc-predebut-card .nyc-predebut-face{position:absolute!important;inset:0!important;z-index:1!important}
+.dream-home-banner .nyc-predebut-fan .nyc-predebut-card .nyc-predebut-border{
+ position:absolute!important;inset:0!important;top:0!important;right:0!important;bottom:0!important;left:0!important;
+ z-index:2!important;width:100%!important;height:100%!important;object-fit:fill!important;
+ display:block!important;filter:none!important;pointer-events:none!important;border:0!important;border-radius:0!important;
+}
+.dream-home-banner .nyc-predebut-fan{z-index:2}
