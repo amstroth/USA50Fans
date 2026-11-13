@@ -37,7 +37,7 @@ const baseCard={title:'First Light',rarity:'R',border:'R',artId:face};
 const rareCard={title:'Personal Letter',rarity:'SSR',border:'SSR',artId:face,backArtId:rareBack};
 const draft=call('save',{title:'Back design test',member:'Arielle',team:'NYC50',status:'draft',isTest:true,
  defaultBackArtId:defaultBack,cards:[baseCard,rareCard]});
-assert.equal(draft.status,200);
+assert.equal(draft.status,200,JSON.stringify(draft.body));
 const packId=draft.body.pack.id;
 const [idR,idSSR]=draft.body.pack.cards.map(c=>c.id);
 fanA.state.owned[idR]=1;
