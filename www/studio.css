@@ -131,3 +131,22 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .crop-controls{min-width:240px;align-content:start}.crop-panel{width:min(850px,97vw);max-height:calc(100dvh - 24px)}.crop-distortion{background:#f2e6fa;border:1px solid #d9c0ed;border-radius:13px;padding:12px;grid-template-columns:minmax(0,1fr)!important;gap:12px!important}.crop-distortion .field label{color:#72518e;font-weight:850}.crop-controls input[type=range]{display:block;width:100%;height:24px;accent-color:#8d58bc}.crop-controls .field{width:100%}.crop-controls .helper{display:block}
 
 .studio-heading-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px}.studio-template-actions{display:flex;align-items:center;gap:10px}.studio-template-actions a{font-size:11px;color:#71518c;font-weight:750}.studio-template-actions button{white-space:nowrap}.card-preview,.crop-face{border-radius:5.4545% / 3.5294%}@media(max-width:1250px){.studio-heading{flex-wrap:wrap}}
+
+/* v1.1 — set-wide and per-card back artwork */
+.studio-back-editor{display:grid;grid-template-columns:190px minmax(0,1fr);gap:22px;align-items:start;margin-top:13px}
+.studio-back-face{display:block;width:186px;max-width:100%;aspect-ratio:11/17;overflow:hidden;position:relative;
+ border:2px solid #fff;border-radius:16px;background:#e6d9fb;box-shadow:0 8px 24px #9772b14d}
+.studio-back-face img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.studio-back-generated{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+ color:#70558f;background:radial-gradient(circle at 80% 16%,#fff9 0,transparent 40%),linear-gradient(135deg,#d8c3f8 0%,#efd4f7 52%,#f7dfef 100%);text-align:center;
+ border:11px double #ffffff91;outline:1px solid #ffffffa0;outline-offset:-18px}
+.studio-back-generated strong{font:italic bold 34px Georgia,serif;letter-spacing:-2px}
+.studio-back-generated small{letter-spacing:3px;font-size:10px}
+.studio-back-generated .back-fleur{font:28px Georgia,serif;color:#a075c9}
+.studio-back-generated span:last-child{font:italic 11px Georgia,serif;margin-top:14px}
+.studio-back-section{margin-top:22px}
+.studio-back-section .studio-back-editor{grid-template-columns:170px minmax(0,1fr)}
+.studio-back-section .studio-back-face{width:164px}
+.studio-back-editor .editor-fields{min-width:0;gap:12px}
+@media(max-width:1180px){.studio-back-editor,.studio-back-section .studio-back-editor{grid-template-columns:150px minmax(0,1fr);gap:12px}
+ .studio-back-face,.studio-back-section .studio-back-face{width:145px}}
