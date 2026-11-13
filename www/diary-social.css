@@ -115,3 +115,49 @@ body.diary-story-open{overflow:hidden}
 .diary-story-gallery-back:focus-visible{outline:2px solid #e5cbff;outline-offset:2px}
 @media(min-width:650px){.diary-archive-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.diary-archive-thumbnail{aspect-ratio:3/4}}
 @media(max-width:390px){.diary-story-gallery-back{font-size:10px;padding:5px}.diary-story-header .diary-story-author small{font-size:9px}}
+
+/* v1.4 — Official Channels: actual source cover images and graceful fallback */
+.official-social-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.official-social-grid .official-social-card{display:block;position:relative;min-width:0;
+ padding:0!important;overflow:hidden;border:1px solid rgba(255,255,255,.98);
+ border-radius:20px;box-shadow:0 9px 23px rgba(118,76,164,.13);
+ background:rgba(255,251,255,.74)}
+.official-social-card .official-post-link{display:block;min-width:0;color:inherit;text-decoration:none}
+.official-post-thumbnail{position:relative;aspect-ratio:16/9;overflow:hidden;
+ background:radial-gradient(circle at 78% 16%,#fff9,transparent 36%),linear-gradient(125deg,#cfb8ec 0%,#c5c4f8 44%,#f7cbe9 100%);
+ display:grid;place-items:center;isolation:isolate}
+.official-thumbnail-placeholder{font:clamp(42px,6vw,65px) Georgia,serif;color:#ffffffd9;text-shadow:0 2px 14px #9871b77c}
+.official-post-image{display:block;position:absolute;inset:0;width:100%;height:100%;
+ object-fit:cover;object-position:center;z-index:1;transition:transform .25s ease}
+.official-post-link:hover .official-post-image{transform:scale(1.04)}
+.official-thumbnail-play{position:absolute;z-index:2;top:50%;left:50%;transform:translate(-50%,-50%);
+ width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+ background:#3220499c;border:1px solid #ffffffbf;color:white;font-size:13px;padding-left:3px;
+ backdrop-filter:blur(8px);box-shadow:0 4px 18px #2d174456}
+.official-post-thumbnail.no-image .official-thumbnail-play{background:#f9eafb9c;color:#825caa}
+.official-thumbnail-platform{position:absolute;z-index:2;bottom:10px;left:11px;
+ padding:5px 9px;border:1px solid #ffffffa9;background:#28194980;backdrop-filter:blur(8px);
+ color:white;border-radius:99px;font-weight:800;letter-spacing:.45px;font-size:10px}
+.official-post-body{padding:12px 14px 14px;position:relative;min-height:80px}
+.official-post-platform{font-size:9px;letter-spacing:1.6px;font-weight:850;color:#a078b3;text-transform:uppercase}
+.official-social-card .official-post-body h3{font-size:14px;line-height:1.36;margin:6px 25px 7px 0;
+ color:#5f487f;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.official-post-body small{font-size:10px;color:#9986a7}
+.official-post-body .official-open{position:absolute;right:14px;top:26px;font-size:21px;color:#9972ac}
+.official-post-delete{position:absolute;z-index:4;top:8px;right:8px;
+ display:grid;place-items:center;width:29px;height:29px;border:1px solid #ffffffd0;border-radius:50%;
+ background:#fffb;color:#865f9d;box-shadow:0 2px 8px #21162c30;cursor:pointer;font-size:21px}
+.official-social-card .official-post-link:focus-visible{outline:3px solid #b77dc8;outline-offset:-4px}
+.official-social-card .official-post-delete:focus-visible{outline:3px solid #b77dc8}
+.diary-admin-sources .diary-form input[type=file]{font-size:12px}
+.diary-admin-sources .diary-form input[type=file]::file-selector-button{padding:7px;border:1px solid #ead1ec;border-radius:9px;background:#f3e2fa}
+@media(max-width:520px){
+ .official-social-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .official-social-grid .official-social-card{border-radius:17px}
+ .official-social-card .official-post-body{padding:10px 9px 12px}
+ .official-social-card .official-post-body h3{font-size:12px;margin-right:12px}
+ .official-post-platform{font-size:8px;letter-spacing:1px}
+ .official-post-body .official-open{right:8px;top:31px;font-size:15px}
+ .official-thumbnail-play{width:32px;height:32px;font-size:10px}
+ .official-thumbnail-platform{bottom:6px;left:6px;font-size:9px}
+}
