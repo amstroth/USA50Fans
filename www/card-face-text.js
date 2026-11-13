@@ -5,7 +5,7 @@
 (function(root){
 'use strict';
 const W=660,H=1020;
-const fonts=['Georgia','Arial','Times New Roman','Trebuchet MS','Verdana','Courier New'];
+const fonts=['Georgia','Great Vibes','Arial','Times New Roman','Trebuchet MS','Verdana','Courier New'];
 const weights=['400','500','600','700'];
 const clamp=(n,min,max,fallback)=>Number.isFinite(Number(n))&&n!==null&&n!==''?Math.min(max,Math.max(min,Number(n))):fallback;
 function normalize(t,fallback=''){
@@ -56,6 +56,7 @@ function cover(ctx,img){
  ctx.drawImage(img,(W-w)/2,(H-h)/2,w,h);
 }
 async function composite({artUrl,borderUrl,overlayText}){
+ if(normalize(overlayText).fontFamily==='Great Vibes'&&document.fonts?.load)await document.fonts.load('58px "Great Vibes"');
  const [art,frame]=await Promise.all([loadImage(artUrl),borderUrl?loadImage(borderUrl):Promise.resolve(null)]);
  const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
  const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Canvas export is unavailable in this browser.');
