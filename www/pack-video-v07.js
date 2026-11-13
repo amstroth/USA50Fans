@@ -14,6 +14,9 @@ showPackOpening=function(result,freePull=false){
      '<div class="runway-opening-overlay"><span>USA50 · '+e(name)+'</span><strong>Unwrapping your stars ✦</strong></div></div>'+
      '<button type="button" class="opening-skip" data-pack-video-skip="1">Skip animation</button></div>';
   showModal('Opening '+name+' ✦',content);
+  const immersive=document.querySelector('#modal-root .modal');
+  immersive?.classList.add('pack-immersive','pack-immersive-opening');
+  immersive?.closest('.modal-backdrop')?.classList.add('pack-immersive-backdrop');
   const video=document.getElementById('runway-opening-video');
   let completed=false;
   let watchdog;
@@ -23,14 +26,16 @@ showPackOpening=function(result,freePull=false){
     if(video){video.pause();video.onended=null;video.onerror=null;}
     currentFinish=null;
     // The existing card-first reveal is retained (currencies on second screen).
+    immersive?.classList.remove('pack-immersive-opening');
+    immersive?.classList.add('pack-immersive-results');
     dreamReveal(result);
   };
   currentFinish=done;
-  if(!video)return previousOpening(result,freePull);
+  if(!video)return previousOpening(result,freePull);document.querySelector('#modal-root .modal')?.classList.add('pack-immersive','pack-immersive-results');document.querySelector('#modal-root .modal-backdrop')?.classList.add('pack-immersive-backdrop');
   video.onended=done;
-  video.onerror=()=>{if(completed)return;completed=true;clearTimeout(watchdog);currentFinish=null;previousOpening(result,freePull);};
+  video.onerror=()=>{if(completed)return;completed=true;clearTimeout(watchdog);currentFinish=null;previousOpening(result,freePull);document.querySelector('#modal-root .modal')?.classList.add('pack-immersive','pack-immersive-results');document.querySelector('#modal-root .modal-backdrop')?.classList.add('pack-immersive-backdrop');};
   watchdog=setTimeout(done,8500);
-  const p=video.play();if(p&&p.catch)p.catch(()=>{if(!completed){completed=true;clearTimeout(watchdog);currentFinish=null;previousOpening(result,freePull);}});
+  const p=video.play();if(p&&p.catch)p.catch(()=>{if(!completed){completed=true;clearTimeout(watchdog);currentFinish=null;previousOpening(result,freePull);document.querySelector('#modal-root .modal')?.classList.add('pack-immersive','pack-immersive-results');document.querySelector('#modal-root .modal-backdrop')?.classList.add('pack-immersive-backdrop');}});
 };
 document.addEventListener('click',event=>{
   if(event.target.closest('[data-pack-video-skip]')){
