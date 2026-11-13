@@ -123,21 +123,33 @@ async function create({container,card={},layers=[],onWarning=()=>{},onSide=()=>{
  const group=new THREE.Group();scene.add(group);
  const resources=[];
  const shape=roundedCardShape(THREE),faceGeometry=cardFaceGeometry(THREE,shape);
- const shellMaterial=new THREE.MeshPhysicalMaterial({color:0xece3f9,metalness:.18,roughness:.24,clearcoat:1,clearcoatRoughness:.16});
+ // ExtrudeGeometry's material group 0 is BOTH solid front/back caps, while
+ // group 1 is the narrow perimeter. The caps were opaque and could cover
+ // photo textures on the overlaid ShapeGeometry, making cards look blank.
+ // Keep the rounded pearlescent edge only; the artwork is the actual face.
+ const hiddenCaps=new THREE.MeshBasicMaterial({visible:false,depthWrite:false});
+ const shellMaterial=new THREE.MeshPhysicalMaterial({color:0xece3f9,metalness:.18,
+   roughness:.24,clearcoat:1,clearcoatRoughness:.16,side:THREE.DoubleSide});
  const shellGeometry=new THREE.ExtrudeGeometry(shape,{depth:DEPTH,steps:1,curveSegments:16,
    bevelEnabled:true,bevelSize:.004,bevelThickness:.004,bevelSegments:2});
  shellGeometry.translate(0,0,-DEPTH/2);
- resources.push(shellMaterial,shellGeometry,faceGeometry);
- group.add(new THREE.Mesh(shellGeometry,shellMaterial));
+ resources.push(hiddenCaps,shellMaterial,shellGeometry,faceGeometry);
+ group.add(new THREE.Mesh(shellGeometry,[hiddenCaps,shellMaterial]));
  let destroyed=false,animation=0,rx=-7,ry=initialRotation,sideName='FRONT',revision=0;
  const effects=new Map(),maskCache=new Map();
  function materialCanvas(input){const t=new THREE.CanvasTexture(input);t.colorSpace=THREE.SRGBColorSpace;resources.push(t);return t;}
  function addSurface(input,isBack=false){
-  const material=new THREE.MeshBasicMaterial({map:materialCanvas(input),transparent:true,side:THREE.FrontSide});
+  // Opaque rounded photo surfaces avoid unpredictable ordering against the
+  // transparent holographic layers. DoubleSide handles winding differences
+  // between ShapeGeometry and the reversed back without making faces vanish.
+  const material=new THREE.MeshBasicMaterial({
+    map:materialCanvas(input),transparent:false,depthTest:true,depthWrite:true,
+    side:THREE.DoubleSide
+  });
   const mesh=new THREE.Mesh(faceGeometry,material);
   resources.push(material);
-  if(isBack){mesh.rotation.y=Math.PI;mesh.position.z=-DEPTH/2-.003;}
-  else mesh.position.z=DEPTH/2+.003;
+  if(isBack){mesh.rotation.y=Math.PI;mesh.position.z=-DEPTH/2-.008;}
+  else mesh.position.z=DEPTH/2+.008;
   group.add(mesh);
  }
  try{
@@ -208,13 +220,13 @@ async function create({container,card={},layers=[],onWarning=()=>{},onSide=()=>{
     uDensity:{value:.5},uScale:{value:1},uSpeed:{value:1}
    };
    const material=new THREE.ShaderMaterial({vertexShader:VERT,fragmentShader:FRAG,uniforms,transparent:true,
-     depthWrite:false,side:THREE.FrontSide,blending:THREE.NormalBlending});
+     depthWrite:false,side:THREE.DoubleSide,blending:THREE.NormalBlending});
    const mesh=new THREE.Mesh(effectGeometry,material);
    if(layer.side==='back'){
      mesh.rotation.y=Math.PI;
-     mesh.position.z=-DEPTH/2-.009-i*.0014;
+     mesh.position.z=-DEPTH/2-.012-i*.0014;
    }else{
-     mesh.position.z=DEPTH/2+.009+i*.0014;
+     mesh.position.z=DEPTH/2+.012+i*.0014;
    }
    mesh.renderOrder=25+i;group.add(mesh);
    const record={mesh,material,ownMask:mask.owned?mask.texture:null};
