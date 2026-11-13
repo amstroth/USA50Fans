@@ -196,8 +196,11 @@ async function create({container,card={},layers=[],onWarning=()=>{},onSide=()=>{
  function updateLayer(layer){const entry=effects.get(layer.id);if(entry)updateParams(layer,entry);}
  function updateMask(id,newCanvas){
   const entry=effects.get(id);if(!entry)return;
+  if(entry.maskCanvas===newCanvas && entry.ownMask){
+   entry.ownMask.needsUpdate=true;return;
+  }
   entry.ownMask?.dispose();
-  const tex=new THREE.CanvasTexture(newCanvas);entry.ownMask=tex;
+  const tex=new THREE.CanvasTexture(newCanvas);entry.ownMask=tex;entry.maskCanvas=newCanvas;
   entry.material.uniforms.uMask.value=tex;entry.material.uniforms.uMasked.value=1;
  }
  function rotation(x,y){
