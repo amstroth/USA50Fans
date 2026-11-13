@@ -13,6 +13,18 @@ const app=read('www/app.js');
 assert.match(three,/function roundedCardShape\(THREE\)/);
 assert.match(three,/new THREE\.ExtrudeGeometry\(shape/);
 assert.match(three,/new THREE\.ShapeGeometry\(shape/);
+assert.match(three,/new THREE\.Mesh\(shellGeometry,\[hiddenCaps,shellMaterial\]\)/,
+ 'Solid extrusion caps must not cover the photo on either side');
+assert.match(three,/new THREE\.MeshBasicMaterial\(\{visible:false,depthWrite:false\}\)/);
+assert.match(three,/map:materialCanvas\(input\),transparent:false,depthTest:true,depthWrite:true/,
+ 'Front and back are opaque textured surfaces rather than transparent sorted planes');
+assert.match(three,/side:THREE\.DoubleSide/,
+ 'Both rounded photo faces must render regardless of winding orientation');
+assert.match(three,/mesh\.position\.z=-DEPTH\/2-\.008/,
+ 'Back image must sit outside the physical shell');
+assert.match(three,/mesh\.position\.z=DEPTH\/2\+\.008/,
+ 'Front image must sit outside the physical shell');
+
 assert.match(three,/layer\.side==='back'/);
 assert.match(three,/mesh\.rotation\.y=Math\.PI/);
 assert.match(foil,/data-foil="side-front"/);
