@@ -5,7 +5,7 @@ const WIDTH=2.2,HEIGHT=3.4,DEPTH=.065;
 const KIND={holographic:0,iridescent:1,glitter:2};
 const token=()=>localStorage.getItem('usa50_dev_token')||'';
 let modulePromise;
-function three(){return modulePromise||(modulePromise=import('/vendor/three.module.js'));}
+function three(){return modulePromise||(modulePromise=import('/vendor/three.module.js?v=121').catch(error=>{modulePromise=null;throw error;}));}
 async function image(src,privateAsset=false){
  if(!src)throw Error('Missing artwork');
  let objectUrl=null,url=src;
