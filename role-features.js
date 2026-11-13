@@ -1,6 +1,7 @@
 module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,adminFrom,bodyText,now,json,fail}){
   db.idolPosts ||= [{id:"arielle-welcome",idolId:"arielle",body:"Hi USA50! ♡ Welcome to my little corner of the fan club. I can't wait to share more with you!",createdAt:now()}];
   db.fanReplies ||= [];
+  db.idolReplies ||= []; // Public idol-to-idol responses; never mix with private fan replies.
   db.messagingReports ||= [];
   db.messagingBans ||= {};
   // All fan accounts have their own inbox state. Neither read receipts nor
@@ -19,6 +20,11 @@ module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,admi
       if(!allowedIdols.has(post.idolId))continue;
       if(Date.parse(post.createdAt)>Date.parse(seen[post.idolId]||0))
         counts[post.idolId]=(counts[post.idolId]||0)+1;
+    }
+    for(const reply of db.idolReplies){
+      if(!allowedIdols.has(reply.idolId))continue;
+      if(Date.parse(reply.createdAt)>Date.parse(seen[reply.idolId]||0))
+        counts[reply.idolId]=(counts[reply.idolId]||0)+1;
     }
     if(user&&user.role!=='idol'&&user.role!=='admin'){
       for(const reply of db.fanReplies){
@@ -66,7 +72,9 @@ module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,admi
       else if(role==="fan")replies=db.fanReplies.filter(r=>r.fanId===user.id);
     }
     const prefs=user && role==='fan'?inboxPrefs(user):null;
-    return {posts,replies:replies.map(r=>({...r})),banned:Boolean(user && db.messagingBans[user.id]),role,pinnedIds:prefs?[...prefs.messagePinned]:[],unreadCounts:unreadCounts(user)};
+    return {posts,idolReplies:db.idolReplies.filter(r=>db.idolPosts.some(p=>p.id===r.postId)),
+      replies:replies.map(r=>({...r})),banned:Boolean(user && db.messagingBans[user.id]),
+      role,pinnedIds:prefs?[...prefs.messagePinned]:[],unreadCounts:unreadCounts(user)};
   }
   function isMod(user){return user?.role==="admin";}
   function requiresReset(user,res){
@@ -74,7 +82,7 @@ module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,admi
   }
   function requireUser(req,res){const user=userFrom(req);if(!user)fail(res,401,"Please sign in.");return user;}
   async function handle(req,res,endpoint,data){
-    if(!["/api/account/change-password","/api/idol/post","/api/idol/reply","/api/messages/fan-reply","/api/messages/report","/api/messages/mark-read","/api/messages/pin","/api/admin/messaging-ban","/api/admin/messaging-resolve","/api/admin/messaging-overview"].includes(endpoint))return false;
+    if(!["/api/account/change-password","/api/idol/post","/api/idol/reply","/api/idol/public-reply","/api/messages/fan-reply","/api/messages/report","/api/messages/mark-read","/api/messages/pin","/api/admin/messaging-ban","/api/admin/messaging-resolve","/api/admin/messaging-overview"].includes(endpoint))return false;
     const u=requireUser(req,res);if(!u)return true;
     if(endpoint==="/api/account/change-password"){
       const old=String(data.currentPassword||"");
@@ -110,6 +118,19 @@ module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,admi
       if(body.length<2)return fail(res,400,"Message is too short."),true;
       const post={id:id(),idolId:u.idolId||"arielle",body,createdAt:now()};
       db.idolPosts.push(post);save();return json(res,201,{post}),true;
+    }
+    if(endpoint==="/api/idol/public-reply"){
+      if(u.role!=="idol"||!allowedIdols.has(u.idolId))return fail(res,403,"Only authorized idol accounts may reply publicly."),true;
+      const target=db.idolPosts.find(p=>p.id===data.postId);
+      if(!target)return fail(res,404,"Original idol message not found."),true;
+      if(target.idolId===u.idolId)return fail(res,400,"Use your own idol chat to post a new message."),true;
+      const text=bodyText(data.text,600);
+      if(text.length<1)return fail(res,400,"Write a reply before sending."),true;
+      const reply={id:id(),postId:target.id,idolId:target.idolId,fromId:u.idolId,
+        fromName:u.displayName||u.idolId,text,createdAt:now()};
+      db.idolReplies.push(reply);
+      if(db.idolReplies.length>10000)db.idolReplies.splice(0,db.idolReplies.length-10000);
+      save();return json(res,201,{reply}),true;
     }
     if(endpoint==="/api/messages/fan-reply"){
       if((u.role||"fan")!=="fan")return fail(res,403,"Only fan accounts can reply."),true;
