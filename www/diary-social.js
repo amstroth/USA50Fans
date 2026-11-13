@@ -25,7 +25,18 @@ function diaryMarkup(d){
 }
 function officialCard(p){
  const symbol=p.platform==='YouTube'?'▶':p.platform==='TikTok'?'♪':'◎';
- return '<a class="glass official-social-card" href="'+textEscape(p.url)+'" target="_blank" rel="noopener noreferrer"><div class="official-social-icon">'+symbol+'</div><div><span class="eyebrow">USA50 OFFICIAL · '+textEscape(p.platform)+'</span><h3>'+textEscape(p.title)+'</h3><small>'+diaryDate(p.publishedAt)+'</small></div><span class="official-open">↗</span></a>';
+ const hasThumb=Boolean(p.thumbnailUrl);
+ const cover=hasThumb?'<img src="'+textEscape(p.thumbnailUrl)+'" alt="" loading="lazy" referrerpolicy="no-referrer" class="official-post-image">':'';
+ const remove=store?.me?.role==='admin'?'<button type="button" class="official-post-delete" data-action="official-remove" data-value="'+textEscape(p.id)+'" aria-label="Remove official post">×</button>':'';
+ return '<article class="glass official-social-card">'+
+  '<a class="official-post-link" href="'+textEscape(p.url)+'" target="_blank" rel="noopener noreferrer" aria-label="Open '+textEscape(p.platform)+' post: '+textEscape(p.title)+'">'+
+  '<div class="official-post-thumbnail '+(hasThumb?'has-image':'no-image')+'">'+
+    '<span class="official-thumbnail-placeholder" aria-hidden="true">'+symbol+'</span>'+cover+
+    '<span class="official-thumbnail-play" aria-hidden="true">▶</span>'+
+    '<span class="official-thumbnail-platform">'+textEscape(p.platform)+'</span></div>'+
+  '<div class="official-post-body"><div class="official-post-platform">USA50 OFFICIAL · '+textEscape(p.platform)+'</div>'+
+  '<h3>'+textEscape(p.title)+'</h3><small>'+diaryDate(p.publishedAt)+'</small>'+
+  '<span class="official-open" aria-hidden="true">↗</span></div></a>'+remove+'</article>';
 }
 const storyPalette=['#b88ad7','#ef9cc6','#b29bdf','#91c7bb','#e1b5d2','#a5b6eb'];
 let storyIdol=null,storyIndex=0,storyTimer=null,storyTouchStart=null,storyFocusReturn=null,storyMode='gallery';
@@ -151,7 +162,7 @@ function officialDiarySection(){
  '<div class="glass panel diary-empty">The diary is waiting for its first page. ♡<p>New pages from the idols will appear here.</p></div>')+
  '<div class="official-social-block"><div class="social-section-heading"><div><span class="eyebrow">OFFICIAL USA50 UPDATES</span><h2>Official Channels</h2><p class="lead">Latest videos and posts from USA50.</p></div></div>'+
  (official.length?officialCarousel(official):
- '<div class="glass panel official-social-empty">Official uploads will appear once the authorized channels are connected.</div>')+'</div>'+
+ '<div class="glass panel official-social-empty">No official posts added yet. YouTube imports from its configured channel ID; Instagram and TikTok need a verified provider integration or a post added by management.</div>')+'</div>'+
  '<div class="diary-fan-divider"><span>✦ FAN COMMUNITY ✦</span><p>Continue scrolling for fan posts</p></div></section>';
 }
 const previousCommunity=communityScreen;
@@ -217,6 +228,12 @@ act=async function(name,node){
   }
   return;
  }
+ if(name==='official-remove'){
+  if(store?.me?.role!=='admin')return toast('Management only.');
+  if(!confirm('Remove this post from Official Channels?'))return;
+  await request('/api/official/delete',{method:'POST',body:JSON.stringify({id:node.dataset.value})});
+  officialPage=0;await refresh();toast('Official channel post removed.');return;
+ }
  if(name==='diary-story-open'){openDiaryStory(node.dataset.value);return;}
  if(name==='diary-story-gallery'){diaryStoryArchive();return;}
  if(name==='diary-story-select'){const group=diaryGroups().find(g=>g.id===storyIdol);const index=group?.entries.findIndex(p=>p.id===node.dataset.value)??-1;if(index>=0){storyIndex=index;showStory();}return;}
@@ -279,11 +296,18 @@ showAdmin=async function(){
  if(!host||store.me?.role!=='admin')return;
  const settings=getData().settings||{};
  const input=(name,value,placeholder)=>'<label>'+name+'<input name="'+name+'" value="'+textEscape(value||'')+'" placeholder="'+placeholder+'"></label>';
- host.insertAdjacentHTML('beforeend','<section class="glass panel diary-admin-sources"><span class="eyebrow">USA50 OFFICIAL FEED</span><h3>Connect official channels</h3><p class="lead">YouTube checks for new videos approximately every ten minutes after you enter its channel ID. Instagram and TikTok need their approved platform/webhook integrations to push verified post events into the app.</p><form id="official-source-form" class="diary-form">'+
+ host.insertAdjacentHTML('beforeend','<section class="glass panel diary-admin-sources"><span class="eyebrow">USA50 OFFICIAL FEED</span><h3>Connect official channels</h3><p class="lead">YouTube imports public uploads when its channel ID is configured (approximately every ten minutes). Saving an Instagram or TikTok username does <strong>not</strong> connect its feed: automatic updates require a separately authorized provider integration and webhook.</p><form id="official-source-form" class="diary-form">'+
  input('youtubeChannelId',settings.youtubeChannelId,'UC… (24 characters)')+
  input('instagramUsername',settings.instagramUsername,'Official Instagram username')+
  input('tiktokUsername',settings.tiktokUsername,'Official TikTok username')+
- '<button class="btn" type="submit">Save official channels</button></form></section>');
+ '<button class="btn" type="submit">Save official channels</button></form>'+
+ '<div class="divider"></div><h3>Add an official post ✧</h3>'+
+ '<p class="lead">Publish a public official post without waiting for a provider integration. YouTube thumbnails load automatically; TikTok previews are requested from its source when available. Instagram no longer supplies cover images through oEmbed, so you can attach a thumbnail from the official content.</p>'+
+ '<form id="official-post-form" class="diary-form">'+
+ '<label>Link to official post<input name="url" type="url" required placeholder="https://www.instagram.com/reel/… or https://www.tiktok.com/@…/video/…"></label>'+
+ '<label>Display title<input name="title" maxlength="170" required placeholder="New USA50 performance clip"></label>'+
+ '<label>Optional source cover image (Instagram / TikTok)<input id="official-post-thumbnail" name="thumbnail" type="file" accept="image/jpeg,image/png,image/webp"><small>Optional. Crop from your own official post, or use its approved source cover. Reduced to JPEG before uploading; no source thumbnail will be invented.</small></label>'+
+ '<button class="btn" type="submit">Add to Official Channels</button></form></section>');
 };
 const previousDiarySubmit=submitForm;
 submitForm=async function(form){
@@ -291,6 +315,17 @@ submitForm=async function(form){
   const fd=Object.fromEntries(new FormData(form));
   await request('/api/official/sources',{method:'POST',body:JSON.stringify(fd)});
   await refresh();toast('Official channel settings saved');return;
+ }
+ if(form.id==='official-post-form'){
+  const fd=new FormData(form);
+  const payload={url:String(fd.get('url')||''),title:String(fd.get('title')||'').trim()};
+  const cover=fd.get('thumbnail');
+  if(cover&&cover.size){
+    const photo=await resizeDiaryPhoto(cover);
+    payload.thumbnailDataUrl='data:'+photo.mime+';base64,'+photo.data;
+  }
+  await request('/api/official/publish',{method:'POST',body:JSON.stringify(payload)});
+  await refresh();toast('Official post added ✧');return;
  }
  if(form.id!=='diary-entry-form')return previousDiarySubmit(form);
  const fd=new FormData(form);
