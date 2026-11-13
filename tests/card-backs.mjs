@@ -33,8 +33,8 @@ const defaultBack=call('upload',{kind:'back',dataUrl:raw}).body.artId;
 const rareBack=call('upload',{kind:'back',dataUrl:raw}).body.artId;
 assert.equal(studio.studio.media[defaultBack].kind,'back');
 assert.equal(call('upload',{kind:'back',dataUrl:raw},fanA).status,403);
-const baseCard={title:'First Light',rarity:'R',border:'R',artId:face};
-const rareCard={title:'Personal Letter',rarity:'SSR',border:'SSR',artId:face,backArtId:rareBack};
+const baseCard={title:'First Light',rarity:'R',border:'none',artId:face};
+const rareCard={title:'Personal Letter',rarity:'SSR',border:'none',artId:face,backArtId:rareBack};
 const draft=call('save',{title:'Back design test',member:'Arielle',team:'NYC50',status:'draft',isTest:true,
  defaultBackArtId:defaultBack,cards:[baseCard,rareCard]});
 assert.equal(draft.status,200,JSON.stringify(draft.body));
