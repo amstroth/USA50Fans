@@ -13,6 +13,89 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
  const state=db.officialDiary||(db.officialDiary={diaries:[],officialPosts:[],sequence:{},sources:{}});
  state.diaries||=[];state.officialPosts||=[];state.sequence||={};state.sources||={};
  const dir=path.join(dataDir,'diary-uploads');fs.mkdirSync(dir,{recursive:true});
+ const previewDir=path.join(dataDir,'official-previews');fs.mkdirSync(previewDir,{recursive:true});
+ const THUMB_MAX=1200000;
+ const mimeExt={'image/jpeg':'.jpg','image/png':'.png','image/webp':'.webp'};
+ function validImageBuffer(buf,mime){
+   if(!Buffer.isBuffer(buf)||!buf.length||buf.length>THUMB_MAX||!mimeExt[mime])return false;
+   return (mime==='image/jpeg'&&buf.subarray(0,3).toString('hex')==='ffd8ff')||
+      (mime==='image/png'&&buf.subarray(0,8).toString('hex')==='89504e470d0a1a0a')||
+      (mime==='image/webp'&&buf.toString('ascii',0,4)==='RIFF'&&buf.toString('ascii',8,12)==='WEBP');
+ }
+ function safeThumbnailHost(raw){
+   try{
+     const u=new URL(raw);
+     if(u.protocol!=='https:'||u.username||u.password||u.port)return null;
+     const h=u.hostname.toLowerCase();
+     const allowed=['tiktokcdn.com','tiktokcdn-us.com','tiktok.com','muscdn.com',
+       'ibytedtos.com','byteoversea.com','cdninstagram.com','fbcdn.net','instagram.com',
+       'ytimg.com','ggpht.com','googleusercontent.com'];
+     if(!allowed.some(d=>h===d||h.endsWith('.'+d)))return null;
+     return u.toString();
+   }catch{return null;}
+ }
+ function publicOfficial(p){
+   const {thumbnailFile,thumbnailMime,thumbnailExt,thumbnailAttemptedAt,...display}=p;
+   return {...display,thumbnailUrl:thumbnailFile?'/api/official/thumbnail/'+p.id:
+       p.platform==='YouTube'?'https://i.ytimg.com/vi/'+p.externalId+'/hqdefault.jpg':null};
+ }
+ function writeThumb(p,buf,mime){
+   if(!validImageBuffer(buf,mime))throw Error('Thumbnail must be a JPG, PNG or WebP under 1.2 MB.');
+   const ext=mimeExt[mime],file=p.id+ext;
+   fs.writeFileSync(path.join(previewDir,file),buf);
+   if(p.thumbnailFile&&p.thumbnailFile!==file)try{fs.unlinkSync(path.join(previewDir,p.thumbnailFile));}catch{}
+   p.thumbnailFile=file;p.thumbnailExt=ext;p.thumbnailMime=mime;save();
+ }
+ function thumbnailFromData(p,dataUrl){
+   const m=/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl||''));
+   if(!m)return false;
+   const buf=Buffer.from(m[2],'base64');writeThumb(p,buf,m[1]);return true;
+ }
+ async function fetchThumb(p,rawUrl){
+   const safe=safeThumbnailHost(rawUrl);
+   if(!safe)return false;
+   const response=await fetch(safe,{headers:{Accept:'image/avif,image/webp,image/png,image/jpeg'},redirect:'error',signal:AbortSignal.timeout(6500)});
+   if(!response.ok)return false;
+   const mime=String(response.headers.get('content-type')||'').split(';')[0].toLowerCase();
+   if(!mimeExt[mime]||Number(response.headers.get('content-length')||0)>THUMB_MAX)return false;
+   const bytes=Buffer.from(await response.arrayBuffer());
+   if(!validImageBuffer(bytes,mime))return false;
+   writeThumb(p,bytes,mime);return true;
+ }
+ async function enrichOfficial(p,input={}){
+   if(!p||p.thumbnailFile)return;
+   // Only trusted hostnames supplied by a verified webhook can become media sources.
+   if(input.thumbnailUrl){
+     try{if(await fetchThumb(p,input.thumbnailUrl))return;}catch(err){console.warn('USA50 official thumbnail:',err.message);}
+   }
+   if(p.platform!=='TikTok')return;
+   try{
+     // TikTok oEmbed may supply a cover URL for public videos. The provider can omit it.
+     const response=await fetch('https://www.tiktok.com/oembed?url='+encodeURIComponent(p.url),
+       {headers:{Accept:'application/json'},redirect:'error',signal:AbortSignal.timeout(6500)});
+     if(!response.ok)return;
+     const result=await response.json();
+     if(result.thumbnail_url)await fetchThumb(p,result.thumbnail_url);
+     if((!p.title||p.title==='Official USA50 update')&&typeof result.title==='string'){
+       p.title=result.title.slice(0,170);save();
+     }
+   }catch(err){console.warn('USA50 TikTok preview:',err.message);}
+   finally{p.thumbnailAttemptedAt=now();save();}
+ }
+ function photoThumbnail(req,res,postId){
+   if(!/^[0-9a-f-]{36}$/i.test(postId))return fail(res,404,'Thumbnail not found.');
+   const item=state.officialPosts.find(p=>p.id===postId&&p.thumbnailFile);
+   if(!item)return fail(res,404,'Thumbnail not found.');
+   fs.readFile(path.join(previewDir,item.thumbnailFile),(err,buf)=>{
+     if(err)return fail(res,404,'Thumbnail unavailable.');
+     res.writeHead(200,{'Content-Type':item.thumbnailMime,'Content-Length':buf.length,
+       'Cache-Control':'public,max-age=86400','X-Content-Type-Options':'nosniff'});res.end(buf);
+   });
+ }
+ function removeThumb(p){
+   if(p.thumbnailFile)try{fs.unlinkSync(path.join(previewDir,p.thumbnailFile));}catch{}
+ }
+
  const palettes={cream:'#fff9f0',pink:'#ffe8f0',lavender:'#eee7ff',mint:'#e6f7ee',blue:'#e5f3ff',white:'#ffffff'};
  const lines={none:'Blank',ruled:'Ruled',grid:'Boxed',dots:'Dotted'};
  const allowedEmojis=['♡','✦','☆','☁️','🌷','🐰','🎀','💌','🫧','🦋','🍒','⭐','🪼','🍀','🦄','✨','💗','🌸'];
@@ -20,7 +103,11 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
  function isIdol(u){return Boolean(u&&u.role==='idol'&&!u.mustChangePassword);}
  function authorName(u){return u?.idolName||u?.memberName||u?.displayName||'USA50 Idol';}
  function publicEntry(e){return {id:e.id,authorId:e.authorId,author:e.author,number:e.number,publishedAt:e.publishedAt,text:e.text,layout:e.layout,paper:e.paper,lineColor:e.lineColor,textColor:e.textColor,stickers:e.stickers,photos:e.photos.map(p=>({id:p.id,url:'/api/diary/photo/'+p.id,caption:p.caption}))};}
- function view(){return {diaries:state.diaries.slice(-100).reverse().map(publicEntry),officialPosts:state.officialPosts.slice(-100).reverse(),canPost:false,sourceStatus:{youtube:Boolean(state.sources.youtubeChannelId||process.env.YOUTUBE_CHANNEL_ID),instagram:Boolean(process.env.USA50_OFFICIAL_WEBHOOK_SECRET),tiktok:Boolean(process.env.USA50_OFFICIAL_WEBHOOK_SECRET)}};}
+ function view(){return {diaries:state.diaries.slice(-100).reverse().map(publicEntry),
+   officialPosts:state.officialPosts.slice(-100).reverse().map(publicOfficial),
+   canPost:false,sourceStatus:{youtube:Boolean(state.sources.youtubeChannelId||process.env.YOUTUBE_CHANNEL_ID),
+     instagram:Boolean(process.env.USA50_OFFICIAL_WEBHOOK_SECRET),
+     tiktok:Boolean(process.env.USA50_OFFICIAL_WEBHOOK_SECRET)}};}
  function info(u){return {...view(),canPost:isIdol(u),settings:u?.role==='admin'?{youtubeChannelId:state.sources.youtubeChannelId||process.env.YOUTUBE_CHANNEL_ID||'',instagramUsername:state.sources.instagramUsername||'',tiktokUsername:state.sources.tiktokUsername||''}:null};}
  function photoUpload(item){
    if(!item||!['image/jpeg','image/png','image/webp'].includes(item.mime)||typeof item.data!=='string')throw Error('Choose a JPG, PNG or WebP photo');
@@ -69,10 +156,46 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
    }catch{}return null;
  };
  function addOfficial(input){
-   const source=canonical(input.url);if(!source)return false;
-   if(state.officialPosts.some(p=>p.platform===source.platform&&p.externalId===source.externalId))return false;
-   state.officialPosts.push({id:id(),...source,title:String(input.title||'Official USA50 update').slice(0,170),caption:String(input.caption||'').slice(0,500),publishedAt:input.publishedAt&&Number.isFinite(Date.parse(input.publishedAt))?new Date(input.publishedAt).toISOString():now()});
-   state.officialPosts=state.officialPosts.slice(-300);save();return true;
+   const source=canonical(input.url);if(!source)return null;
+   if(state.officialPosts.some(p=>p.platform===source.platform&&p.externalId===source.externalId))return null;
+   const p={id:id(),...source,title:String(input.title||'Official USA50 update').slice(0,170),
+     caption:String(input.caption||'').slice(0,500),
+     publishedAt:input.publishedAt&&Number.isFinite(Date.parse(input.publishedAt))?new Date(input.publishedAt).toISOString():now()};
+   state.officialPosts.push(p);
+   const discarded=state.officialPosts.splice(0,Math.max(0,state.officialPosts.length-300));
+   for(const old of discarded)removeThumb(old);
+   save();
+   // Async source metadata enrichment is never required for importing the post itself.
+   enrichOfficial(p,input).catch(err=>console.warn('USA50 preview error:',err.message));
+   return p;
+ }
+ async function publishOfficial(req,res,input){
+   const user=userFrom(req);
+   if(!user||user.role!=='admin'||user.mustChangePassword)return fail(res,403,'Management account required.');
+   const canonicalPost=canonical(input.url);
+   if(!canonicalPost)return fail(res,400,'Paste a public YouTube, Instagram post/reel, or TikTok video URL.');
+   if(input.thumbnailDataUrl&&String(input.thumbnailDataUrl).length>1800000)return fail(res,413,'Thumbnail is too large.');
+   const title=String(input.title||'').trim().slice(0,170)||'Official USA50 update';
+   const p=addOfficial({url:canonicalPost.url,title,caption:input.caption});
+   if(!p)return fail(res,409,'This official post is already in the feed.');
+   if(input.thumbnailDataUrl){
+     try{if(!thumbnailFromData(p,input.thumbnailDataUrl))throw Error('Invalid thumbnail.');}
+     catch(err){state.officialPosts=state.officialPosts.filter(x=>x.id!==p.id);removeThumb(p);save();return fail(res,400,err.message);}
+   }
+   return json(res,201,{ok:true,post:publicOfficial(p)});
+ }
+ function deleteOfficial(req,res,data){
+   const user=userFrom(req);
+   if(!user||user.role!=='admin'||user.mustChangePassword)return fail(res,403,'Management account required.');
+   const p=state.officialPosts.find(x=>x.id===data.id);
+   if(!p)return fail(res,404,'Official post not found.');
+   state.officialPosts=state.officialPosts.filter(x=>x.id!==p.id);removeThumb(p);save();
+   return json(res,200,{ok:true});
+ }
+ async function refreshPreviews(){
+   const stale=state.officialPosts.filter(p=>p.platform==='TikTok'&&!p.thumbnailFile&&
+     (!p.thumbnailAttemptedAt||Date.now()-Date.parse(p.thumbnailAttemptedAt)>6*3600000)).slice(-6);
+   for(const p of stale)await enrichOfficial(p).catch(()=>{});
  }
  async function pollYouTube(){
    const channel=state.sources.youtubeChannelId||process.env.YOUTUBE_CHANNEL_ID||'';
@@ -117,7 +240,7 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
    const src=canonical(data.url);if(!src||!['Instagram','TikTok','YouTube'].includes(src.platform))return fail(res,400,'Invalid official post URL');
    const allowed=src.platform==='Instagram'?(state.sources.instagramUsername||process.env.USA50_INSTAGRAM_USERNAME):src.platform==='TikTok'?(state.sources.tiktokUsername||process.env.USA50_TIKTOK_USERNAME):null;
    if(allowed&&String(data.account||'').replace(/^@/,'').toLowerCase()!==allowed.replace(/^@/,'').toLowerCase())return fail(res,403,'Not an authorized official channel');
-   return json(res,200,{ok:true,imported:addOfficial(data)});
+   return json(res,200,{ok:true,imported:Boolean(addOfficial(data))});
  }
- return {info,createDiary,deleteDiary,photo,ingestOfficial,setSources,pollYouTube};
+ return {info,createDiary,deleteDiary,photo,photoThumbnail,publishOfficial,deleteOfficial,refreshPreviews,ingestOfficial,setSources,pollYouTube};
 };
