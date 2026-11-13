@@ -71,3 +71,16 @@ Custom border presets can be deleted only after no cards (including draft packs)
 - Maximum processed file size is **5 MB**; imports up to 15 MB are cropped and compressed locally.
 - After cropping, **Apply cropped artwork** uploads the file. Then click **Save pack** or **Save border preset** to persist the artwork assignment.
 - Uploads and image metadata currently live on the persistent Railway volume and remain management-only until used in a published pack.
+
+## Editable card-face lettering and finished PNG export (v1.0)
+
+Inside **Collections → select card → Design card**, use the **Lettering on the card** editor to set:
+- Text printed on the card face (separate from the collectible card's listing title).
+- Font family, font weight, optional italic, size (14–160 master-image pixels), and hex color.
+- Horizontal/vertical position (0–100% of the 660 × 1020 card), alignment, or drag the lettering directly on the card preview.
+
+The lettering is saved separately from the photo artwork and custom or built-in border. Management can change text later without re-uploading the art. Existing cards without an explicit text layer default in the editor to their member name; on save, the layer becomes independently editable.
+
+**Download finished card (PNG)** creates a flattened **660 × 1020 px** image directly in your browser, compositing image, rarity-border overlay and editable lettering in that order. This works with unsaved changes in the editor, so download the preview before saving if desired. For durable edits, click **Save pack** separately; downloading does not change the published pack.
+
+Only same-origin card assets may be exported. A card must have artwork to download. The print-standard pixel size is a design master, not a vendor-ready manufacturing bleed template; confirm bleed and safe areas with the printer before producing physical sets.
