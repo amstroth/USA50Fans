@@ -55,9 +55,11 @@ assert.ok(borderId.startsWith('border-'));
 assert.ok(get(admin).body.borderPresets.some(b=>b.id===borderId));
 assert.equal(post(admin,'border/save',{name:'Dreamy Pink Frame',artId:borderUpload.body.artId}).status,409);
 assert.equal(post(admin,'border/delete',{id:'R',confirm:'DELETE'}).status,404);
-const card={title:'First',rarity:'SSR',border:'none',artId:img.body.artId};
+const card={title:'First',rarity:'SSR',border:'none',artId:img.body.artId,
+ overlayText:{value:'Kellie',fontFamily:'Georgia',fontSize:74,x:46.5,y:88,color:'#9057A9',align:'center',weight:'700',italic:true}};
 const scheduled=post(admin,'save',{id:packId,title:'Test comeback',member:'Kellie',team:'NYC50',subgroup:'NYC50',status:'scheduled',releaseAt:'2099-06-01T12:00:00Z',cards:[card]});
 assert.equal(scheduled.status,200);
+assert.deepEqual(scheduled.body.pack.cards[0].overlayText,card.overlayText);
 assert.equal(app.publicAlbums().find(p=>p.id===packId).available,false);
 assert.ok(!app.publicCardsByPack()[packId]);
 const draftAgain=post(admin,'save',{id:packId,title:'Test comeback',member:'Kellie',team:'NYC50',subgroup:'NYC50',status:'draft',releaseAt:'2026-01-01T00:00:00Z',cards:scheduled.body.pack.cards});
@@ -68,6 +70,17 @@ assert.equal(released.status,200);
 assert.equal(app.publicAlbums().find(p=>p.id===packId).available,true);
 assert.equal(app.publicAlbums().find(p=>p.id===packId).odds.SSR,100);
 assert.equal(app.publicCardsByPack()[packId][0].border,'none');
+assert.deepEqual(app.publicCardsByPack()[packId][0].overlayText,card.overlayText);
+assert.equal(app.publicCardsByPack()[packId][0].title,'First');
+const sanitized=post(admin,'save',{id:packId,title:'Test comeback',member:'Kellie',team:'NYC50',subgroup:'NYC50',status:'published',
+ cards:[{...released.body.pack.cards[0],overlayText:{value:'custom name',fontFamily:'Unknown<script>',fontSize:999,x:-10,y:150,color:'expression(red)',weight:'900',align:'bad'}}]});
+assert.equal(sanitized.status,200);
+const safe=sanitized.body.pack.cards[0].overlayText;
+assert.equal(safe.value,'custom name');
+assert.equal(safe.fontFamily,'Georgia');assert.equal(safe.fontSize,160);
+assert.equal(safe.x,0);assert.equal(safe.y,100);
+assert.equal(safe.color,'#68577D');assert.equal(safe.weight,'400');
+assert.equal(app.publicCardsByPack()[packId][0].overlayText.value,'custom name');
 
 const styled=post(admin,'save',{id:packId,title:'Test comeback',member:'Kellie',team:'NYC50',subgroup:'NYC50',status:'published',
  cards:[{...released.body.pack.cards[0],border:borderId}]});
