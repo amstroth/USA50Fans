@@ -38,6 +38,14 @@ function officialCard(p){
   '<h3>'+textEscape(p.title)+'</h3><small>'+diaryDate(p.publishedAt)+'</small>'+
   '<span class="official-open" aria-hidden="true">↗</span></div></a>'+remove+'</article>';
 }
+// Provider CDN thumbnails can expire or be unavailable. Keep the official post
+// link working and show the branded visual fallback instead of a broken image.
+document.addEventListener('error',event=>{
+ const img=event.target;
+ if(!img?.matches?.('.official-post-image'))return;
+ img.hidden=true;img.remove();
+ img.closest('.official-post-thumbnail')?.classList.replace('has-image','no-image');
+},true);
 const storyPalette=['#b88ad7','#ef9cc6','#b29bdf','#91c7bb','#e1b5d2','#a5b6eb'];
 let storyIdol=null,storyIndex=0,storyTimer=null,storyTouchStart=null,storyFocusReturn=null,storyMode='gallery';
 function diaryGroups(){
