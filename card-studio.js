@@ -396,7 +396,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     if(pathname==='/api/card-studio'){
       if(!isStudio(req))return deny(res);
       return json(res,200,{face:FACE,rarities:RARITIES,borders:BORDERS,borderPresets:borderOptions(),
-        role:userFrom(req).role,member: idolMember(req)||null,
+        role:userFrom(req).role,userId:userFrom(req).id,member: idolMember(req)||null,
         packs:statusOverview().filter(p=>canEditPack(req,p)),
         audit:isAdmin(req)?studio.audit.slice(-40).reverse():[]});
     }
