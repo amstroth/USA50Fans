@@ -25,7 +25,7 @@ async function open({card,member,artUrl,borderUrl,upload,onApply}){
  const layers=copy(card.materialLayers||[]).map(l=>({...l,side:l.side==='back'?'back':'front'}));
  const maskMap=new Map(),modified=new Set(),undo=new Map();
  let viewSide='front',frontSource=null,backSource=null;
- let current=layers.findIndex(l=>l.side==='front'),tool='brush',size=28,tolerance=48,source=null,engine=null,drag=null,closed=false;
+ let current=layers.findIndex(l=>l.side==='front'),tool='brush',size=28,tolerance=48,source=null,engine=null,drag=null,closed=false,previewStarted=false;
  function currentLayer(){const l=layers[current];return l?.side===viewSide?l:null;}
  function layerHTML(l,i){
   return '<button class="foil-layer-entry '+(i===current?'active':'')+'" data-foil="select" data-index="'+i+'">'+
@@ -81,7 +81,8 @@ async function open({card,member,artUrl,borderUrl,upload,onApply}){
     '<div class="foil-footer"><span id="foil-status">Mask editing is local until you apply the layers.</span>'+
     '<div><button class="foil-cancel" data-foil="close">Cancel</button><button class="foil-primary" data-foil="apply">Apply layers to card</button></div></div>';
   const previewCanvas=root.querySelector('#foil-face-canvas');if(source)previewCanvas.getContext('2d').drawImage(source,0,0);
-  if(engine){const container=root.querySelector('#foil-three-preview');engine.destroy();engine=null;startPreview(container);}
+  if(engine){engine.destroy();engine=null;}
+  if(previewStarted)startPreview(root.querySelector('#foil-three-preview'));
   updateOverlay();
  }
  function makeMask(){const c=document.createElement('canvas');c.width=W;c.height=H;return c;}
@@ -223,7 +224,7 @@ async function open({card,member,artUrl,borderUrl,upload,onApply}){
  source=frontSource;
  if(source)root.querySelector('#foil-face-canvas').getContext('2d').drawImage(source,0,0);
  if(layers.length){await initMask(currentLayer());updateOverlay();}
- await startPreview(root.querySelector('#foil-three-preview'));
+ previewStarted=true;await startPreview(root.querySelector('#foil-three-preview'));
  root.addEventListener('pointerdown',ev=>{
   if(!ev.target.matches('#foil-mask-overlay')||!currentLayer())return;
   const p=point(ev);remember();drag={pointerId:ev.pointerId,last:p,first:p,points:[p]};
