@@ -70,6 +70,22 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     // Existing legacy cards still use their stored member name unless edited.
     return c.overlayText?normalizeTextLayer(c.overlayText):null;
   }
+
+  const MATERIAL_TYPES=['holographic','iridescent','glitter'];
+  function normalizeMaterialLayer(source,previous){
+    const x=source&&typeof source==='object'&&!Array.isArray(source)?source:{};
+    const number=(v,d,lo,hi)=>Number.isFinite(Number(v))&&v!==null&&v!==''?Math.max(lo,Math.min(hi,Number(v))):d;
+    const color=(v,f)=>/^#[0-9a-f]{6}$/i.test(String(v||''))?String(v):f;
+    const idValue=String(x.id||'');
+    const layerId=previous?.id||(/^layer-[a-zA-Z0-9-]{8,60}$/.test(idValue)?idValue:'layer-'+id());
+    const maskArtId=x.maskArtId?String(x.maskArtId):null;
+    if(maskArtId&&studio.media[maskArtId]?.kind!=='mask')throw new Error('Foil mask must be a validated uploaded mask image.');
+    if(!MATERIAL_TYPES.includes(x.type))throw new Error('Unknown foil layer material.');
+    return {id:layerId,name:bodyText(x.name,45)||'New material',type:x.type,enabled:x.enabled!==false,
+      maskArtId,colors:[color(x.colors?.[0],'#e99fff'),color(x.colors?.[1],'#a9edff')],
+      opacity:number(x.opacity,.72,0,1),intensity:number(x.intensity,.85,0,2),
+      density:number(x.density,.5,.05,1),scale:number(x.scale,1,.2,5),speed:number(x.speed,.65,0,3)};
+  }
   function validCard(c,allowLegacy=false){
     return !!c && !!String(c.title||'').trim() && RARITIES.includes(c.rarity) &&
       hasBorder(c.border) && (!!studio.media[c.artId] || (allowLegacy&&c.legacy===true));
@@ -82,7 +98,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
       title:c.title,index:i+1,member:p.member,team:p.team,
       artUrl:artUrl(c.artId),backArtUrl:artUrl(effectiveBackId(c,p)),
       backSource:c.backArtId?'card':p.defaultBackArtId?'set':'generated',
-      overlayText:labelForCard(c,p)};
+      overlayText:labelForCard(c,p),materialLayers:(c.materialLayers||[]).map(x=>({...x,maskUrl:artUrl(x.maskArtId)}))};
   }
   function rarityOdds(pack){
     const choices=RARITIES.filter(r=>pack.cards.some(c=>c.rarity===r));
@@ -123,6 +139,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
   function statusOverview(){
     return studio.packs.map(p=>({...p,defaultBackUrl:artUrl(p.defaultBackArtId),
       cards:p.cards.map(c=>({...c,artUrl:artUrl(c.artId),borderUrl:borderUrl(c.border),
+        materialLayers:(c.materialLayers||[]).map(x=>({...x,maskUrl:artUrl(x.maskArtId)})),
         backArtUrl:artUrl(effectiveBackId(c,p))})),
       effectiveStatus:effective(p)?'published':p.status,ready:ready(p),cardCount:p.cards.length}));
   }
@@ -130,7 +147,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
   function deny(res){return fail(res,403,'Management account required. Change your temporary password before using Card Studio.');}
   function log(action,packId,uid){studio.audit.push({at:now(),action,packId,by:uid});studio.audit=studio.audit.slice(-250);}
   function upload(data,req,res){
-    const kind=data.kind==='border'?'border':data.kind==='back'?'back':'face';
+    const kind=data.kind==='border'?'border':data.kind==='back'?'back':data.kind==='mask'?'mask':'face';
     const match=/^data:image\/(webp|png);base64,([A-Za-z0-9+/=]+)$/.exec(String(data.dataUrl||''));
     if(!match)return fail(res,400,'Export the image from Card Studio as WebP or PNG.');
     const buf=Buffer.from(match[2],'base64');
@@ -185,9 +202,17 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
       if(artId && studio.media[artId]?.kind!=='face')return fail(res,400,'A face image must use uploaded card artwork.');
       const backArtId=draft.backArtId===undefined?(previousCard?.backArtId||null):(draft.backArtId||null);
       if(backArtId && studio.media[backArtId]?.kind!=='back')return fail(res,400,'Individual card backs must be uploaded as back images.');
+      const layerInput=Array.isArray(draft.materialLayers)?draft.materialLayers:(previousCard?.materialLayers||[]);
+      if(layerInput.length>8)return fail(res,400,'Up to eight foil layers are supported per card.');
+      let materialLayers;
+      try{
+        const known=new Map((previousCard?.materialLayers||[]).map(x=>[x.id,x]));
+        materialLayers=layerInput.map(x=>normalizeMaterialLayer(x,known.get(x.id)));
+        if(new Set(materialLayers.map(x=>x.id)).size!==materialLayers.length)throw Error('Duplicate foil layer IDs.');
+      }catch(err){return fail(res,400,err.message);}
       const cardId=previousCard?.id||id();
       if(seen.has(cardId))return fail(res,400,'Duplicate card ID.');seen.add(cardId);
-      cards.push({id:cardId,rarity:draft.rarity,border,title,artId:artId||null,backArtId,
+      cards.push({id:cardId,rarity:draft.rarity,border,title,artId:artId||null,backArtId,materialLayers,
         overlayText:normalizeTextLayer(draft.overlayText===undefined?previousCard?.overlayText:draft.overlayText,member),
         legacy:Boolean(previousCard?.legacy && !artId && existing?.id===baseAlbumId)});
     }
@@ -199,7 +224,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     if(status!=='draft' && !ready(p))return fail(res,400,'To schedule or publish, every card needs artwork, a title, rarity and border selection.');
     if(p.id===baseAlbumId && status!=='draft' && RARITIES.some(r=>!cards.some(c=>c.rarity===r)))return fail(res,400,'The original True Love set must keep at least one card of each rarity to match its published pull odds.');
     // Replacing/removing a back should not leave private handwritten artwork orphaned.
-    const previousAssets=existing?[existing.defaultBackArtId,...existing.cards.flatMap(c=>[c.artId,c.backArtId])].filter(Boolean):[];
+    const previousAssets=existing?[existing.defaultBackArtId,...existing.cards.flatMap(c=>[c.artId,c.backArtId,...(c.materialLayers||[]).map(l=>l.maskArtId)])].filter(Boolean):[];
     if(existing)Object.assign(existing,p);else studio.packs.push(p);
     for(const assetId of previousAssets)cleanupMedia(assetId);
     log(existing?'edit':'create',p.id,uid);save();syncBaseCards();
@@ -216,7 +241,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     db.tradeListings=(db.tradeListings||[]).filter(t=>!cardIds.has(t.cardId));
     studio.packs=studio.packs.filter(pack=>pack.id!==p.id);
     // Remove unreferenced face and back files without deleting shared assets.
-    const previouslyUsed=[p.defaultBackArtId,...p.cards.flatMap(card=>[card.artId,card.backArtId])].filter(Boolean);
+    const previouslyUsed=[p.defaultBackArtId,...p.cards.flatMap(card=>[card.artId,card.backArtId,...(card.materialLayers||[]).map(l=>l.maskArtId)])].filter(Boolean);
     for(const artId of previouslyUsed)cleanupMedia(artId);
     log('delete-test',p.id,userFrom(req).id);save();syncBaseCards();
     return json(res,200,{ok:true,deleted:p.id});
@@ -227,16 +252,18 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     if(!meta)return fail(res,404,'Artwork not found.');
     const cardBackOwner=studio.packs.some(p=>effective(p)&&p.cards.some(c=>
       effectiveBackId(c,p)===artId && Number(userFrom(req)?.state?.owned?.[c.id]||0)>0));
+    const maskOwner=studio.packs.some(p=>effective(p)&&p.cards.some(c=>
+      (c.materialLayers||[]).some(l=>l.maskArtId===artId) && Number(userFrom(req)?.state?.owned?.[c.id]||0)>0));
     const published=studio.packs.some(p=>effective(p)&&p.cards.some(c=>
       c.artId===artId || presetFor(c.border)?.artId===artId));
     // Backside messages are only delivered to owners of the corresponding card.
-    if(!isAdmin(req) && !(meta.kind==='back'?cardBackOwner:published))
+    if(!isAdmin(req) && !(meta.kind==='back'?cardBackOwner:meta.kind==='mask'?maskOwner:published))
       return fail(res,403,meta.kind==='back'?'Obtain this card before viewing its back.':'Artwork is not published.');
     const full=path.join(artworkDir,meta.filename);
     return fs.readFile(full,(err,buf)=>{
       if(err)return fail(res,404,'Artwork unavailable.');
       res.writeHead(200,{'Content-Type':meta.mime,'Content-Length':buf.length,
-        'Cache-Control':meta.kind==='back'?'private,no-store':published?'public,max-age=600':'private,no-store','X-Content-Type-Options':'nosniff'});
+        'Cache-Control':['back','mask'].includes(meta.kind)?'private,no-store':published?'public,max-age=600':'private,no-store','X-Content-Type-Options':'nosniff'});
       res.end(buf);
     });
   }
@@ -318,7 +345,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     return json(res,200,{ok:true,preset:{...preset,url:borderUrl(preset.id),builtin:false}});
   }
   function cleanupMedia(artId){
-    if(studio.packs.some(p=>p.defaultBackArtId===artId||p.cards.some(c=>c.artId===artId||c.backArtId===artId)))return;
+    if(studio.packs.some(p=>p.defaultBackArtId===artId||p.cards.some(c=>c.artId===artId||c.backArtId===artId||(c.materialLayers||[]).some(l=>l.maskArtId===artId))))return;
     if(studio.borders.some(b=>b.artId===artId))return;
     const entry=studio.media[artId];if(!entry)return;
     try{fs.unlinkSync(path.join(artworkDir,entry.filename));}catch(_e){}
