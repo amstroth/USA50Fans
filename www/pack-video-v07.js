@@ -31,7 +31,12 @@ showPackOpening=function(result,freePull=false){
     dreamReveal(result);
   };
   currentFinish=done;
-  if(!video)return previousOpening(result,freePull);document.querySelector('#modal-root .modal')?.classList.add('pack-immersive','pack-immersive-results');document.querySelector('#modal-root .modal-backdrop')?.classList.add('pack-immersive-backdrop');
+  if(!video){
+    previousOpening(result,freePull);
+    document.querySelector('#modal-root .modal')?.classList.add('pack-immersive','pack-immersive-results');
+    document.querySelector('#modal-root .modal-backdrop')?.classList.add('pack-immersive-backdrop');
+    return;
+  }
   video.onended=done;
   video.onerror=()=>{if(completed)return;completed=true;clearTimeout(watchdog);currentFinish=null;previousOpening(result,freePull);document.querySelector('#modal-root .modal')?.classList.add('pack-immersive','pack-immersive-results');document.querySelector('#modal-root .modal-backdrop')?.classList.add('pack-immersive-backdrop');};
   watchdog=setTimeout(done,8500);
