@@ -32,7 +32,9 @@ module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,admi
 
   const emailRole=[
     ["amstrotherusa50@gmail.com","idol","Arielle","arielle","USA50_IDOL_BOOTSTRAP_PASSWORD"],
-    ["arielstrotherb@gmail.com","admin","Management",null,"USA50_ADMIN_BOOTSTRAP_PASSWORD"]
+    ["arielstrotherb@gmail.com","admin","Management",null,"USA50_ADMIN_BOOTSTRAP_PASSWORD"],
+    ["jelugousa50@gmail.com","idol","Jaylene","jaylene","USA50_JAYLENE_BOOTSTRAP_PASSWORD"],
+    ["cnwashingtonusa50@gmail.com","admin","Chase",null,"USA50_CHASE_BOOTSTRAP_PASSWORD"]
   ];
   let mutated=false;
   for(const [email,role,displayName,idolId,key] of emailRole){
