@@ -84,7 +84,7 @@ async function api(req,res,url){
  if(method==='GET'&&url.pathname==='/api/me')return json(res,200,{me:userFrom(req)?cleanUser(userFrom(req)):null});
  if(method==='GET'&&url.pathname==='/api/admin/overview'){
    const u=userFrom(req);
-   if(!adminFrom(req)&&u?.role!=='admin')return fail(res,403,'Management login required.');
+   if((u&&u.role!=='admin')||(!adminFrom(req)&&u?.role!=='admin'))return fail(res,403,'Management login required.');
    if(u?.mustChangePassword)return fail(res,403,'Change your temporary password before using management tools.');
    return json(res,200,{fansiteApplications:db.fansites,posts:db.posts,reports:db.reports,users:Object.keys(db.users).length});
  }
@@ -125,7 +125,7 @@ async function api(req,res,url){
    return json(res,200,{ok:true},{'Set-Cookie':cookie('usa50_admin',sign({admin:true,exp:Date.now()+7*86400000}),req,604800)});
  }
  if(ep.startsWith('/api/admin/')){
-   if(!adminFrom(req)&&userFrom(req)?.role!=='admin')return fail(res,403,'Admin login required.');
+   if((userFrom(req)&&userFrom(req).role!=='admin')||(!adminFrom(req)&&userFrom(req)?.role!=='admin'))return fail(res,403,'Admin login required.');
    if(userFrom(req)?.mustChangePassword)return fail(res,403,'Change your temporary password before using management tools.');
    if(ep==='/api/admin/overview')return json(res,200,{fansiteApplications:db.fansites,posts:db.posts,reports:db.reports,users:Object.keys(db.users).length});
    if(ep==='/api/admin/fansite-review'){
