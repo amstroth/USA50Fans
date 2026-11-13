@@ -43,6 +43,33 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
   function presetFor(id){return studio.borders.find(b=>b.id===id);}
   function borderUrl(id){if(!id||id==='none')return null;const p=presetFor(id);return p?'/api/card-studio/art/'+p.artId:null;}
   function borderOptions(){return [{id:'none',name:'No border',url:null,builtin:true,rarity:null},...studio.borders.map(b=>({...b,url:borderUrl(b.id),builtin:false}))];}
+
+  // Face lettering is an independent editable layer, not baked into uploaded art.
+  const FACE_FONTS=['Georgia','Arial','Times New Roman','Trebuchet MS','Verdana','Courier New'];
+  const TEXT_WEIGHTS=['400','500','600','700'];
+  function normalizeTextLayer(input, fallback=''){
+    const t=input&&typeof input==='object'&&!Array.isArray(input)?input:{};
+    const number=(value,defaultValue,min,max)=>{
+      const n=Number(value);
+      return Number.isFinite(n)&&value!==null&&value!==''?Math.max(min,Math.min(max,Math.round(n*10)/10)):defaultValue;
+    };
+    const value=bodyText(t.value===undefined?fallback:t.value,60);
+    return {
+      value,
+      fontFamily:FACE_FONTS.includes(t.fontFamily)?t.fontFamily:'Georgia',
+      fontSize:number(t.fontSize,58,14,160),
+      x:number(t.x,50,0,100),
+      y:number(t.y,88,0,100),
+      color:/^#[0-9a-fA-F]{6}$/.test(String(t.color||''))?t.color:'#68577D',
+      align:['left','center','right'].includes(t.align)?t.align:'center',
+      weight:TEXT_WEIGHTS.includes(String(t.weight))?String(t.weight):'400',
+      italic:t.italic===true
+    };
+  }
+  function labelForCard(c,p){
+    // Existing legacy cards still use their stored member name unless edited.
+    return c.overlayText?normalizeTextLayer(c.overlayText):null;
+  }
   function validCard(c,allowLegacy=false){
     return !!c && !!String(c.title||'').trim() && RARITIES.includes(c.rarity) &&
       hasBorder(c.border) && (!!studio.media[c.artId] || (allowLegacy&&c.legacy===true));
@@ -51,7 +78,8 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
   function cardPublic(c,p,i){
     return {id:c.id,albumId:p.id,rarity:c.rarity,border:c.border||'none',borderUrl:borderUrl(c.border||'none'),
       title:c.title,index:i+1,member:p.member,team:p.team,
-      artUrl:c.artId?'/api/card-studio/art/'+c.artId:null};
+      artUrl:c.artId?'/api/card-studio/art/'+c.artId:null,
+      overlayText:labelForCard(c,p)};
   }
   function rarityOdds(pack){
     const choices=RARITIES.filter(r=>pack.cards.some(c=>c.rarity===r));
@@ -151,6 +179,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
       const cardId=previousCard?.id||id();
       if(seen.has(cardId))return fail(res,400,'Duplicate card ID.');seen.add(cardId);
       cards.push({id:cardId,rarity:draft.rarity,border,title,artId:artId||null,
+        overlayText:normalizeTextLayer(draft.overlayText===undefined?previousCard?.overlayText:draft.overlayText,member),
         legacy:Boolean(previousCard?.legacy && !artId && existing?.id===baseAlbumId)});
     }
     const p={
