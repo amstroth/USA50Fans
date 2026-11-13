@@ -60,6 +60,7 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
    if(!mimeExt[mime]||Number(response.headers.get('content-length')||0)>THUMB_MAX)return false;
    const bytes=Buffer.from(await response.arrayBuffer());
    if(!validImageBuffer(bytes,mime))return false;
+   if(p.thumbnailFile)return true; // An uploaded approved cover takes precedence.
    writeThumb(p,bytes,mime);return true;
  }
  async function enrichOfficial(p,input={}){
@@ -155,7 +156,7 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
      if(['www.tiktok.com','tiktok.com'].includes(h)){const m=u.pathname.match(/^\/@[\w.]+\/video\/(\d{12,25})/);if(!m)return null;return {platform:'TikTok',url:'https://www.tiktok.com'+u.pathname.replace(/\/$/,'') ,externalId:m[1]};}
    }catch{}return null;
  };
- function addOfficial(input){
+ function addOfficial(input,autoEnrich=true){
    const source=canonical(input.url);if(!source)return null;
    if(state.officialPosts.some(p=>p.platform===source.platform&&p.externalId===source.externalId))return null;
    const p={id:id(),...source,title:String(input.title||'Official USA50 update').slice(0,170),
@@ -166,7 +167,7 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
    for(const old of discarded)removeThumb(old);
    save();
    // Async source metadata enrichment is never required for importing the post itself.
-   enrichOfficial(p,input).catch(err=>console.warn('USA50 preview error:',err.message));
+   if(autoEnrich)enrichOfficial(p,input).catch(err=>console.warn('USA50 preview error:',err.message));
    return p;
  }
  async function publishOfficial(req,res,input){
@@ -176,11 +177,15 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
    if(!canonicalPost)return fail(res,400,'Paste a public YouTube, Instagram post/reel, or TikTok video URL.');
    if(input.thumbnailDataUrl&&String(input.thumbnailDataUrl).length>1800000)return fail(res,413,'Thumbnail is too large.');
    const title=String(input.title||'').trim().slice(0,170)||'Official USA50 update';
-   const p=addOfficial({url:canonicalPost.url,title,caption:input.caption});
+   const p=addOfficial({url:canonicalPost.url,title,caption:input.caption},false);
    if(!p)return fail(res,409,'This official post is already in the feed.');
    if(input.thumbnailDataUrl){
      try{if(!thumbnailFromData(p,input.thumbnailDataUrl))throw Error('Invalid thumbnail.');}
      catch(err){state.officialPosts=state.officialPosts.filter(x=>x.id!==p.id);removeThumb(p);save();return fail(res,400,err.message);}
+   }else if(p.platform==='TikTok'){
+     // The management form waits for the official public metadata response so
+     // the thumbnail is visible on the very next feed refresh if available.
+     await enrichOfficial(p).catch(err=>console.warn('USA50 official preview:',err.message));
    }
    return json(res,201,{ok:true,post:publicOfficial(p)});
  }
