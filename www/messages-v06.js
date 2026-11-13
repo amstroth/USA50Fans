@@ -12,6 +12,9 @@ const pinned=m=>(msg().pinnedIds||[]).includes(m.id);
 function recent(m){
  const notes=[];
  for(const p of msg().posts||[])if(p.idolId===m.id)notes.push({at:p.createdAt,text:p.body,from:'idol'});
+ for(const p of msg().idolReplies||[])if(p.idolId===m.id){
+   notes.push({at:p.createdAt,text:p.fromName+': '+p.text,from:'idol'});
+ }
  for(const r of msg().replies||[])if(r.idolId===m.id){
    notes.push({at:r.createdAt,text:r.text,from:'you'});
    if(r.idolResponse)notes.push({at:r.idolResponse.createdAt,text:r.idolResponse.text,from:'idol'});
@@ -45,19 +48,24 @@ function gallery(){
  '<label class="im-search">⌕ <input id="im-filter" type="search" placeholder="Search idols" value="'+e(searchTerm)+'" aria-label="Search messages"></label>'+
  (!store.me?'<p class="im-guest">Reading is free. <button class="text-btn" data-go="profile">Sign in</button> to pin favorites.</p>':'')+
  '<div class="im-list-groups">'+section('Pinned',ms.filter(pinned))+section('All Idols',ms.filter(m=>!pinned(m)))+'</div>'+
- '<p class="im-privacy-note">Replies are private between each fan and idol. Fan subscriptions are only simulated in this development build.</p></div>';
+ '<p class="im-privacy-note">Fan-to-idol replies stay private; idol-to-idol replies appear publicly. Fan subscriptions are only simulated in this development build.</p></div>';
 }
 function chat(){
  const m=allMembers().find(x=>x.id===threadId);if(!m){threadId=null;return gallery();}
  const posts=(msg().posts||[]).filter(p=>p.idolId===threadId);
  const messages=[];
  for(const p of posts)messages.push({at:p.createdAt,body:p.body,from:'idol'});
+ for(const reply of msg().idolReplies||[])if(reply.idolId===threadId){
+   messages.push({at:reply.createdAt,body:reply.text,from:'idol-public',fromName:reply.fromName,fromId:reply.fromId});
+ }
  for(const r of msg().replies||[])if(r.idolId===threadId){
    messages.push({at:r.createdAt,body:r.text,from:'fan'});
    if(r.idolResponse)messages.push({at:r.idolResponse.createdAt,body:r.idolResponse.text,from:'personal'});
  }
  messages.sort((a,b)=>Date.parse(a.at)-Date.parse(b.at));
- const rows=messages.map(p=>'<div class="im-msg-row '+(p.from==='fan'?'outbound':'inbound')+'"><div class="im-chat-bubble '+(p.from==='fan'?'mine':p.from==='personal'?'personal':'')+'"><p>'+e(p.body)+'</p><small>'+e(p.from==='personal'?'Private reply · ':'')+time(p.at)+'</small></div></div>').join('');
+ const rows=messages.map(p=>'<div class="im-msg-row '+(p.from==='fan'?'outbound':'inbound')+'"><div class="im-chat-bubble '+(p.from==='fan'?'mine':p.from==='personal'?'personal':p.from==='idol-public'?'idol-public':'')+'">'+
+ (p.from==='idol-public'?'<strong class="im-public-sender">✦ '+e(p.fromName)+' · Idol reply</strong>':'')+
+ '<p>'+e(p.body)+'</p><small>'+e(p.from==='personal'?'Private reply · ':p.from==='idol-public'?'Public to all fans · ':'')+time(p.at)+'</small></div></div>').join('');
  const last=posts.slice().sort((a,b)=>Date.parse(b.createdAt)-Date.parse(a.createdAt))[0];
  const locked=!store.me?.state?.subscriberPreview||msg().banned||!last||store.me?.mustChangePassword;
  let input='';
@@ -66,7 +74,7 @@ function chat(){
  (last&&!msg().banned?'<button class="text-btn" data-go="profile">'+(store.me?'Subscription settings':'Sign in')+'</button>':'')+'</div>';
  return '<div class="im-chat"><header class="im-chat-header"><button class="im-back" data-action="im-back" type="button" aria-label="Back to inbox">‹ <span>Back</span></button><div class="im-idol">'+avatar(m)+'<div><strong>'+e(m.name)+'</strong><small>'+e(m.team)+' · Official idol updates</small></div></div>'+pinControl(m)+'</header>'+
  '<div class="im-chat-log" id="im-chat-log" role="log" aria-label="Messages from '+e(m.name)+'">'+(rows||'<div class="im-no-chat"><div>'+avatar(m)+'</div><h3>No messages yet ♡</h3><p>New updates from '+e(m.name)+' will appear here.</p></div>')+'</div>'+
- '<footer class="im-composer"><p>Only you and '+e(m.name)+' can see your replies.</p>'+input+'</footer></div>';
+ '<footer class="im-composer"><p>Your replies are private. Replies between idols are visible to everyone.</p>'+input+'</footer></div>';
 }
 messagesScreen=function(){
  if(role()==='idol'||role()==='admin')return oldMessagesScreen();
