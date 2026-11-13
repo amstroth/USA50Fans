@@ -72,6 +72,25 @@ try{
  const studioOverview=await api('/api/card-studio',null,admin.token);
  assert.equal(studioOverview.httpStatus,200);
  assert.ok(Array.isArray(studioOverview.packs));
+ // Official Channels: management can curate provider links and upload an
+ // approved source cover; fan/idol accounts cannot inject official content.
+ const officialLink={url:'https://www.instagram.com/reel/ABCDEfghijk/',title:'USA50 teaser',
+  thumbnailDataUrl:'data:image/jpeg;base64,'+Buffer.from('ffd8ff00112233445566','hex').toString('base64')};
+ assert.equal((await api('/api/official/publish',officialLink,ta)).httpStatus,403);
+ assert.equal((await api('/api/official/publish',officialLink,idol.token)).httpStatus,403);
+ const imported=await api('/api/official/publish',officialLink,admin.token);
+ assert.equal(imported.httpStatus,201,JSON.stringify(imported));
+ assert.equal(imported.post.platform,'Instagram');
+ assert.equal(imported.post.thumbnailUrl,'/api/official/thumbnail/'+imported.post.id);
+ const coverResponse=await fetch(base+imported.post.thumbnailUrl);
+ assert.equal(coverResponse.status,200);
+ assert.equal(coverResponse.headers.get('content-type'),'image/jpeg');
+ const officialBootstrap=await api('/api/bootstrap');
+ assert.ok(officialBootstrap.officialDiary.officialPosts.some(x=>x.id===imported.post.id&&x.thumbnailUrl));
+ assert.equal((await api('/api/official/publish',officialLink,admin.token)).httpStatus,409);
+ assert.equal((await api('/api/official/delete',{id:imported.post.id},admin.token)).httpStatus,200);
+ assert.equal((await fetch(base+imported.post.thumbnailUrl)).status,404);
+ passed++;
  // Idol accounts get the creator workspace, but not any moderation overview.
  assert.equal((await api('/api/card-studio',null,idolStart.token)).httpStatus,403);
  const idolStudio=await api('/api/card-studio',null,idol.token);
