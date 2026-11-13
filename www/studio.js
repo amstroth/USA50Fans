@@ -51,7 +51,7 @@ function choose(id,force=false){
 }
 function newPack(){
  if(isDirty && !confirm('Discard your unsaved changes?'))return;
- working={id:null,title:'New USA50 Pack',member:'Arielle',team:'NYC50',subgroup:'NYC50',
+ working={id:null,title:'New USA50 Pack',member:catalogue?.member?(catalogue.member.charAt(0).toUpperCase()+catalogue.member.slice(1)):'Arielle',team:'NYC50',subgroup:'NYC50',
    description:'',releaseAt:null,status:'draft',isTest:true,cards:[],ready:false,defaultBackArtId:null,defaultBackUrl:null};
  cardIndex=0;isDirty=false;alertUser('');render();
 }
@@ -208,6 +208,7 @@ function render(){
  byId('studio-pack-library').hidden=!borders;
  byId('studio-new').hidden=borders;
  byId('studio-packs').hidden=borders;
+ const bar=document.querySelector('.studio-top-label');if(bar)bar.textContent=catalogue.role==='idol'?'✦ IDOL CREATOR WORKSPACE / CARD STUDIO':'✦ MANAGEMENT WORKSPACE / CARD STUDIO';
  if(borders){
    byId('studio-main-content').innerHTML=renderBorderLibrary();
    byId('studio-publish-panel').innerHTML=borderHelp();
@@ -487,6 +488,7 @@ function borderHelp(){
 function renderBorderLibrary(){
  const presets=catalogue.borderPresets||[];
  const chosen=borderDraft||{id:null,name:'New custom border',rarity:'',artId:null,url:null};
+ const readonlyBorder=chosen.builtin||(catalogue?.role==='idol'&&chosen.id&&chosen.ownerId!==catalogue.userId);
  const gallery=presets.filter(b=>b.id!=='none').map(b=>
  '<button type="button" class="studio-border-tile" data-studio-action="pick-border" data-id="'+esc(b.id)+'" aria-current="'+String(b.id===chosen.id)+'">'+
  '<span class="studio-border-thumb"><img src="/assets/portraits/arielle_real.webp" alt="">'+(b.url?'<img class="studio-border-overlay" src="'+esc(b.url)+'" alt="">':'')+'</span>'+
@@ -498,10 +500,10 @@ function renderBorderLibrary(){
  '<div class="studio-border-grid">'+gallery+'</div></section>'+
  '<section class="soft-panel"><h2>'+(chosen.id?'Preset details':'New custom border')+'</h2>'+
  '<div class="editor-grid"><div>'+preview+'<p class="card-preview-note">Transparent overlay · 660 × 1020 px</p></div><div class="editor-fields">'+
- '<div class="field"><label>Preset name</label><input data-border-field="name" maxlength="54" value="'+esc(chosen.name)+'" '+(chosen.builtin?'disabled':'')+'></div>'+
- '<div class="field"><label>Suggested rarity (optional)</label><select data-border-field="rarity" '+(chosen.builtin?'disabled':'')+'><option value="">Any rarity</option>'+
+ '<div class="field"><label>Preset name</label><input data-border-field="name" maxlength="54" value="'+esc(chosen.name)+'" '+(readonlyBorder?'disabled':'')+'></div>'+
+ '<div class="field"><label>Suggested rarity (optional)</label><select data-border-field="rarity" '+(readonlyBorder?'disabled':'')+'><option value="">Any rarity</option>'+
  catalogue.rarities.map(r=>'<option value="'+r+'" '+(chosen.rarity===r?'selected':'')+'>'+r+'</option>').join('')+'</select></div>'+
- (chosen.builtin?'<p class="helper">Built-in borders cannot be replaced or deleted. Create a new custom preset instead.</p>':
+ (readonlyBorder?'<p class="helper">'+(chosen.builtin?'Built-in borders are protected.':'Shared preset: only its creator or management can edit or delete it.')+' Create a custom preset instead.</p>':
  '<label class="studio-button studio-file-label" for="studio-border-picker">'+(chosen.artId?'Replace / recrop border':'Upload transparent border')+'</label>'+
  '<p class="helper">PNG or WebP with a transparent center. Drag, rotate, and zoom before exporting. Artwork stays separate from the photocard image.</p>'+
  '<button class="studio-button" data-studio-action="save-border" type="button">Save border preset ✧</button>'+
@@ -685,7 +687,7 @@ byId('studio-pack-library').addEventListener('click',()=>switchMode('packs'));
 window.addEventListener('beforeunload',event=>{if(isDirty){event.preventDefault();event.returnValue='';}});
 load().catch(error=>{
  alertUser(error.message);
- byId('studio-packs').innerHTML='<p class="subtle">Management account required.</p>';
- byId('studio-main-content').innerHTML='<section class="soft-panel"><h2>Management access required</h2><p>Sign in with the USA50 management account and finish the required password change, then reopen Card Studio.</p><a href="/">Return to USA50 Fan Club</a></section>';
+ byId('studio-packs').innerHTML='<p class="subtle">Management or idol account required.</p>';
+ byId('studio-main-content').innerHTML='<section class="soft-panel"><h2>Creator access required</h2><p>Sign in with a USA50 management or idol account, change the temporary password, then reopen Card Studio.</p><a href="/">Return to USA50 Fan Club</a></section>';
 });
 })();
