@@ -236,6 +236,17 @@ act=async function(name,node){
   }
   return;
  }
+ if(name==='official-sync-now'){
+  if(store?.me?.role!=='admin')return toast('Management only.');
+  node.disabled=true;node.textContent='Checking connected accounts…';
+  try{
+    const result=await request('/api/official/sync',{method:'POST',body:'{}'});
+    await refresh();
+    const imported=(result.instagram?.imported||0)+(result.tiktok?.imported||0);
+    toast(imported?imported+' new official posts imported ✦':'Feed check complete. No new posts found.');
+  }finally{node.disabled=false;node.textContent='↻ Check connected feeds now';}
+  return;
+ }
  if(name==='official-remove'){
   if(store?.me?.role!=='admin')return toast('Management only.');
   if(!confirm('Remove this post from Official Channels?'))return;
@@ -303,8 +314,20 @@ showAdmin=async function(){
  const host=document.querySelector('#admin-content');
  if(!host||store.me?.role!=='admin')return;
  const settings=getData().settings||{};
+ const auto=settings.autoSync||{};
+ const syncRow=(name,value)=>{
+   const configured=Boolean(value?.configured);
+   const when=value?.lastSuccess?new Date(value.lastSuccess).toLocaleString('en-US'):'Not yet';
+   return '<div class="official-sync-row"><strong>'+name+'</strong><span class="'+(configured?'ready':'disconnected')+'">'+
+     (configured?'Credentials configured':'Not connected')+'</span><small>Last successful import: '+textEscape(when)+'</small>'+
+     (value?.lastError?'<small class="official-sync-error">Last error: '+textEscape(value.lastError)+'</small>':'')+'</div>';
+ };
  const input=(name,value,placeholder)=>'<label>'+name+'<input name="'+name+'" value="'+textEscape(value||'')+'" placeholder="'+placeholder+'"></label>';
- host.insertAdjacentHTML('beforeend','<section class="glass panel diary-admin-sources"><span class="eyebrow">USA50 OFFICIAL FEED</span><h3>Connect official channels</h3><p class="lead">YouTube imports public uploads when its channel ID is configured (approximately every ten minutes). Saving an Instagram or TikTok username does <strong>not</strong> connect its feed: automatic updates require a separately authorized provider integration and webhook.</p><form id="official-source-form" class="diary-form">'+
+ host.insertAdjacentHTML('beforeend','<section class="glass panel diary-admin-sources"><span class="eyebrow">USA50 OFFICIAL FEED</span><h3>Connect official channels</h3><p class="lead">YouTube checks public uploads every ten minutes. Instagram Graph API and TikTok Display API can now import posts automatically every twenty minutes <strong>after authorized tokens are configured in Railway</strong>. A username alone does not grant account access; no private content is scraped.</p>'+
+ '<div class="official-sync-dashboard">'+syncRow('Instagram',auto.instagram)+syncRow('TikTok',auto.tiktok)+'</div>'+
+ '<button class="btn secondary" type="button" data-action="official-sync-now">↻ Check connected feeds now</button>'+
+ '<p class="lead">Connect authorized account credentials in Railway using the setup guide in GitHub. API tokens stay on the server and are never entered in this form.</p>'+
+ '<form id="official-source-form" class="diary-form">'+
  input('youtubeChannelId',settings.youtubeChannelId,'UC… (24 characters)')+
  input('instagramUsername',settings.instagramUsername,'Official Instagram username')+
  input('tiktokUsername',settings.tiktokUsername,'Official TikTok username')+
