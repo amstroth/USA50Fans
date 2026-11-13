@@ -6,6 +6,7 @@ const papers=['ruled','grid','dots','none'];
 const pageNames={ruled:'Ruled paper',grid:'Boxed paper',dots:'Dotted paper',none:'Blank paper'};
 const colors={Cream:'#fff9f0',Blush:'#ffe8f0',Lavender:'#eee7ff',Mint:'#e6f7ee',Blue:'#e5f3ff',White:'#ffffff'};
 let diaryPhotos=[];
+let officialPage=0;
 function textEscape(s){return e(s)}
 function diaryDate(d){const t=new Date(d);return Number.isFinite(t.getTime())?t.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):''}
 function paperStyle(entry){
@@ -132,13 +133,23 @@ function openDiaryStory(id){
  storyFocusReturn=document.activeElement;
  storyIdol=id;storyIndex=group.entries.length-1;diaryStoryArchive();
 }
+function officialCarousel(posts){
+ const count=Math.ceil(posts.length/4);officialPage=Math.min(Math.max(0,officialPage),count-1);
+ const pages=Array.from({length:count},(_,i)=>'<div class="official-page" role="group" aria-label="Official posts page '+(i+1)+' of '+count+'" aria-hidden="'+(officialPage!==i)+'"><div class="official-social-grid">'+posts.slice(i*4,i*4+4).map(officialCard).join('')+'</div></div>').join('');
+ const dots=Array.from({length:count},(_,i)=>'<button type="button" class="official-page-dot '+(i===officialPage?'active':'')+'" data-action="official-page" data-value="'+i+'" aria-current="'+(i===officialPage?'page':'false')+'" aria-label="Show official posts page '+(i+1)+' of '+count+'"><span></span></button>').join('');
+ return '<div class="official-carousel"><div class="official-carousel-track" style="transform:translateX(-'+officialPage*100+'%)">'+pages+'</div></div>'+
+ (count>1?'<nav class="official-carousel-controls" aria-label="Official channel post pages">'+
+ '<button type="button" data-action="official-prev" aria-label="Previous official posts page" '+(officialPage===0?'disabled':'')+'>‹</button>'+
+ '<div class="official-page-dots">'+dots+'</div><button type="button" data-action="official-next" aria-label="Next official posts page" '+(officialPage===count-1?'disabled':'')+'>›</button>'+
+ '<small>Page '+(officialPage+1)+' / '+count+'</small></nav>':'');
+}
 function officialDiarySection(){
  const data=getData(),groups=diaryGroups(),official=data.officialPosts||[];
  return '<section class="official-diary-section"><div class="diary-stories-heading"><div><span class="eyebrow">FROM THE IDOLS · USA50</span><h2>Diary Entries ♡</h2></div><span class="diary-story-hint">Tap a story to read</span></div>'+
  (groups.length||data.canPost?diaryStoryStrip(groups,data.canPost):
  '<div class="glass panel diary-empty">The diary is waiting for its first page. ♡<p>New pages from the idols will appear here.</p></div>')+
  '<div class="official-social-block"><div class="social-section-heading"><div><span class="eyebrow">OFFICIAL USA50 UPDATES</span><h2>Official Channels</h2><p class="lead">Latest videos and posts from USA50.</p></div></div>'+
- (official.length?'<div class="official-social-grid">'+official.map(officialCard).join('')+'</div>':
+ (official.length?officialCarousel(official):
  '<div class="glass panel official-social-empty">Official uploads will appear once the authorized channels are connected.</div>')+'</div>'+
  '<div class="diary-fan-divider"><span>✦ FAN COMMUNITY ✦</span><p>Continue scrolling for fan posts</p></div></section>';
 }
@@ -193,6 +204,18 @@ function resizeDiaryPhoto(file){
 }
 const previousDiaryAct=act;
 act=async function(name,node){
+ if(name==='official-page'||name==='official-next'||name==='official-prev'){
+  const posts=getData().officialPosts||[],count=Math.ceil(posts.length/4);
+  officialPage=Math.max(0,Math.min(count-1,name==='official-page'?Number(node.dataset.value):officialPage+(name==='official-next'?1:-1)));
+  const block=document.querySelector('.official-social-block');
+  if(block){
+    const wrapper=document.createElement('div');wrapper.innerHTML=officialCarousel(posts);
+    block.querySelector('.official-carousel')?.remove();
+    block.querySelector('.official-carousel-controls')?.remove();
+    while(wrapper.firstElementChild)block.appendChild(wrapper.firstElementChild);
+  }
+  return;
+ }
  if(name==='diary-story-open'){openDiaryStory(node.dataset.value);return;}
  if(name==='diary-story-gallery'){diaryStoryArchive();return;}
  if(name==='diary-story-select'){const group=diaryGroups().find(g=>g.id===storyIdol);const index=group?.entries.findIndex(p=>p.id===node.dataset.value)??-1;if(index>=0){storyIndex=index;showStory();}return;}
