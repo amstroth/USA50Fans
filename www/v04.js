@@ -126,7 +126,9 @@
     const me=store.me;
     if(!me)return base;
     const area=`<section class="glass panel" style="margin-top:18px"><div class="eyebrow">ACCOUNT SETTINGS</div><h3>Password & roles</h3><p class="lead">Signed in as <strong>${e(me.email)}</strong> · ${e(me.role||"fan")}${me.mustChangePassword?' · Password change required':''}</p><form id="password-update-form" class="form-grid" style="margin-top:12px"><div class="form-field"><label>Current password</label><input name="currentPassword" type="password" autocomplete="current-password" required></div><div class="form-field"><label>New password (12+ chars, upper/lowercase and a number)</label><input name="newPassword" type="password" autocomplete="new-password" required minlength="12"></div><button class="btn secondary" type="submit">Change password</button></form>${me.role==="admin"?'<button class="btn" data-action="load-management" style="margin-top:14px">Open Management Dashboard</button>':''}</section>`;
-    return base+area;
+    const studioAccess=['admin','idol'].includes(me.role);
+    const studioLink=studioAccess?'<section class="glass panel creator-studio-link" style="margin-top:18px"><div><div class="eyebrow">USA50 · CREATOR TOOLS</div><h3>Card Studio ✧</h3><p class="lead">Create collectible faces, custom backs, and holographic foil layers on desktop. '+(me.role==='idol'?'Idol accounts can edit their own collections without access to moderation.':'Management may edit all collections.')+'</p></div><a class="btn" href="/studio.html" target="_blank" rel="noopener noreferrer">Open Card Studio ↗</a></section>':'';
+    return base+studioLink+area;
   };
   const originalAdmin=adminScreen;
   adminScreen=function(){
