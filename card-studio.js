@@ -65,6 +65,19 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
       isTest:Boolean(p.isTest)
     }));
   }
+  function homeFeaturedCards(){
+    // Use four real R-rarity faces from the NYC50 Pre-Debut collection.
+    // Promotional display does not make unpublished packs available for pulls.
+    const candidates=studio.packs.filter(p=>{
+      const label=[p.id,p.title,p.description].join(' ').toLowerCase();
+      return /nyc[ -]?50/.test([p.id,p.title,p.team,p.subgroup].join(' ').toLowerCase()) &&
+        /pre[ -]?debut|predebut/.test(label);
+    });
+    const pack=candidates.find(p=>p.cards?.filter(c=>c.rarity==='R').length>=4)||candidates[0];
+    if(!pack)return [];
+    const items=pack.cards.filter(c=>c.rarity==='R').slice(0,4);
+    return items.map((c,i)=>cardPublic(c,pack,pack.cards.indexOf(c)));
+  }
   function publicCardsByPack(){
     const result={};
     for(const p of studio.packs.filter(effective))result[p.id]=p.cards.map((c,i)=>cardPublic(c,p,i));
@@ -300,5 +313,5 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     if(pathname.startsWith('/api/card-studio/art/'))return readArt(req,res,pathname.slice('/api/card-studio/art/'.length));
     return fail(res,404,'Unknown Card Studio route.');
   }
-  return {handlePost,handleGet,customPull,publicAlbums,publicCardsByPack,syncBaseCards,ready,studio};
+  return {handlePost,handleGet,customPull,publicAlbums,publicCardsByPack,homeFeaturedCards,syncBaseCards,ready,studio};
 };
