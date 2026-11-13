@@ -106,7 +106,7 @@ async function api(req,res,url){
    if(rateLimit(req))return fail(res,429,'Please try again shortly.');
    let email=bodyText(data.email,160).toLowerCase(),displayName=bodyText(data.displayName,36),password=String(data.password||'');
    if(!/^\S+@\S+\.\S+$/.test(email)||displayName.length<2||password.length<8||password.length>128)return fail(res,400,'Enter a valid email, display name (2+ letters), and password (8+ characters).');
-   if(['amstrotherusa50@gmail.com','arielstrotherb@gmail.com','jelugousa50@gmail.com','cnwashingtonusa50@gmail.com'].includes(email))return fail(res,403,'This email is reserved for an authorized USA50 account.');
+   if(['amstrotherusa50@gmail.com','arielstrotherb@gmail.com','jelugousa50@gmail.com','cnwashingtonusa50@gmail.com','zfmuseusa50@gmail.com'].includes(email))return fail(res,403,'This email is reserved for an authorized USA50 account.');
    if(Object.values(db.users).some(u=>u.email===email))return fail(res,409,'Email already registered.');
    let u={id:id(),email,displayName,passwordHash:hashPass(password),createdAt:now(),state:getProfileState()};db.users[u.id]=u;save();
    let token=sign({uid:u.id,sv:u.sessionVersion||0,exp:Date.now()+30*86400000});return json(res,201,{me:cleanUser(u),token}, {'Set-Cookie':cookie('usa50_session',token,req)});
