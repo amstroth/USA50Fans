@@ -26,3 +26,6 @@
 .studio-italic-toggle input{accent-color:#9665af;width:18px;height:18px}
 .studio-download-btn{width:100%;margin-top:18px;font-size:13px;padding:13px 16px}
 @media(max-width:1150px){.studio-type-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Locally hosted, OFL-licensed calligraphy for script-style photocard names. */
+@font-face{font-family:'Great Vibes';src:url('/assets/fonts/great-vibes-latin-400-normal.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap}
