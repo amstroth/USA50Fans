@@ -116,13 +116,18 @@ module.exports=function makeOfficialAutoSync({state,save,addOfficial,fetchThumb,
    }
    if(response.error?.code&&response.error.code!=='ok')throw Error('TikTok video.list error: '+String(response.error.code).slice(0,65));
    if(!Array.isArray(response.data?.videos))throw Error('TikTok video.list did not return videos; verify the video.list scope');
-   const user=String(process.env.USA50_TIKTOK_USERNAME||state.sources.tiktokUsername||'usa50')
+   const user=String(state.sources.tiktokUsername||process.env.USA50_TIKTOK_USERNAME||'')
      .replace(/^@/,'').toLowerCase();
-   if(!/^[a-z0-9_.]{1,40}$/.test(user))throw Error('Set a valid official TikTok username');
+   if(user&&!/^[a-z0-9_.]{1,40}$/.test(user))throw Error('Set a valid official TikTok username');
    for(const v of response.data.videos.slice(0,20).reverse()){
     if(!/^\d{10,25}$/.test(String(v.id||'')))continue;
-    // A link derived from a verified owned-video API response.
-    const url='https://www.tiktok.com/@'+user+'/video/'+v.id;
+    // Prefer the link returned by TikTok for the authorized creator; a
+    // configured username is only a fallback if share_url is unavailable.
+    const supplied=typeof v.share_url==='string'?v.share_url:'';
+    const exactLink=new RegExp('^https://(?:www\\.)?tiktok\\.com/@[a-zA-Z0-9_.]+/video/'+v.id+'(?:[/?#]|$)');
+    const url=exactLink.test(supplied)?supplied:
+      user?'https://www.tiktok.com/@'+user+'/video/'+v.id:null;
+    if(!url)continue;
     const title=String(v.title||v.video_description||'USA50 TikTok update').slice(0,170);
     const post=addOfficial({url,title,caption:String(v.video_description||'').slice(0,500),
       publishedAt:v.create_time?new Date(Number(v.create_time)*1000).toISOString():now()},false);
