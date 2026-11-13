@@ -1,0 +1,15 @@
+/* Three.js collector card presentation with real 0.065 world-unit thickness. */
+#collector-three-container.collector-three-container{
+ width:min(100%,760px);height:100%;min-height:180px;position:relative;
+ display:grid;place-items:center;overflow:hidden;touch-action:none;
+}
+#collector-three-container canvas.usa50-three-canvas{width:100%!important;height:100%!important;touch-action:none!important;cursor:grab}
+#collector-three-container canvas.usa50-three-canvas:active{cursor:grabbing}
+.collector-loading{font:italic 21px Georgia,serif;color:#ffe8ff;text-shadow:0 2px 20px #5d2e82}
+.collector-fallback{display:grid;justify-items:center;gap:10px;max-width:230px;text-align:center;color:#fff;line-height:1.4;font-size:12px}
+.collector-fallback>.photocard{width:180px;height:278px}
+.collector-fallback p{font-size:12px;color:#fff}
+.collector-fallback small{color:#f5daff}
+#collector-3d-stage{min-height:180px;overflow:hidden}
+#collector-three-container .usa50-three-canvas{outline:none}
+@media(max-width:600px){#collector-3d-stage{width:100%;min-height:180px}}
