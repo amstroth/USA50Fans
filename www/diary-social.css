@@ -161,3 +161,15 @@ body.diary-story-open{overflow:hidden}
  .official-thumbnail-play{width:32px;height:32px;font-size:10px}
  .official-thumbnail-platform{bottom:6px;left:6px;font-size:9px}
 }
+
+/* Verified Instagram/TikTok connection and importer diagnostics. */
+.official-sync-dashboard{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.official-sync-row{display:grid;align-content:start;gap:5px;border:1px solid #fff;
+ background:linear-gradient(130deg,#f5ebfb,#fff5fc);padding:11px 14px;border-radius:15px;color:#75578f}
+.official-sync-row strong{font-size:13px}
+.official-sync-row span{font-size:10px;padding:5px 8px;border-radius:99px;width:max-content;max-width:100%;font-weight:800}
+.official-sync-row span.ready{color:#567b57;background:#e3f3e1}
+.official-sync-row span.disconnected{color:#9b6884;background:#f7e5eb}
+.official-sync-row small{font-size:10px;color:#927e9f;line-height:1.5}
+.official-sync-row .official-sync-error{color:#aa537e;overflow-wrap:anywhere}
+@media(max-width:580px){.official-sync-dashboard{grid-template-columns:1fr}}
