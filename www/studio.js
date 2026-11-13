@@ -7,7 +7,7 @@
 const byId=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const defaultCard=()=>({id:null,title:'New photocard',rarity:'R',border:'none',artId:null,legacy:false,artUrl:null,
- overlayText:window.USA50CardFace.normalize(null,working?.member||'Arielle'),backArtId:null});
+ overlayText:window.USA50CardFace.normalize(null,working?.member||'Arielle'),backArtId:null,materialLayers:[]});
 const token=()=>localStorage.getItem('usa50_dev_token')||'';
 const sizes={width:660,height:1020};
 let catalogue=null,working=null,cardIndex=0,isDirty=false,activeCrop=null;
@@ -139,6 +139,13 @@ function renderCardList(){
  '<div class="helper">No cards yet. Add one to start designing the album.</div>')+
  '</div></section>';
 }
+function renderMaterialSummary(card){
+ const items=card.materialLayers||[];
+ return '<div class="studio-foil-banner"><h3>Foil Lab ✧</h3>'+
+ '<p>Choose where each finish appears. Paint holographic stars, select iridescent areas from the photo, and add sparkling borders in separate layers.</p>'+
+ '<div>'+items.map(l=>'<span class="studio-foil-chip">'+esc(l.name)+' · '+esc(l.type)+'</span>').join('')+'</div>'+
+ '<button class="studio-button" type="button" data-studio-action="open-foil-lab">✧ Open Foil Lab · '+items.length+' layer'+(items.length===1?'':'s')+'</button></div>';
+}
 function renderCardEditor(){
  const c=selectedCard();if(!c)return '';
  const layer=cardFace.normalize(c.overlayText,working?.member||'Arielle');
@@ -172,7 +179,7 @@ function renderCardEditor(){
  '<p class="helper">Changing the text here does not change the collectible title, photo, or border. Leave it blank for no lettering.</p>'+
  '</div>'+
  '<button class="studio-button studio-download-btn" data-studio-action="download-card" type="button">↓ Download finished card (PNG)</button>'+
- '<p class="helper">Exports the face, chosen border, and lettering in one 660 × 1020 PNG. Editable layers are retained in Card Studio.</p>'+renderIndividualBack(c)+
+ '<p class="helper">Exports the face, chosen border, and lettering in one 660 × 1020 PNG. Editable layers are retained in Card Studio.</p>'+renderIndividualBack(c)+renderMaterialSummary(c)+
  '</section>';
 }
 function renderPublish(){
@@ -592,6 +599,26 @@ document.addEventListener('click',async event=>{
  try{
    if(a==='download-template')return downloadTemplatePng();
    if(a==='download-card')return await downloadFinishedCard(target);
+   if(a==='open-foil-lab'){
+     const card=selectedCard();
+     if(!card)return;
+     const artwork=cardArt(card);
+     if(!artwork)return alertUser('Upload a face image before creating a foil mask.');
+     const originalIndex=cardIndex;
+     await window.USA50FoilLab.open({
+       card:{...card,artUrl:artwork,borderUrl:borderURL(card.border)},
+       member:working?.member||'Arielle',
+       artUrl:artwork,borderUrl:borderURL(card.border),
+       upload:(dataUrl)=>api('/api/card-studio/upload',{dataUrl,kind:'mask'}),
+       onApply:(layers)=>{
+         const selected=working?.cards?.[originalIndex];
+         if(!selected)return;
+         selected.materialLayers=layers;
+         isDirty=true;render();toast('Foil layers applied. Click Save pack to publish or preserve the changes.');
+       }
+     });
+     return;
+   }
    if(a==='select')return choose(target.dataset.id);
    if(a==='pick-border'){const p=catalogue.borderPresets.find(b=>b.id===target.dataset.id);if(!p)return;if(isDirty&&!confirm('Discard unsaved border edits?'))return;borderDraft={...p};isDirty=false;return render();}
    if(a==='new-border'){if(isDirty&&!confirm('Discard unsaved border edits?'))return;borderDraft={id:null,name:'New custom border',rarity:'',artId:null,url:null};isDirty=false;return render();}
