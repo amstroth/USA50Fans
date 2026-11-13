@@ -45,7 +45,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
   function borderOptions(){return [{id:'none',name:'No border',url:null,builtin:true,rarity:null},...studio.borders.map(b=>({...b,url:borderUrl(b.id),builtin:false}))];}
 
   // Face lettering is an independent editable layer, not baked into uploaded art.
-  const FACE_FONTS=['Georgia','Arial','Times New Roman','Trebuchet MS','Verdana','Courier New'];
+  const FACE_FONTS=['Georgia','Great Vibes','Arial','Times New Roman','Trebuchet MS','Verdana','Courier New'];
   const TEXT_WEIGHTS=['400','500','600','700'];
   function normalizeTextLayer(input, fallback=''){
     const t=input&&typeof input==='object'&&!Array.isArray(input)?input:{};
