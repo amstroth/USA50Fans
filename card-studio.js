@@ -81,7 +81,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     const maskArtId=x.maskArtId?String(x.maskArtId):null;
     if(maskArtId&&studio.media[maskArtId]?.kind!=='mask')throw new Error('Foil mask must be a validated uploaded mask image.');
     if(!MATERIAL_TYPES.includes(x.type))throw new Error('Unknown foil layer material.');
-    return {id:layerId,name:bodyText(x.name,45)||'New material',type:x.type,enabled:x.enabled!==false,
+    return {id:layerId,name:bodyText(x.name,45)||'New material',type:x.type,side:x.side==='back'?'back':'front',enabled:x.enabled!==false,
       maskArtId,colors:[color(x.colors?.[0],'#e99fff'),color(x.colors?.[1],'#a9edff')],
       opacity:number(x.opacity,.72,0,1),intensity:number(x.intensity,.85,0,2),
       density:number(x.density,.5,.05,1),scale:number(x.scale,1,.2,5),speed:number(x.speed,.65,0,3)};
@@ -144,7 +144,22 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
       effectiveStatus:effective(p)?'published':p.status,ready:ready(p),cardCount:p.cards.length}));
   }
   function isAdmin(req){const u=userFrom(req);return !!(u?.role==='admin'&&!u.mustChangePassword);}
-  function deny(res){return fail(res,403,'Management account required. Change your temporary password before using Card Studio.');}
+  function isStudio(req){const u=userFrom(req);return !!(u&&!u.mustChangePassword&&['admin','idol'].includes(u.role));}
+  function idolMember(req){const u=userFrom(req);return u?.role==='idol'?String(u.idolId||'').toLowerCase():null;}
+  function canEditPack(req,p){
+    if(isAdmin(req))return true;
+    const idol=idolMember(req);
+    return isStudio(req)&&!!idol&&!!p&&String(p.member||'').toLowerCase()===idol;
+  }
+  function canSeeStudioArt(req,artId){
+    if(isAdmin(req))return true;
+    if(!isStudio(req))return false;
+    if(studio.media[artId]?.by===userFrom(req)?.id)return true;
+    if(studio.borders.some(b=>b.artId===artId))return true;
+    return studio.packs.some(p=>canEditPack(req,p)&&
+      (p.defaultBackArtId===artId||p.cards.some(c=>c.artId===artId||c.backArtId===artId||(c.materialLayers||[]).some(l=>l.maskArtId===artId))));
+  }
+  function deny(res){return fail(res,403,'Card Studio requires a management or idol account with its temporary password changed.');}
   function log(action,packId,uid){studio.audit.push({at:now(),action,packId,by:uid});studio.audit=studio.audit.slice(-250);}
   function upload(data,req,res){
     const kind=data.kind==='border'?'border':data.kind==='back'?'back':data.kind==='mask'?'mask':'face';
@@ -176,10 +191,12 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     const uid=userFrom(req).id;
     const existing=data.id?studio.packs.find(p=>p.id===data.id):null;
     if(data.id && !existing)return fail(res,404,'Pack not found.');
+    if(existing&&!canEditPack(req,existing))return fail(res,403,'Idols can edit only their own collections.');
     const title=bodyText(data.title,80),member=bodyText(data.member,60),
       team=bodyText(data.team,40),subgroup=bodyText(data.subgroup,50)||team,
       description=bodyText(data.description,240);
     if(!title||!member||!team)return fail(res,400,'Pack name, member and subgroup/team are required.');
+    if(idolMember(req)&&member.toLowerCase()!==idolMember(req))return fail(res,403,'Idols may create and edit only collections assigned to their own member name.');
     const status=String(data.status||'draft');
     if(!['draft','scheduled','published'].includes(status))return fail(res,400,'Choose Draft, Scheduled or Published.');
     const releaseAt=data.releaseAt?String(data.releaseAt):null;
@@ -233,6 +250,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
   function removePack(data,req,res){
     const p=studio.packs.find(p=>p.id===String(data.id||''));
     if(!p)return fail(res,404,'Pack not found.');
+    if(!canEditPack(req,p))return fail(res,403,'Idols can remove only their own test packs.');
     if(!p.isTest)return fail(res,403,'Only test packs may be deleted. Official packs can be moved to Draft.');
     if(data.confirm!=='DELETE')return fail(res,400,'Type DELETE to confirm deleting the entire test pack.');
     const cardIds=new Set(p.cards.map(c=>c.id));
@@ -257,7 +275,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     const published=studio.packs.some(p=>effective(p)&&p.cards.some(c=>
       c.artId===artId || presetFor(c.border)?.artId===artId));
     // Backside messages are only delivered to owners of the corresponding card.
-    if(!isAdmin(req) && !(meta.kind==='back'?cardBackOwner:meta.kind==='mask'?maskOwner:published))
+    if(!canSeeStudioArt(req,artId) && !(meta.kind==='back'?cardBackOwner:meta.kind==='mask'?maskOwner:published))
       return fail(res,403,meta.kind==='back'?'Obtain this card before viewing its back.':'Artwork is not published.');
     const full=path.join(artworkDir,meta.filename);
     return fs.readFile(full,(err,buf)=>{
@@ -326,6 +344,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
   function saveBorder(data,req,res){
     const old=data.id?studio.borders.find(b=>b.id===data.id):null;
     if(data.id&&!old)return fail(res,404,'Custom border not found.');
+    if(old&&!isAdmin(req)&&old.ownerId!==userFrom(req)?.id)return fail(res,403,'Only the creator or management may edit this border.');
     const name=bodyText(data.name,54);
     const artId=String(data.artId||'');
     const rarity=data.rarity===null || data.rarity===''?null:String(data.rarity||'');
@@ -335,7 +354,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     if(rarity&&!RARITIES.includes(rarity))return fail(res,400,'Unknown suggested rarity.');
     const taken=studio.borders.find(b=>b.name.toLowerCase()===name.toLowerCase()&&b.id!==old?.id);
     if(taken)return fail(res,409,'A border already has that name.');
-    const preset=old||{id:'border-'+id(),createdAt:now()};
+    const preset=old||{id:'border-'+id(),ownerId:userFrom(req).id,createdAt:now()};
     const previousArt=old?.artId;
     Object.assign(preset,{name,rarity,artId,updatedAt:now()});
     if(!old)studio.borders.push(preset);
@@ -354,6 +373,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
   function deleteBorder(data,req,res){
     const preset=presetFor(String(data.id||''));
     if(!preset)return fail(res,404,'Custom border not found. Built-in borders cannot be deleted.');
+    if(!isAdmin(req)&&preset.ownerId!==userFrom(req)?.id)return fail(res,403,'Only the creator or management may delete this border.');
     const inUse=studio.packs.filter(p=>p.cards.some(c=>c.border===preset.id));
     if(inUse.length)return fail(res,409,'This border is used by '+inUse.length+' pack(s). Change those cards to another border before deleting it.');
     if(data.confirm!=='DELETE')return fail(res,400,'Type DELETE to remove the custom border.');
@@ -364,7 +384,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
   }
   function handlePost(req,res,endpoint,data){
     if(!endpoint.startsWith('/api/card-studio/'))return false;
-    if(!isAdmin(req))return deny(res),true;
+    if(!isStudio(req))return deny(res),true;
     if(endpoint==='/api/card-studio/upload')return upload(data,req,res),true;
     if(endpoint==='/api/card-studio/border/save')return saveBorder(data,req,res),true;
     if(endpoint==='/api/card-studio/border/delete')return deleteBorder(data,req,res),true;
@@ -374,9 +394,11 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
   }
   function handleGet(req,res,pathname){
     if(pathname==='/api/card-studio'){
-      if(!isAdmin(req))return deny(res);
+      if(!isStudio(req))return deny(res);
       return json(res,200,{face:FACE,rarities:RARITIES,borders:BORDERS,borderPresets:borderOptions(),
-        packs:statusOverview(),audit:studio.audit.slice(-40).reverse()});
+        role:userFrom(req).role,member: idolMember(req)||null,
+        packs:statusOverview().filter(p=>canEditPack(req,p)),
+        audit:isAdmin(req)?studio.audit.slice(-40).reverse():[]});
     }
     if(pathname.startsWith('/api/card-studio/art/'))return readArt(req,res,pathname.slice('/api/card-studio/art/'.length));
     return fail(res,404,'Unknown Card Studio route.');
