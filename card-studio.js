@@ -204,7 +204,15 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     }
     const p=studio.packs.find(x=>x.id===packId);
     if(!p||!effective(p)||!ready(p))return fail(res,400,'This collection is not released for pulling.'),true;
-    if(u.role==='admin'||u.role==='idol')return fail(res,403,'Only fan accounts can pull packs.'),true;
+    // All signed-in roles (fan, idol, management) pull under identical
+    // account-owned balances, rates, guarantees and album inventory rules.
+    // Authentication and account status are handled by the shared API gate.
+    if(u.mustChangePassword)return fail(res,403,'Change your temporary password before opening packs.'),true;
+    u.state ||= {};
+    u.state.owned ||= {};
+    u.state.stars = Number(u.state.stars||0);
+    u.state.pullPoints = Number(u.state.pullPoints||0);
+    u.state.fancallTickets = Number(u.state.fancallTickets||0);
     const count=endpoint==='/api/cards/pull10'?10:1;
     const free=endpoint==='/api/cards/pull-points';
     const cost=count*packCost;
