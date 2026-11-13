@@ -132,6 +132,8 @@
   };
   const originalAdmin=adminScreen;
   adminScreen=function(){
+    if(store.me && store.me.role!=="admin")return screenTop("Restricted","Management moderation is not available to fan or idol accounts.")+
+      '<div class="glass panel"><p class="lead">Use My Page for your account settings and, if you are an idol, the separate Card Studio creative workspace.</p><button class="btn secondary" data-go="profile">Return to My Page</button></div>';
     if(store.me?.role==="admin")return `${screenTop("USA50 Management","Review fansites, reports, messaging safety and fan accounts.")}<div id="admin-content"><div class="glass panel"><p class="lead">Management account authenticated.</p><button class="btn" data-action="load-management">Load moderation dashboard</button></div></div>`;
     return originalAdmin();
   };
