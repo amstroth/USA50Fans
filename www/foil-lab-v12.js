@@ -263,7 +263,10 @@ async function open({card,member,artUrl,borderUrl,upload,onApply}){
    }
    if(action==='delete'){if(!currentLayer())return;maskMap.delete(currentLayer().id);layers.splice(current,1);
     current=layers.findIndex(l=>l.side===viewSide);render();if(currentLayer())await initMask(currentLayer());await updatePreviewLayers();return;}
-   if(action==='up'||action==='down'){const j=current+(action==='up'?-1:1);if(j<0||j>=layers.length||layers[j].side!==viewSide)return;
+   if(action==='up'||action==='down'){
+    const sameSide=layers.map((l,i)=>l.side===viewSide?i:-1).filter(i=>i>=0);
+    const j=sameSide[sameSide.indexOf(current)+(action==='up'?-1:1)];
+    if(j===undefined)return;
     [layers[current],layers[j]]=[layers[j],layers[current]];current=j;render();await updatePreviewLayers();return;}
    const l=currentLayer();if(!l)return;
    if(action==='undo'){const arr=undo.get(l.id)||[];const prior=arr.pop();if(!prior)return;
@@ -308,8 +311,9 @@ async function open({card,member,artUrl,borderUrl,upload,onApply}){
   if(key==='color0')layer.colors[0]=val;else if(key==='color1')layer.colors[1]=val;else layer[key]=val;
   root.querySelectorAll('[data-foil-output]').forEach(x=>{if(x.dataset.foilOutput===key)x.textContent=Number(val).toFixed(2);});
   engine?.updateLayer(layer);
-  if(key==='name')root.querySelectorAll('.foil-layer-entry')[current].querySelector('strong').textContent=val;
-  if(key==='type'){root.querySelectorAll('.foil-layer-entry')[current].querySelector('small').textContent=val+' · editable mask';}
+  const visibleEntry=root.querySelector('.foil-layer-entry[data-index="'+current+'"]');
+  if(key==='name'&&visibleEntry)visibleEntry.querySelector('strong').textContent=val;
+  if(key==='type'&&visibleEntry)visibleEntry.querySelector('small').textContent=val+' · editable mask';
  });
 }
 window.USA50FoilLab=Object.freeze({open});
