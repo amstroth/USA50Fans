@@ -5,7 +5,7 @@ The Official Channels gallery on the Social tab displays **four posts per page**
 ## Why Instagram / TikTok can appear empty
 
 - **YouTube** is polled through its official public RSS feed when management enters a valid YouTube channel ID. New uploads are imported about every ten minutes.
-- **Instagram and TikTok** cannot be turned into automatic feeds by simply entering usernames in management settings. Automatic ingestion requires a separate provider-authorized service configured to send verified post events to `POST /api/official/ingest` with the `x-usa50-webhook-secret` header and the Railway `USA50_OFFICIAL_WEBHOOK_SECRET` environment variable.
+- **Instagram and TikTok** cannot be turned into automatic feeds by simply entering usernames in management settings. Automatic ingestion is now available through authorized Meta Graph and TikTok Display API polling (configure Railway credentials below), or through a verified provider webhook at `POST /api/official/ingest` with the `x-usa50-webhook-secret` header.
 - Until those integrations exist, management can add individual official posts immediately. This is an intentional curated fallback, **not** a claim that the social platforms have been connected.
 
 ## Add a post without a provider integration
