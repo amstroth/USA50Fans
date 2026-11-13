@@ -72,6 +72,15 @@ try{
  const studioOverview=await api('/api/card-studio',null,admin.token);
  assert.equal(studioOverview.httpStatus,200);
  assert.ok(Array.isArray(studioOverview.packs));
+ // Idol accounts get the creator workspace, but not any moderation overview.
+ assert.equal((await api('/api/card-studio',null,idolStart.token)).httpStatus,403);
+ const idolStudio=await api('/api/card-studio',null,idol.token);
+ assert.equal(idolStudio.httpStatus,200);
+ assert.equal(idolStudio.role,'idol');
+ assert.equal(idolStudio.member,'arielle');
+ assert.ok(idolStudio.packs.every(p=>p.member.toLowerCase()==='arielle'));
+ assert.equal((await api('/api/admin/overview',null,idol.token)).httpStatus,403);
+ assert.equal((await api('/api/admin/messaging-overview',{},idol.token)).httpStatus,403);
  passed++;
  const sent=await api('/api/idol/post',{body:'Hello USA50 fans from Arielle!'},idol.token);assert.equal(sent.httpStatus,201);
  assert.equal((await api('/api/messages/fan-reply',{postId:sent.post.id,text:'Hello!'},tb)).httpStatus,403);
