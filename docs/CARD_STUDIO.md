@@ -114,3 +114,16 @@ In the public collection, the **3D viewer is owner-only**. It uses locally bundl
 
 ### Script lettering
 Card Studio's font dropdown also includes **Great Vibes**, an open-license calligraphy font, installed locally for consistent web preview and finished PNG lettering.
+
+## Two-sided foil and creator permissions (v1.3)
+
+The **Foil Lab** now has **Front** and **Back** tabs above the material-layer list. Select the side you want to edit before adding holographic, glitter, or iridescent layers. Paint masks against that side's artwork, configure its colors/properties, and rotate the Three.js preview. The back uses the individual card-back image if one is assigned, otherwise the pack's default back or the generated USA50 collector design. A foil layer saves its `side` as `front` or `back`; previously saved layers default to `front`.
+
+**Apply layers to card** uploads changed masks. You still must **Save pack** to persist material assignments. Layers have independent masks for each side; changing the reverse does not change the front.
+
+The interactive collector viewer now uses **rounded extruded 3D geometry** and the same rounded outline for card-face textures and both sides' foil effects. The rounding exists in the mesh, not just in CSS.
+
+**Management accounts** can view and modify all Card Studio packs and shared border presets. **Idol accounts** with a completed password change may open the desktop creator workspace, create or edit collections where the pack member matches their idol identity, upload card art/back/masks, and create their own custom borders. Idol accounts cannot browse another idol's unreleased packs, alter other artists' packs, edit other creators' border presets, or access any management moderation endpoint. Creative access does not unlock moderation privileges.
+
+### Fan-facing layout changes
+The Social tab's redundant fan-story hero has been removed and its title reduced to a compact heading. My Page shows fan STARS, unique cards and pity progress in the **same profile card** as the avatar, username and email.
