@@ -82,3 +82,10 @@
   .im-back span{font-size:12px}
   .im-idol .member-avatar{width:37px;height:37px;flex-basis:37px}
 }
+
+/* Distinct public idol-to-idol replies; fan responses remain private. */
+.im-chat-bubble.idol-public{background:linear-gradient(145deg,#f2dffa,#e2d5f8);
+ color:#604b7b;border:1px solid #d6b8ed;box-shadow:0 4px 12px #8e65b120}
+.im-chat-bubble.idol-public .im-public-sender{display:block;font-size:11px;
+ font-weight:800;color:#8056a5;margin:0 0 5px}
+.im-chat-bubble.idol-public small{color:#987eaf}
