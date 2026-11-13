@@ -7,11 +7,12 @@
 const byId=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const defaultCard=()=>({id:null,title:'New photocard',rarity:'R',border:'none',artId:null,legacy:false,artUrl:null,
- overlayText:window.USA50CardFace.normalize(null,working?.member||'Arielle')});
+ overlayText:window.USA50CardFace.normalize(null,working?.member||'Arielle'),backArtId:null});
 const token=()=>localStorage.getItem('usa50_dev_token')||'';
 const sizes={width:660,height:1020};
 let catalogue=null,working=null,cardIndex=0,isDirty=false,activeCrop=null;
 let studioMode='packs',borderDraft=null;
+let backUploadScope='set';
 const cardFace=window.USA50CardFace;
 let draggingLettering=null;
 async function api(url,payload){
@@ -51,7 +52,7 @@ function choose(id,force=false){
 function newPack(){
  if(isDirty && !confirm('Discard your unsaved changes?'))return;
  working={id:null,title:'New USA50 Pack',member:'Arielle',team:'NYC50',subgroup:'NYC50',
-   description:'',releaseAt:null,status:'draft',isTest:true,cards:[],ready:false};
+   description:'',releaseAt:null,status:'draft',isTest:true,cards:[],ready:false,defaultBackArtId:null,defaultBackUrl:null};
  cardIndex=0;isDirty=false;alertUser('');render();
 }
 function markDirty(){isDirty=true;renderSidebar();renderPublish();}
@@ -90,6 +91,34 @@ function downloadTemplatePng(){
  const link=document.createElement('a');link.download='USA50_Card_Studio_Template_660x1020.png';
  link.href=cv.toDataURL('image/png');document.body.appendChild(link);link.click();link.remove();
 }
+function backArtURL(artId){return artId?'/api/card-studio/art/'+encodeURIComponent(artId):null;}
+function backDesign(artId,compact=false){
+ const src=backArtURL(artId);
+ return '<div class="studio-back-face '+(compact?'compact':'')+'">'+
+ (src?'<img src="'+esc(src)+'" alt="Card back image">':
+ '<div class="studio-back-generated"><span class="back-fleur">✧ ♡ ✧</span><strong>USA50</strong><small>FAN CLUB</small><span>⋆ dreamy collector ⋆</span></div>')+
+ '</div>';
+}
+function renderSetBack(){
+ return '<section class="soft-panel"><div class="studio-toolbar"><div><h2 style="margin:0">Set-wide card back</h2>'+
+ '<p class="helper">Default for every card unless that card has its own back artwork.</p></div></div>'+
+ '<div class="studio-back-editor"><div>'+backDesign(working.defaultBackArtId)+'<div class="card-preview-note">Set default · 660 × 1020 px</div></div>'+
+ '<div class="editor-fields"><div class="field"><label>Default back design for '+esc(working.title)+'</label>'+
+ '<span class="helper">Upload one back image for all R–UR cards in this set. Individual cards can override it with their own handwritten notes, artwork, or photo.</span></div>'+
+ '<button type="button" class="studio-button" data-studio-action="upload-set-back">'+(working.defaultBackArtId?'Replace / crop set back':'Upload set-wide card back')+'</button>'+
+ (working.defaultBackArtId?'<button type="button" class="studio-button secondary" data-studio-action="clear-set-back">Use generated USA50 back</button>':'')+
+ '<span class="helper">A blank setting uses the built-in lilac USA50 collector back, not a broken image.</span></div></div></section>';
+}
+function renderIndividualBack(card){
+ const override=Boolean(card.backArtId);
+ return '<div class="studio-type-editor studio-back-section"><div class="studio-toolbar"><h3>Back of this card</h3>'+
+ '<span class="helper">'+(override?'Custom individual design':working.defaultBackArtId?'Using set default':'Using USA50 default')+'</span></div>'+
+ '<div class="studio-back-editor">'+backDesign(card.backArtId||working.defaultBackArtId)+
+ '<div class="editor-fields"><p class="helper">Make a special back for this card (for example, an SSR handwritten message). This overrides the set-wide design only for this card.</p>'+
+ '<button type="button" class="studio-button" data-studio-action="upload-card-back">'+(override?'Replace / crop individual back':'Upload individual card back')+'</button>'+
+ (override?'<button type="button" class="studio-button secondary" data-studio-action="clear-card-back">Use set default again</button>':'')+
+ '</div></div></div>';
+}
 function renderMeta(){
  return '<section class="soft-panel"><h2>Collection details</h2><div class="pack-form">'+
  field('Pack name','title','text','e.g. Sweet & Sour')+
@@ -98,7 +127,7 @@ function renderMeta(){
  field('Collection label','subgroup','text','NYC50 · Sub-unit')+
  '<div class="field wide"><label>Description</label><textarea data-pack-field="description" maxlength="240" placeholder="About this photocard collection…">'+esc(working.description||'')+'</textarea></div>'+
  '<div class="field wide"><label>Release date and time (your local time)</label><input data-pack-field="releaseAt" type="datetime-local" value="'+esc(nextDate(working.releaseAt))+'"><span class="helper">For Scheduled packs, publishing begins when this time is reached. Drafts remain private even after their selected date.</span></div>'+
- '</div></section>';
+ '</div></section>'+renderSetBack();
 }
 function field(label,name,type,placeholder){
  return '<div class="field"><label>'+label+'</label><input data-pack-field="'+name+'" type="'+type+'" maxlength="80" value="'+esc(working[name]||'')+'" placeholder="'+esc(placeholder)+'"></div>';
@@ -143,7 +172,7 @@ function renderCardEditor(){
  '<p class="helper">Changing the text here does not change the collectible title, photo, or border. Leave it blank for no lettering.</p>'+
  '</div>'+
  '<button class="studio-button studio-download-btn" data-studio-action="download-card" type="button">↓ Download finished card (PNG)</button>'+
- '<p class="helper">Exports the face, chosen border, and lettering in one 660 × 1020 PNG. Editable layers are retained in Card Studio.</p>'+
+ '<p class="helper">Exports the face, chosen border, and lettering in one 660 × 1020 PNG. Editable layers are retained in Card Studio.</p>'+renderIndividualBack(c)+
  '</section>';
 }
 function renderPublish(){
@@ -231,7 +260,7 @@ function imageEditor(file,mode='face'){
  img.onload=()=>{
    if(img.naturalWidth*img.naturalHeight>38000000){URL.revokeObjectURL(blobUrl);return alertUser('Use an image smaller than 38 megapixels.');}
    const originalIndex=cardIndex;
-   activeCrop={img,blobUrl,cardIndex:originalIndex,mode,zoom:1,angle:0,dx:0,dy:0,fit:'stretch',stretchX:1,stretchY:1};
+   activeCrop={img,blobUrl,cardIndex:originalIndex,mode,backScope:mode==='back'?backUploadScope:null,zoom:1,angle:0,dx:0,dy:0,fit:'stretch',stretchX:1,stretchY:1};
    showCrop();
  };
  img.onerror=()=>{URL.revokeObjectURL(blobUrl);alertUser('The image could not be loaded.');};
@@ -305,9 +334,9 @@ function canvasDraw(canvas){
  redrawTransformHandles();
 }
 function showCrop(){
- const modal=byId('studio-crop-modal');const border=activeCrop.mode==='border'?'none':selectedCard()?.border||'none';
+ const modal=byId('studio-crop-modal');const border=activeCrop.mode==='border'||activeCrop.mode==='back'?'none':selectedCard()?.border||'none';
  modal.hidden=false;
- modal.innerHTML='<div class="crop-panel"><div class="crop-top"><div><span class="eyebrow">CROP & RESIZE</span><h2>Frame your card ✧</h2></div><button data-studio-action="close-crop" type="button" class="studio-button secondary small">Close ✕</button></div>'+
+ modal.innerHTML='<div class="crop-panel"><div class="crop-top"><div><span class="eyebrow">CROP & RESIZE</span><h2>'+(activeCrop.mode==='back'?'Crop your card back ✧':'Frame your card ✧')+'</h2></div><button data-studio-action="close-crop" type="button" class="studio-button secondary small">Close ✕</button></div>'+
  '<div class="crop-body"><div class="crop-face '+(activeCrop.mode==='border'?'crop-transparent':'')+'"><canvas id="studio-crop-canvas" width="660" height="1020" aria-label="Drag the photo to reposition it"></canvas><div class="studio-transform-box" id="studio-transform-box" aria-label="Drag the handles to reshape the image">' + ['nw','n','ne','e','se','s','sw','w'].map(h=>'<button type="button" class="studio-transform-handle handle-'+h+'" data-transform-handle="'+h+'" aria-label="Drag '+h+' handle to reshape image"></button>').join('') + '</div>'+
  (borderURL(border)?'<img class="frame" src="'+esc(borderURL(border))+'" alt="">':'')+'</div>'+
  '<div class="crop-controls"><p>'+(activeCrop.mode==='border'?'Position your border while preserving its transparent center. The checkerboard means transparency, and it will overlay the photo without covering it.':'Drag to reposition your artwork within a 55 × 85 mm photocard.')+' Zoom or rotate, then export exactly <strong>660 × 1020 px</strong>.</p>'+
@@ -398,7 +427,7 @@ async function exportCrop(button){
  button.disabled=true;button.textContent='Processing artwork…';
  try{
    const canvas=byId('studio-crop-canvas');canvasDraw(canvas);
-   const kind=activeCrop.mode==='border'?'border':'face';
+   const kind=activeCrop.mode==='border'?'border':activeCrop.mode==='back'?'back':'face';
    let dataUrl=kind==='border'?canvas.toDataURL('image/png'):canvas.toDataURL('image/webp',.87);
    if(kind==='face'&&dataUrl.length>2400000)dataUrl=canvas.toDataURL('image/webp',.72);
    if(kind==='border'&&dataUrl.length>6800000){
@@ -409,7 +438,18 @@ async function exportCrop(button){
    if(kind==='face'&&!dataUrl.startsWith('data:image/webp'))dataUrl=canvas.toDataURL('image/png');
    if(dataUrl.length>7100000)throw new Error('Cropped image is too large. Try a simpler image or compress the source.');
    const {artId,url}=await api('/api/card-studio/upload',{dataUrl,kind});
-   if(kind==='border'){
+   if(kind==='back'){
+     if(activeCrop.backScope==='set'){
+       working.defaultBackArtId=artId;
+       working.defaultBackUrl=url;
+     }else{
+       const card=working?.cards?.[activeCrop.cardIndex];
+       if(!card)throw new Error('Card was changed while uploading its back.');
+       card.backArtId=artId;card.backArtUrl=url;
+     }
+     isDirty=true;closeCrop();render();
+     toast('Card back uploaded. Click Save pack to keep it.');
+   }else if(kind==='border'){
      if(!borderDraft)throw new Error('Border editor was closed.');
      borderDraft.artId=artId;borderDraft.url=url;
      isDirty=true;closeCrop();render();
@@ -568,6 +608,10 @@ document.addEventListener('click',async event=>{
      working.cards.splice(cardIndex,1);cardIndex=Math.max(0,Math.min(cardIndex,working.cards.length-1));markDirty();return render();
    }
    if(a==='upload-art')return byId('studio-art-picker')?.click();
+   if(a==='upload-set-back'){backUploadScope='set';return byId('studio-back-picker')?.click();}
+   if(a==='upload-card-back'){backUploadScope='card';return byId('studio-back-picker')?.click();}
+   if(a==='clear-set-back'){working.defaultBackArtId=null;working.defaultBackUrl=null;markDirty();return render();}
+   if(a==='clear-card-back'){const card=selectedCard();if(card){card.backArtId=null;card.backArtUrl=null;markDirty();render();}return;}
    if(a==='save')return await savePack();
    if(a==='delete-pack')return await deletePack();
    if(a==='close-crop')return closeCrop();
@@ -587,6 +631,7 @@ document.addEventListener('change',event=>{
  const target=event.target;
  if(target.id==='studio-art-picker'){imageEditor(target.files[0],'face');target.value='';return;}
  if(target.id==='studio-border-picker'){imageEditor(target.files[0],'border');target.value='';return;}
+ if(target.id==='studio-back-picker'){imageEditor(target.files[0],'back');target.value='';return;}
  if(target.matches('[data-text-field]')){updateFaceText(target);return;}
  if(target.matches('[data-border-field]')){if(borderDraft){borderDraft[target.dataset.borderField]=target.value;isDirty=true;}return;}
  if(target.matches('[data-pack-field], [data-card-field]')){
