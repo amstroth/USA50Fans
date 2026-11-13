@@ -9,9 +9,11 @@
 const fs=require('node:fs');
 const path=require('node:path');
 const crypto=require('node:crypto');
+const makeOfficialAutoSync=require('./official-auto-sync.js');
 module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,dataDir}){
  const state=db.officialDiary||(db.officialDiary={diaries:[],officialPosts:[],sequence:{},sources:{}});
  state.diaries||=[];state.officialPosts||=[];state.sequence||={};state.sources||={};
+ const autoSync=makeOfficialAutoSync({state,save,addOfficial,fetchThumb,now});
  const dir=path.join(dataDir,'diary-uploads');fs.mkdirSync(dir,{recursive:true});
  const previewDir=path.join(dataDir,'official-previews');fs.mkdirSync(previewDir,{recursive:true});
  const THUMB_MAX=1200000;
@@ -107,9 +109,12 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
  function view(){return {diaries:state.diaries.slice(-100).reverse().map(publicEntry),
    officialPosts:state.officialPosts.slice(-100).reverse().map(publicOfficial),
    canPost:false,sourceStatus:{youtube:Boolean(state.sources.youtubeChannelId||process.env.YOUTUBE_CHANNEL_ID),
-     instagram:Boolean(process.env.USA50_OFFICIAL_WEBHOOK_SECRET),
-     tiktok:Boolean(process.env.USA50_OFFICIAL_WEBHOOK_SECRET)}};}
- function info(u){return {...view(),canPost:isIdol(u),settings:u?.role==='admin'?{youtubeChannelId:state.sources.youtubeChannelId||process.env.YOUTUBE_CHANNEL_ID||'',instagramUsername:state.sources.instagramUsername||'',tiktokUsername:state.sources.tiktokUsername||''}:null};}
+     instagram:Boolean(process.env.USA50_OFFICIAL_WEBHOOK_SECRET||autoSync.publicStatus().instagram.configured),
+     tiktok:Boolean(process.env.USA50_OFFICIAL_WEBHOOK_SECRET||autoSync.publicStatus().tiktok.configured)}};}
+ function info(u){return {...view(),canPost:isIdol(u),
+   settings:u?.role==='admin'?{youtubeChannelId:state.sources.youtubeChannelId||process.env.YOUTUBE_CHANNEL_ID||'',
+     instagramUsername:state.sources.instagramUsername||'',tiktokUsername:state.sources.tiktokUsername||'',
+     autoSync:autoSync.publicStatus()}:null};}
  function photoUpload(item){
    if(!item||!['image/jpeg','image/png','image/webp'].includes(item.mime)||typeof item.data!=='string')throw Error('Choose a JPG, PNG or WebP photo');
    if(item.data.length>950000)throw Error('Compress diary photos before uploading');
@@ -234,6 +239,8 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
    }
    save();
    pollYouTube().catch(console.warn);
+   if(autoSync.publicStatus().instagram.configured||autoSync.publicStatus().tiktok.configured)
+     autoSync.sync().catch(err=>console.warn('Official auto-sync:',err.message));
    return json(res,200,{ok:true,sourceStatus:view().sourceStatus});
  }
  function ingestOfficial(req,res,data){
@@ -247,5 +254,11 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
    if(allowed&&String(data.account||'').replace(/^@/,'').toLowerCase()!==allowed.replace(/^@/,'').toLowerCase())return fail(res,403,'Not an authorized official channel');
    return json(res,200,{ok:true,imported:Boolean(addOfficial(data))});
  }
- return {info,createDiary,deleteDiary,photo,photoThumbnail,publishOfficial,deleteOfficial,refreshPreviews,ingestOfficial,setSources,pollYouTube};
+ async function syncOfficial(req,res){
+   const u=userFrom(req);
+   if(!u||u.role!=='admin'||u.mustChangePassword)return fail(res,403,'Management required.');
+   const result=await autoSync.sync();
+   return json(res,200,{ok:true,...result});
+ }
+ return {info,createDiary,deleteDiary,photo,photoThumbnail,publishOfficial,deleteOfficial,refreshPreviews,ingestOfficial,setSources,pollYouTube,syncOfficial,pollAutomatic:()=>autoSync.sync()};
 };
