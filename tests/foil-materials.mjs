@@ -64,10 +64,10 @@ assert.equal(allowed.status,200);
 assert.equal(allowed.headers['Cache-Control'],'private,no-store');
 assert.equal((await read(mask,outsider)).status,403);
 assert.equal((await read(mask,admin)).status,200);
-const edited=post('save',{...common,id:packId,status:'published',cards:[{...publicCard,materialLayers:[{
+const edited=post('save',{...common,id:packId,status:'published',cards:[{...published.body.pack.cards[0],materialLayers:[{
  ...layer,opacity:99,intensity:9,colors:['red','#dcf068'],density:0
 }]}]});
-assert.equal(edited.status,200);
+assert.equal(edited.status,200,JSON.stringify(edited.body));
 assert.equal(edited.body.pack.cards[0].materialLayers[0].opacity,1);
 assert.equal(edited.body.pack.cards[0].materialLayers[0].intensity,2);
 assert.equal(edited.body.pack.cards[0].materialLayers[0].colors[0],'#e99fff');
