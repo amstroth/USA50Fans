@@ -84,3 +84,33 @@ The lettering is saved separately from the photo artwork and custom or built-in 
 **Download finished card (PNG)** creates a flattened **660 × 1020 px** image directly in your browser, compositing image, rarity-border overlay and editable lettering in that order. This works with unsaved changes in the editor, so download the preview before saving if desired. For durable edits, click **Save pack** separately; downloading does not change the published pack.
 
 Only same-origin card assets may be exported. A card must have artwork to download. The print-standard pixel size is a design master, not a vendor-ready manufacturing bleed template; confirm bleed and safe areas with the printer before producing physical sets.
+
+## Foil Lab — multi-layer holographic materials (v1.2)
+
+**Management desktop editor:** Card Studio → Collections → select a card → **Open Foil Lab**.
+
+Foil Lab displays the current card artwork behind the select-and-mask canvas on the left and a separate, draggable live Three.js preview on the right. Each card can have **up to eight independently masked material layers**. For example:
+
+- Layer 1: **Holographic star**, with a small star-shaped mask; use lavender/pink colors.
+- Layer 2: **Glitter border**, with a border-shaped mask; use silver or gold sparkle.
+- Layer 3: **Iridescent highlight**, selected from one region of the photograph; use lime-green and yellow accents.
+
+### Mask selection tools
+- **Brush** paints the selected material region.
+- **Erase** removes the region.
+- **Rectangle** makes an editable rectangular selection.
+- **Lasso** draws a free-form filled selection.
+- **Color select** fills a connected region of similar pixels (adjust tolerance).
+- **Undo**, **Fill mask**, **Invert** and **Clear** control the selection.
+- **Holographic star** and **Glitter border** automatically add usable starter layers with matching masks.
+- The blue overlay shows selected areas; the stored mask is a 660 × 1020 PNG, separate from the card's source art.
+
+### Material properties
+Each layer has name, type (holographic, iridescent, glitter), two tint colors, opacity, reflection strength, sparkle density, pattern scale, animation speed and enabled state. Both preset color palettes **Lavender/Pink** and **Green/Yellow** are included. Tilt/drag the 3D card to see the view-dependent reflection change.
+
+**Apply layers to card** uploads edited masks and attaches the layer settings to the current card in the editor. **Save pack** is still required to persist/publish that assignment. Existing card images and rarity borders remain independently editable.
+
+In the public collection, the **3D viewer is owner-only**. It uses locally bundled Three.js to draw a thin, double-sided card with a textured face, an authenticated card-back image or standard USA50 back, and the per-card material shader layers. Mask/back image requests use the signed-in session and the server rejects access to unowned card backs and masks. Shader materials are live WebGL effects; downloaded static PNG face exports currently **do not include animated foil**.
+
+### Script lettering
+Card Studio's font dropdown also includes **Great Vibes**, an open-license calligraphy font, installed locally for consistent web preview and finished PNG lettering.
