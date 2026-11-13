@@ -6,11 +6,14 @@
 'use strict';
 const byId=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const defaultCard=()=>({id:null,title:'New photocard',rarity:'R',border:'none',artId:null,legacy:false,artUrl:null});
+const defaultCard=()=>({id:null,title:'New photocard',rarity:'R',border:'none',artId:null,legacy:false,artUrl:null,
+ overlayText:window.USA50CardFace.normalize(null,working?.member||'Arielle')});
 const token=()=>localStorage.getItem('usa50_dev_token')||'';
 const sizes={width:660,height:1020};
 let catalogue=null,working=null,cardIndex=0,isDirty=false,activeCrop=null;
 let studioMode='packs',borderDraft=null;
+const cardFace=window.USA50CardFace;
+let draggingLettering=null;
 async function api(url,payload){
   const res=await fetch(url,{method:payload===undefined?'GET':'POST',credentials:'include',
     headers:{...(payload!==undefined?{'Content-Type':'application/json'}:{}),...(token()?{Authorization:'Bearer '+token()}:{})},
@@ -60,9 +63,11 @@ function cardArt(card){
 function borderURL(border){return catalogue?.borderPresets?.find(b=>b.id===border)?.url||null;}
 function facePreview(card){
  const src=cardArt(card),border=card.border||'none';
- return '<div class="card-preview">'+
+ const layer=cardFace.normalize(card.overlayText,working?.member||'Arielle');
+ return '<div class="card-preview studio-draggable-text" id="studio-text-preview">'+
    (src?'<img class="face" src="'+esc(src)+'" alt="Photocard artwork preview">':'<span class="preview-label">'+(card.legacy?'Existing image':'Upload artwork')+'</span>')+
    (borderURL(border)?'<img class="frame" src="'+esc(borderURL(border))+'" alt="">':'')+
+   '<div data-studio-text-layer="true">'+cardFace.markup(layer)+'</div>'+
    '</div>';
 }
 function renderSidebar(){
@@ -107,18 +112,39 @@ function renderCardList(){
 }
 function renderCardEditor(){
  const c=selectedCard();if(!c)return '';
+ const layer=cardFace.normalize(c.overlayText,working?.member||'Arielle');
+ const families=cardFace.fonts.map(f=>'<option value="'+esc(f)+'" '+(layer.fontFamily===f?'selected':'')+'>'+esc(f)+'</option>').join('');
+ const aligns=['left','center','right'].map(v=>'<option value="'+v+'" '+(layer.align===v?'selected':'')+'>'+v.charAt(0).toUpperCase()+v.slice(1)+'</option>').join('');
+ const weights=cardFace.weights.map(v=>'<option value="'+v+'" '+(layer.weight===v?'selected':'')+'>'+({400:'Regular',500:'Medium',600:'Semibold',700:'Bold'})[v]+'</option>').join('');
  return '<section class="soft-panel"><div class="studio-toolbar"><h2 style="margin:0">Design card '+(cardIndex+1)+'</h2><button class="studio-button danger small" data-studio-action="remove-card" type="button">Remove card</button></div>'+
- '<div class="editor-grid"><div>'+facePreview(c)+'<div class="card-preview-note">Exactly 660 × 1020 px · 11:17<br>Rarity overlay is optional.</div></div>'+
+ '<div class="editor-grid"><div>'+facePreview(c)+'<div class="card-preview-note">Drag the lettering directly on the preview to move it.<br>Finished face: 660 × 1020 px.</div></div>'+
  '<div class="editor-fields">'+
- '<div class="field"><label>Card title</label><input data-card-field="title" maxlength="80" value="'+esc(c.title)+'"></div>'+
+ '<div class="field"><label>Card title (collection listing)</label><input data-card-field="title" maxlength="80" value="'+esc(c.title)+'"></div>'+
  '<div class="field"><label>Rarity / gacha probability tier</label><select data-card-field="rarity">'+catalogue.rarities.map(r=>'<option value="'+r+'" '+(c.rarity===r?'selected':'')+'>'+r+'</option>').join('')+'</select></div>'+
  '<div class="field"><label>Face border</label><select data-card-field="border">'+
  catalogue.borderPresets.map(b=>'<option value="'+esc(b.id)+'" '+(c.border===b.id?'selected':'')+'>'+esc(b.name)+(b.builtin?' · Default':' · Custom')+'</option>').join('')+'</select>'+
- '<span class="helper">Border style is independent of rarity. Your artwork remains unchanged.</span></div>'+
+ '<span class="helper">Card rarity and the visible border are independent settings.</span></div>'+
  '<label class="studio-button studio-file-label" for="studio-art-picker">'+(c.artId?'Replace / recrop artwork':'Upload, crop & resize artwork')+'</label>'+
- '<span class="helper">Choose a JPG, PNG or WebP image. The crop editor opens immediately after selection.</span>'+
- (c.legacy?'<span class="helper">Legacy True Love card: the existing default image stays until you upload new artwork.</span>':'')+
- '</div></div></section>';
+ '<span class="helper">Choose a JPG, PNG or WebP. Artwork stays separate from the border and text.</span>'+
+ (c.legacy?'<span class="helper">Existing True Love card: the original image is preserved until you upload new artwork.</span>':'')+
+ '</div></div>'+
+ '<div class="studio-type-editor"><div class="studio-toolbar"><h3>Lettering on the card</h3><span class="helper">Separate editable text layer</span></div>'+
+ '<div class="studio-type-grid">'+
+ '<div class="field wide"><label>Text printed on the face</label><input type="text" maxlength="60" data-text-field="value" value="'+esc(layer.value)+'" placeholder="e.g. Arielle"></div>'+
+ '<div class="field"><label>Font</label><select data-text-field="fontFamily">'+families+'</select></div>'+
+ '<div class="field"><label>Weight</label><select data-text-field="weight">'+weights+'</select></div>'+
+ '<div class="field"><label>Size <span data-text-output="fontSize">'+layer.fontSize+' px</span></label><input type="range" data-text-field="fontSize" min="14" max="160" step="1" value="'+layer.fontSize+'"></div>'+
+ '<div class="field"><label>Text color</label><input type="color" data-text-field="color" value="'+esc(layer.color)+'"></div>'+
+ '<div class="field"><label>Horizontal position <span data-text-output="x">'+layer.x+'%</span></label><input type="range" data-text-field="x" min="0" max="100" step=".5" value="'+layer.x+'"></div>'+
+ '<div class="field"><label>Vertical position <span data-text-output="y">'+layer.y+'%</span></label><input type="range" data-text-field="y" min="0" max="100" step=".5" value="'+layer.y+'"></div>'+
+ '<div class="field"><label>Alignment</label><select data-text-field="align">'+aligns+'</select></div>'+
+ '<label class="studio-italic-toggle"><input type="checkbox" data-text-field="italic" '+(layer.italic?'checked':'')+'> Italic lettering</label>'+
+ '</div>'+
+ '<p class="helper">Changing the text here does not change the collectible title, photo, or border. Leave it blank for no lettering.</p>'+
+ '</div>'+
+ '<button class="studio-button studio-download-btn" data-studio-action="download-card" type="button">↓ Download finished card (PNG)</button>'+
+ '<p class="helper">Exports the face, chosen border, and lettering in one 660 × 1020 PNG. Editable layers are retained in Card Studio.</p>'+
+ '</section>';
 }
 function renderPublish(){
  const el=byId('studio-publish-panel');if(!el)return;
@@ -449,12 +475,83 @@ async function deleteBorder(){
  isDirty=false;render();toast('Custom border deleted.');
 }
 
+function updateFaceText(target){
+ const card=selectedCard();if(!card)return;
+ const key=target.dataset.textField;
+ const old=cardFace.normalize(card.overlayText,working?.member||'Arielle');
+ let value=target.type==='checkbox'?target.checked:target.value;
+ card.overlayText=cardFace.normalize({...old,[key]:value},working?.member||'Arielle');
+ isDirty=true;
+ const layer=document.querySelector('[data-studio-text-layer]');
+ if(layer)layer.innerHTML=cardFace.markup(card.overlayText);
+ // Keep sliders and their numeric indicators synchronized during drag or typing.
+ for(const output of document.querySelectorAll('[data-text-output]')){
+   const k=output.dataset.textOutput;
+   output.textContent=card.overlayText[k]+(k==='fontSize'?' px':'%');
+ }
+ for(const input of document.querySelectorAll('[data-text-field]')){
+   if(input===target)continue;
+   const k=input.dataset.textField;
+   if(k==='x'||k==='y'||k==='fontSize')input.value=card.overlayText[k];
+ }
+ renderPublish();
+}
+async function downloadFinishedCard(button){
+ const card=selectedCard();if(!card)throw new Error('Choose a card to download.');
+ const artUrl=cardArt(card);
+ if(!artUrl)throw new Error('Upload card artwork before downloading the finished card.');
+ button.disabled=true;
+ const original=button.textContent;button.textContent='Creating PNG…';
+ try{
+   const safe=name=>String(name||'Card').replace(/[^a-zA-Z0-9_-]+/g,'_').slice(0,55);
+   await cardFace.download({
+     artUrl,borderUrl:borderURL(card.border),
+     overlayText:cardFace.normalize(card.overlayText,working?.member||'Arielle'),
+     filename:'USA50_'+safe(working?.title)+'_'+safe(card.title)+'_660x1020.png'
+   });
+   toast('Finished card downloaded as a 660 × 1020 PNG.');
+ }finally{button.disabled=false;button.textContent=original;}
+}
+document.addEventListener('pointerdown',event=>{
+ const target=event.target.closest?.('#studio-text-preview .card-face-lettering');
+ if(!target||event.button!==0)return;
+ const preview=document.getElementById('studio-text-preview');
+ if(!preview||!selectedCard())return;
+ draggingLettering={id:event.pointerId,target,preview};
+ target.setPointerCapture(event.pointerId);
+ event.preventDefault();
+});
+document.addEventListener('pointermove',event=>{
+ if(!draggingLettering||draggingLettering.id!==event.pointerId)return;
+ const rect=draggingLettering.preview.getBoundingClientRect();
+ const x=Math.max(0,Math.min(100,Math.round((event.clientX-rect.left)/rect.width*10)/10));
+ const y=Math.max(0,Math.min(100,Math.round((event.clientY-rect.top)/rect.height*10)/10));
+ const card=selectedCard();if(!card)return;
+ card.overlayText=cardFace.normalize({...cardFace.normalize(card.overlayText,working?.member||'Arielle'),x,y},working?.member||'Arielle');
+ const label=draggingLettering.target;
+ label.style.cssText=cardFace.style(card.overlayText);
+ for(const k of ['x','y']){
+   const input=document.querySelector('[data-text-field="'+k+'"]');
+   if(input)input.value=card.overlayText[k];
+   const output=document.querySelector('[data-text-output="'+k+'"]');
+   if(output)output.textContent=card.overlayText[k]+'%';
+ }
+ isDirty=true;
+});
+function endDrag(event){
+ if(!draggingLettering||draggingLettering.id!==event.pointerId)return;
+ draggingLettering=null;renderPublish();
+}
+document.addEventListener('pointerup',endDrag);
+document.addEventListener('pointercancel',endDrag);
+
 document.addEventListener('click',async event=>{
  const target=event.target.closest('[data-studio-action]');if(!target)return;
  event.preventDefault();
  const a=target.dataset.studioAction;
  try{
    if(a==='download-template')return downloadTemplatePng();
+   if(a==='download-card')return await downloadFinishedCard(target);
    if(a==='select')return choose(target.dataset.id);
    if(a==='pick-border'){const p=catalogue.borderPresets.find(b=>b.id===target.dataset.id);if(!p)return;if(isDirty&&!confirm('Discard unsaved border edits?'))return;borderDraft={...p};isDirty=false;return render();}
    if(a==='new-border'){if(isDirty&&!confirm('Discard unsaved border edits?'))return;borderDraft={id:null,name:'New custom border',rarity:'',artId:null,url:null};isDirty=false;return render();}
@@ -490,6 +587,7 @@ document.addEventListener('change',event=>{
  const target=event.target;
  if(target.id==='studio-art-picker'){imageEditor(target.files[0],'face');target.value='';return;}
  if(target.id==='studio-border-picker'){imageEditor(target.files[0],'border');target.value='';return;}
+ if(target.matches('[data-text-field]')){updateFaceText(target);return;}
  if(target.matches('[data-border-field]')){if(borderDraft){borderDraft[target.dataset.borderField]=target.value;isDirty=true;}return;}
  if(target.matches('[data-pack-field], [data-card-field]')){
    try{updateFormField(target);}catch(err){alertUser(err.message);}
@@ -499,6 +597,7 @@ document.addEventListener('change',event=>{
 });
 document.addEventListener('input',event=>{
  const target=event.target;
+ if(target.matches('[data-text-field]')){updateFaceText(target);return;}
  if(target.matches('input[data-border-field]')){if(borderDraft){borderDraft[target.dataset.borderField]=target.value;isDirty=true;}return;}
  if(!target.matches('input[data-pack-field],textarea[data-pack-field],input[data-card-field]'))return;
  // Do not rerender while typing.
