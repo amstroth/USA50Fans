@@ -1,0 +1,28 @@
+/* Card Studio lettering layers and finished face preview. */
+.card-preview,.photocard{container-type:inline-size}
+.card-preview .card-face-lettering,.photocard .card-face-lettering{
+  position:absolute;z-index:7;display:block;max-width:90%;min-height:1em;
+  white-space:nowrap;overflow:hidden;text-overflow:clip;line-height:1.12;
+  font-size:14px;pointer-events:none;user-select:none;-webkit-user-select:none;
+  text-shadow:0 1px 2px rgba(255,255,255,.18);
+}
+.studio-draggable-text .card-face-lettering{
+ pointer-events:auto;touch-action:none;cursor:grab;
+ padding:4px 6px;margin:-4px -6px;
+ border:1px dashed transparent;border-radius:6px;
+}
+.studio-draggable-text .card-face-lettering:hover,
+.studio-draggable-text .card-face-lettering:active{
+ border-color:rgba(122,73,165,.55);background:rgba(255,255,255,.14);
+}
+.studio-type-editor{border-top:1px solid rgba(169,132,195,.22);margin-top:24px;padding-top:21px}
+.studio-type-editor h3{font:italic 24px Georgia,serif;color:#76528f;margin:0}
+.studio-type-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;align-items:end}
+.studio-type-grid .wide{grid-column:1/-1}
+.studio-type-grid input[type=range]{width:100%;min-height:34px;accent-color:#ae75c9;cursor:pointer}
+.studio-type-grid input[type=color]{height:42px;padding:4px;cursor:pointer}
+.studio-type-grid [data-text-output]{font-size:10px;color:#79589a;margin-left:5px}
+.studio-italic-toggle{display:flex;align-items:center;gap:10px;color:#846999;font-size:12px;padding:10px 0;cursor:pointer}
+.studio-italic-toggle input{accent-color:#9665af;width:18px;height:18px}
+.studio-download-btn{width:100%;margin-top:18px;font-size:13px;padding:13px 16px}
+@media(max-width:1150px){.studio-type-grid{grid-template-columns:minmax(0,1fr)}}
