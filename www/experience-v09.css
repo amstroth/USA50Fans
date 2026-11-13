@@ -1,0 +1,154 @@
+/* USA50 experience v09: immersive pack opening + Instagram-style continuous Social feed */
+/* Full viewport reward sequence, including single/10-card reveals and bonus screen. */
+#modal-root .modal-backdrop.pack-immersive-backdrop{
+ inset:0!important;z-index:1000!important;padding:0!important;
+ background:#110b21!important;backdrop-filter:none!important;
+ align-items:stretch!important;justify-content:stretch!important;
+}
+#modal-root .modal.pack-immersive{
+ position:relative!important;inset:0!important;display:flex!important;flex-direction:column!important;
+ width:100vw!important;max-width:none!important;height:100dvh!important;max-height:none!important;
+ min-height:100dvh!important;margin:0!important;
+ padding:max(15px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))!important;
+ overflow-y:auto!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+ background:radial-gradient(ellipse at 50% 30%,#5e3a91 0,#28183e 45%,#100a20 90%)!important;
+ color:#fff!important;scrollbar-width:thin;
+}
+#modal-root .pack-immersive .modal-head{width:min(1080px,100%);margin:0 auto 12px!important;flex:none;z-index:5}
+#modal-root .pack-immersive .modal-head h2{color:#fff;font-size:clamp(22px,4vw,36px)}
+#modal-root .pack-immersive .modal-head .icon-btn{background:#ffffff1d!important;border:1px solid #ffffff55!important;color:white!important}
+#modal-root .pack-immersive .modal-head .icon-btn svg{color:white}
+#modal-root .pack-immersive .runway-opening{position:relative;flex:1;min-height:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+#modal-root .pack-immersive .runway-opening-frame{
+ width:100%!important;max-width:none!important;max-height:none!important;
+ position:absolute!important;inset:0!important;height:100%!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ background:radial-gradient(ellipse,#6945a3,#130b22)!important;
+}
+#modal-root .pack-immersive .runway-opening-video{
+ width:100%!important;height:100%!important;max-width:none!important;
+ object-fit:contain!important;background:#160d27;
+}
+#modal-root .pack-immersive .runway-opening-overlay{top:clamp(15px,4vh,45px);z-index:2}
+#modal-root .pack-immersive .runway-opening-overlay strong{font-size:clamp(23px,5vw,42px)}
+#modal-root .pack-immersive .opening-skip{
+ z-index:4;position:absolute;bottom:max(20px,env(safe-area-inset-bottom));right:clamp(12px,4vw,45px);
+ background:#ffffffee;border:0;border-radius:99px;color:#4f3475;padding:12px 22px;
+ font-weight:750;cursor:pointer;
+}
+#modal-root .pack-immersive .reveal-wrap{
+ width:min(1120px,100%);margin:auto!important;display:flex;flex-direction:column;align-items:center;
+ justify-content:center;gap:18px;flex:1;min-height:min-content;padding:15px 0 30px;
+}
+#modal-root .pack-immersive .pull-single{width:min(350px,70vw);margin:auto!important}
+#modal-root .pack-immersive .pull-single .pull-result-item{max-width:360px!important}
+#modal-root .pack-immersive .pull-ten-grid{width:100%;max-width:1100px;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(7px,1.5vw,20px);align-items:start}
+#modal-root .pack-immersive .pull-result-item{min-width:0;color:#f5e9ff}
+#modal-root .pack-immersive .pull-result-item small{color:#e8d6ff;font-size:clamp(10px,1.5vw,14px)}
+#modal-root .pack-immersive .pull-result-item .photocard{width:100%;max-width:210px!important}
+#modal-root .pack-immersive .reward-second{background:#ffffff19;border:1px solid #ffffff2f;max-width:650px;width:100%}
+#modal-root .pack-immersive .reward-second h3{color:#fff}
+#modal-root .pack-immersive .lead{color:#e9d6ff;text-align:center}
+#modal-root .pack-immersive .reward-pill{color:#5d4385}
+#modal-root .pack-immersive .cooldown{color:#66517c;max-width:650px;width:100%}
+#modal-root .pack-immersive .btn.full{max-width:460px}
+#modal-root .pack-immersive .modal-actions{justify-content:center;max-width:720px}
+#modal-root .pack-immersive .opening-sequence{display:grid;place-content:center;flex:1;min-height:70vh}
+#modal-root .pack-immersive .opening-sequence p{color:#f3dcff}
+@media(max-width:780px){
+ #modal-root .pack-immersive .pull-ten-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
+ #modal-root .pack-immersive .pull-single{width:min(270px,65vw)}
+ #modal-root .pack-immersive .reveal-wrap{justify-content:flex-start}
+ #modal-root .pack-immersive .modal-head{margin-bottom:8px!important}
+ #modal-root .pack-immersive .reward-second{padding:18px}
+}
+@media(max-width:390px){
+ #modal-root .pack-immersive .pull-ten-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+/* Continuous Instagram-style fan feed. Only the posts are flattened; ranking & tutorial panels remain cards. */
+.social-feed{display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ gap:0!important;max-width:760px;width:100%;margin:0 auto;min-width:0}
+.social-feed .social-post,.social-feed .social-post.glass{
+ width:100%;max-width:100%;min-width:0;
+ background:transparent!important;border:0!important;border-radius:0!important;
+ box-shadow:none!important;backdrop-filter:none!important;
+ padding:19px 0 24px!important;margin:0!important;
+ border-bottom:1px solid rgba(121,93,145,.19)!important;
+}
+.social-feed .social-post:first-child{border-top:1px solid rgba(121,93,145,.19)!important}
+.social-feed .social-post-head{padding:0 9px;margin-bottom:12px}
+.social-feed .social-caption{padding:0 9px;margin-top:12px}
+.social-feed .social-post-footer{padding:0 9px;gap:10px}
+.social-feed .social-embed{border:0!important;border-radius:0!important;background:transparent!important;overflow:hidden;min-height:0}
+.social-feed .social-embed iframe{max-width:100%;border-radius:0!important}
+.social-feed .social-post-links,.social-feed .social-votes{min-width:0;gap:8px}
+.social-feed .social-mini-badge{font-size:10px;padding:3px 7px}
+@media(max-width:780px){
+ .social-feed{max-width:100%;padding:0!important}
+ .social-feed .social-post,.social-feed .social-post.glass{padding:15px 0 20px!important}
+ .social-feed .social-post-head{gap:8px}
+ .social-feed .social-avatar{width:37px;height:37px;flex-basis:37px;font-size:20px}
+ .social-feed .social-embed iframe{width:100%;max-width:100%}
+}
+/* Compact aligned top navigation; overrides old 2-row mobile grid. */
+@media(max-width:780px){
+ .top-bar{
+  display:grid!important;grid-template-columns:max-content minmax(0,1fr)!important;
+  grid-template-rows:44px!important;align-items:center!important;column-gap:7px!important;
+  height:auto!important;min-height:56px!important;max-height:none!important;
+  padding:6px 9px!important;margin:0 auto 12px!important;border-radius:19px!important;
+  width:100%!important;overflow:visible!important;
+ }
+ .top-bar .top-mobile-brand{grid-column:1!important;grid-row:1!important;display:block!important;
+  justify-self:start!important;align-self:center!important;width:auto!important;
+  position:static!important;transform:none!important;z-index:auto!important;text-align:left!important}
+ .top-bar .top-mobile-brand .brand{font-size:23px!important;line-height:.95!important;white-space:nowrap!important;letter-spacing:-1.3px!important}
+ .top-bar .top-mobile-brand .brand small{font-size:7px!important;line-height:1!important;margin-top:3px!important;letter-spacing:.45px!important}
+ .top-bar .top-mobile-brand .brand:after{font-size:12px!important;right:-9px!important;top:-6px!important}
+ .top-bar .desktop-breadcrumb{display:none!important}
+ .top-bar .top-actions{grid-column:2!important;grid-row:1!important;min-width:0!important;
+  width:100%!important;display:flex!important;justify-content:flex-end!important;
+  align-items:center!important;gap:5px!important;margin:0!important;flex-wrap:nowrap!important}
+ .top-bar .top-actions .stars-pill{display:inline-flex!important;flex:0 1 auto!important;
+  align-items:center!important;justify-content:center!important;min-width:0!important;
+  max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  padding:6px 7px!important;gap:4px!important;margin:0 auto 0 0!important;
+  font-size:11px!important;line-height:1!important;white-space:nowrap!important}
+ .top-bar .top-actions .stars-pill small{font-size:8px!important;white-space:nowrap!important;letter-spacing:0!important}
+ .top-bar .top-actions .star-icon{font-size:13px!important}
+ .top-bar .top-actions .stars-pill svg{width:11px!important;height:11px!important;flex:none}
+ .top-bar .top-actions .icon-btn{width:33px!important;height:33px!important;min-width:33px!important;
+  min-height:33px!important;flex:0 0 33px!important;padding:6px!important}
+ .top-bar .top-actions .icon-btn svg{width:17px!important;height:17px!important}
+ .top-bar .top-actions .mobile-menu{display:inline-flex!important}
+}
+@media(max-width:365px){
+ .top-bar{column-gap:4px!important;padding:6px!important}
+ .top-bar .top-mobile-brand .brand{font-size:20px!important}
+ .top-bar .top-actions{gap:3px!important}
+ .top-bar .top-actions .stars-pill{font-size:10px!important;gap:2px!important;padding:5px!important}
+ .top-bar .top-actions .stars-pill small{font-size:7px!important}
+ .top-bar .top-actions .icon-btn{width:30px!important;height:30px!important;min-width:30px!important;flex-basis:30px!important}
+}
+/* Four official posts per carousel page, with a compact dot wheel. */
+.official-carousel{overflow:hidden;width:100%;max-width:100%;touch-action:pan-y}
+.official-carousel-track{display:flex;width:100%;align-items:stretch;transition:transform .32s ease;will-change:transform}
+.official-page{flex:0 0 100%;min-width:0;width:100%}
+.official-page[aria-hidden="true"]{visibility:hidden}
+.official-social-block .official-social-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px}
+.official-social-block .official-social-card{min-width:0;min-height:94px;padding:11px!important;align-items:flex-start;gap:9px}
+.official-social-block .official-social-card h3{font-size:12px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:3px 0}
+.official-social-block .official-social-card .eyebrow{font-size:8px;letter-spacing:.6px}
+.official-social-block .official-social-icon{width:31px;height:31px;flex-basis:31px;font-size:19px}
+.official-social-block .official-open{font-size:14px}
+.official-carousel-controls{display:flex;align-items:center;justify-content:center;gap:11px;padding:12px 0 8px}
+.official-carousel-controls>button{border:0;border-radius:50%;width:28px;height:28px;background:#ffffff7d;color:#8465a4;font-size:20px;cursor:pointer}
+.official-carousel-controls>button:disabled{opacity:.35;cursor:default}
+.official-page-dots{display:flex;align-items:center;gap:8px;max-width:190px;overflow-x:auto;padding:6px 1px;scrollbar-width:none}
+.official-page-dots::-webkit-scrollbar{display:none}
+.official-page-dot{display:grid;place-items:center;flex:0 0 16px;width:16px;height:16px;border:0;background:transparent;padding:0;cursor:pointer}
+.official-page-dot span{width:6px;height:6px;border-radius:50%;background:#cbb6d9;transition:all .2s ease}
+.official-page-dot.active span{width:10px;height:10px;background:#a77ac6}
+.official-carousel-controls small{color:#806f92;font-size:10px;white-space:nowrap}
+@media(max-width:390px){.official-social-block .official-social-card{padding:8px!important;gap:5px}.official-social-block .official-social-icon{width:26px;height:26px;flex-basis:26px}}
+@media(prefers-reduced-motion:reduce){.official-carousel-track{transition:none}}
