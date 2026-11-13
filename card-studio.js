@@ -198,7 +198,10 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     };
     if(status!=='draft' && !ready(p))return fail(res,400,'To schedule or publish, every card needs artwork, a title, rarity and border selection.');
     if(p.id===baseAlbumId && status!=='draft' && RARITIES.some(r=>!cards.some(c=>c.rarity===r)))return fail(res,400,'The original True Love set must keep at least one card of each rarity to match its published pull odds.');
+    // Replacing/removing a back should not leave private handwritten artwork orphaned.
+    const previousAssets=existing?[existing.defaultBackArtId,...existing.cards.flatMap(c=>[c.artId,c.backArtId])].filter(Boolean):[];
     if(existing)Object.assign(existing,p);else studio.packs.push(p);
+    for(const assetId of previousAssets)cleanupMedia(assetId);
     log(existing?'edit':'create',p.id,uid);save();syncBaseCards();
     return json(res,200,{ok:true,pack:{...p,effectiveStatus:effective(p)?'published':p.status,ready:ready(p)}});
   }
