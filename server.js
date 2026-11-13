@@ -101,6 +101,7 @@ async function api(req,res,url){
  if(ep==='/api/diary/delete')return officialDiary.deleteDiary(req,res,data);
  if(ep==='/api/official/ingest')return officialDiary.ingestOfficial(req,res,data);
  if(ep==='/api/official/sources')return officialDiary.setSources(req,res,data);
+ if(ep==='/api/official/sync')return await officialDiary.syncOfficial(req,res);
  if(ep==='/api/official/publish')return officialDiary.publishOfficial(req,res,data);
  if(ep==='/api/official/delete')return officialDiary.deleteOfficial(req,res,data);
  if(cardStudio.handlePost(req,res,ep,data))return;
@@ -277,6 +278,11 @@ const server=http.createServer((req,res)=>{
 // Poll the public official YouTube feed when YOUTUBE_CHANNEL_ID is configured.
 setTimeout(()=>officialDiary.pollYouTube().catch(console.warn),7000);
 setInterval(()=>officialDiary.pollYouTube().catch(console.warn),10*60*1000).unref();
+// Official account API polling is enabled only after management supplies valid
+// authorized API credentials in Railway. TikTok refresh tokens rotate and are
+// persisted on the Railway data volume; no username scraping is performed.
+setTimeout(()=>officialDiary.pollAutomatic().catch(console.warn),17000).unref();
+setInterval(()=>officialDiary.pollAutomatic().catch(console.warn),20*60*1000).unref();
 setTimeout(()=>officialDiary.refreshPreviews().catch(console.warn),12000).unref();
 setInterval(()=>officialDiary.refreshPreviews().catch(console.warn),6*60*60*1000).unref();
 server.listen(PORT,'0.0.0.0',()=>console.log(`USA50 Fan Club dev listening on http://0.0.0.0:${PORT}`));
