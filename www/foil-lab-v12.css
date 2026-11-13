@@ -88,3 +88,12 @@
  .foil-layers,.foil-mask-workspace,.foil-preview-controls{min-height:auto;overflow:visible}
  .foil-three-preview{height:360px}.foil-mask-stage{max-height:500px}
  .foil-lab-root .foil-footer{flex-wrap:wrap}}
+
+/* Foil Lab v1.3 — front/reverse side selector */
+.foil-side-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:0 0 18px;
+ padding:5px;background:#ffffffa2;border:1px solid #fff;border-radius:17px}
+.foil-side-switch button{border:1px solid transparent;background:transparent;color:#836a9e;padding:10px 9px;
+ font-weight:800;font-size:12px;border-radius:13px;cursor:pointer}
+.foil-side-switch button.selected,.foil-side-switch button[aria-pressed="true"]{
+ background:linear-gradient(115deg,#dbb4ed,#f1c9e8);border-color:#fff;color:#5d3d7c;
+ box-shadow:0 4px 11px #aa7fc342}
