@@ -22,10 +22,11 @@ async function open({card,member,artUrl,borderUrl,upload,onApply}){
  root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');
  root.setAttribute('aria-label','Foil Lab material editor');
  document.body.appendChild(root);
- const layers=copy(card.materialLayers||[]);
+ const layers=copy(card.materialLayers||[]).map(l=>({...l,side:l.side==='back'?'back':'front'}));
  const maskMap=new Map(),modified=new Set(),undo=new Map();
- let current=0,tool='brush',size=28,tolerance=48,source=null,engine=null,drag=null,closed=false;
- function currentLayer(){return layers[current]||null;}
+ let viewSide='front',frontSource=null,backSource=null;
+ let current=layers.findIndex(l=>l.side==='front'),tool='brush',size=28,tolerance=48,source=null,engine=null,drag=null,closed=false;
+ function currentLayer(){const l=layers[current];return l?.side===viewSide?l:null;}
  function layerHTML(l,i){
   return '<button class="foil-layer-entry '+(i===current?'active':'')+'" data-foil="select" data-index="'+i+'">'+
     '<span class="foil-layer-dot '+e(l.type)+'"></span><span><strong>'+e(l.name)+'</strong><small>'+e(l.type)+' · '+(l.maskArtId||modified.has(l.id)?'masked':'full card')+'</small></span>'+
@@ -51,15 +52,18 @@ async function open({card,member,artUrl,borderUrl,upload,onApply}){
   root.innerHTML='<div class="foil-lab-head"><div><span>USA50 · CARD STUDIO</span><h2>Foil Lab <em>✧</em></h2>'+
     '<p>Paint a selection, then choose the material that shimmers inside it.</p></div>'+
     '<button data-foil="close" type="button" aria-label="Close Foil Lab" class="foil-close">✕</button></div>'+
-    '<div class="foil-lab-main"><aside class="foil-layers"><div class="foil-section-title">MATERIAL LAYERS <span>'+layers.length+' / 8</span></div>'+
-    '<div id="foil-layer-list">'+layers.map(layerHTML).join('')+'</div>'+
+    '<div class="foil-lab-main"><aside class="foil-layers"><div class="foil-side-switch" role="group" aria-label="Choose card face to edit">'+
+    '<button type="button" data-foil="side-front" aria-pressed="'+(viewSide==='front')+'" class="'+(viewSide==='front'?'selected':'')+'">Front</button>'+
+    '<button type="button" data-foil="side-back" aria-pressed="'+(viewSide==='back')+'" class="'+(viewSide==='back'?'selected':'')+'">Back</button></div>'+
+    '<div class="foil-section-title">MATERIAL LAYERS <span>'+layers.length+' / 8 total</span></div>'+
+    '<div id="foil-layer-list">'+layers.map((l,i)=>l.side===viewSide?layerHTML(l,i):'').join('')+'</div>'+
     '<button class="foil-primary" data-foil="add" type="button">+ Add material layer</button>'+
     '<div class="foil-shortcuts"><button data-foil="star" type="button">✧ Holographic star</button>'+
     '<button data-foil="border" type="button">✦ Glitter border</button></div>'+
     '<div class="foil-layers-actions"><button data-foil="up">↑ Move up</button><button data-foil="down">↓ Move down</button>'+
     '<button data-foil="delete" class="danger">Delete layer</button></div>'+
-    '<div class="foil-advice">Masks are saved separately from the card photo. Stack up to eight reflective effects without flattening the original artwork.</div></aside>'+
-    '<section class="foil-mask-workspace"><div class="foil-section-title">SELECT & MASK <span>660 × 1020</span></div>'+
+    '<div class="foil-advice">'+(viewSide==='back'?'You are editing the reverse face. Effects and masks here do not change the front of the card.':'You are editing the front face. Switch to Back for handwriting shimmer or foil on the reverse.')+' Masks stay separate from artwork.</div></aside>'+
+    '<section class="foil-mask-workspace"><div class="foil-section-title">'+(viewSide==='back'?'BACK':'FRONT')+' · SELECT & MASK <span>660 × 1020</span></div>'+
     '<div class="foil-toolbox">'+['brush','erase','rect','lasso','magic'].map(t=>'<button type="button" data-foil-tool="'+t+'" class="'+(t===tool?'active':'')+'">'+
     ({brush:'Brush',erase:'Erase',rect:'Rectangle',lasso:'Lasso',magic:'Color select'})[t]+'</button>').join('')+'</div>'+
     '<div class="foil-mask-stage"><canvas id="foil-face-canvas" width="660" height="1020" aria-label="Photocard background"></canvas>'+
@@ -69,7 +73,7 @@ async function open({card,member,artUrl,borderUrl,upload,onApply}){
     '<div class="foil-mask-actions"><button data-foil="undo">↶ Undo</button><button data-foil="fill">Fill mask</button>'+
     '<button data-foil="invert">Invert</button><button data-foil="clear">Clear</button></div>'+
     '<p class="foil-explain">Paint with Brush; use Rectangle or Lasso to select a shape. Color select fills a connected area of similar color in the photograph. Blue areas show where foil will appear.</p></section>'+
-    '<aside class="foil-preview-controls"><div class="foil-section-title">LIVE 3D PREVIEW <span>DRAG TO ROTATE</span></div>'+
+    '<aside class="foil-preview-controls"><div class="foil-section-title">LIVE 3D PREVIEW <span>'+viewSide.toUpperCase()+' · DRAG TO ROTATE</span></div>'+
     '<div id="foil-three-preview" class="foil-three-preview">Preparing 3D card…</div>'+
     '<div class="foil-preview-actions"><button data-foil="flip">↻ Flip</button><button data-foil="reset">Reset</button></div>'+
     '<div class="foil-section-title" style="margin-top:14px">MATERIAL PROPERTIES</div>'+
@@ -165,7 +169,7 @@ async function open({card,member,artUrl,borderUrl,upload,onApply}){
  function mark(){const layer=currentLayer();if(!layer)return;
    modified.add(layer.id);setStatus('Mask changed · Apply layers to upload and save.');updateOverlay();}
  async function changeLayer(index){
-  if(index<0||index>=layers.length)return;current=index;render();
+  if(index<0||index>=layers.length||layers[index].side!==viewSide)return;current=index;render();
   await initMask(currentLayer());updateOverlay();
   await updatePreviewLayers();
  }
@@ -174,6 +178,7 @@ async function open({card,member,artUrl,borderUrl,upload,onApply}){
   try{
    const instance=await window.USA50ThreeCard.create({container,card:{...card,artUrl,borderUrl},
       layers:layers.map(l=>({...l,maskCanvas:maskMap.get(l.id)||undefined})),
+      initialRotation:viewSide==='back'?192:12,
       onWarning:setStatus});
    if(!container.isConnected || closed){instance.destroy();return;}
    engine=instance;
@@ -182,6 +187,26 @@ async function open({card,member,artUrl,borderUrl,upload,onApply}){
    await instance.setLayers(layers.map(l=>({...l,maskCanvas:maskMap.get(l.id)||undefined})));
    if(!container.isConnected){instance.destroy();if(engine===instance)engine=null;}
   }catch(err){if(container.isConnected)container.textContent='3D preview unavailable: '+err.message;}
+ }
+ async function switchSide(nextSide){
+  if(nextSide===viewSide)return;
+  if(nextSide==='back'&&!backSource){
+    if(card.backArtUrl){
+      try{
+        const img=await window.USA50ThreeCard.image(card.backArtUrl,true);
+        backSource=makeMask();
+        backSource.getContext('2d').drawImage(img,0,0,W,H);
+      }catch(err){
+        setStatus('Card back preview could not load: '+err.message);
+        backSource=window.USA50ThreeCard.generatedBack();
+      }
+    }else backSource=window.USA50ThreeCard.generatedBack();
+  }
+  viewSide=nextSide;
+  source=viewSide==='back'?backSource:frontSource;
+  current=layers.findIndex(l=>l.side===viewSide);
+  render();
+  if(currentLayer()){await initMask(currentLayer());updateOverlay();}
  }
  async function updatePreviewLayers(){
   if(!engine)return;
@@ -192,10 +217,11 @@ async function open({card,member,artUrl,borderUrl,upload,onApply}){
  function onKey(ev){if(ev.key==='Escape'&&root.isConnected)close();}
  document.addEventListener('keydown',onKey);
  render();
- try{source=await window.USA50CardFace.composite({artUrl,borderUrl,overlayText:card.overlayText});}
+ try{frontSource=await window.USA50CardFace.composite({artUrl,borderUrl,overlayText:card.overlayText});}
  catch(err){setStatus('Artwork preview failed: '+err.message);}
  if(closed)return;
- root.querySelector('#foil-face-canvas').getContext('2d').drawImage(source||makeMask(),0,0);
+ source=frontSource;
+ if(source)root.querySelector('#foil-face-canvas').getContext('2d').drawImage(source,0,0);
  if(layers.length){await initMask(currentLayer());updateOverlay();}
  await startPreview(root.querySelector('#foil-three-preview'));
  root.addEventListener('pointerdown',ev=>{
@@ -226,16 +252,17 @@ async function open({card,member,artUrl,borderUrl,upload,onApply}){
    if(action==='close'){close();return;}
    if(action==='flip'){engine?.flip();return;}
    if(action==='reset'){engine?.reset();return;}
+   if(action==='side-front'||action==='side-back'){await switchSide(action==='side-back'?'back':'front');return;}
    if(action==='select'){await changeLayer(Number(el.dataset.index));return;}
    if(action==='add'||action==='star'||action==='border'){
     if(layers.length>=8){setStatus('Maximum eight layers per card.');return;}
     const type=action==='border'?'glitter':'holographic';
     const l=newLayer(type,action==='border'?'border':action==='star'?'star':'none');
-    layers.push(l);current=layers.length-1;render();await initMask(l);mark();await updatePreviewLayers();return;
+    l.side=viewSide;layers.push(l);current=layers.length-1;render();await initMask(l);mark();await updatePreviewLayers();return;
    }
    if(action==='delete'){if(!currentLayer())return;maskMap.delete(currentLayer().id);layers.splice(current,1);
-    current=Math.max(0,Math.min(current,layers.length-1));render();if(currentLayer())await initMask(currentLayer());await updatePreviewLayers();return;}
-   if(action==='up'||action==='down'){const j=current+(action==='up'?-1:1);if(j<0||j>=layers.length)return;
+    current=layers.findIndex(l=>l.side===viewSide);render();if(currentLayer())await initMask(currentLayer());await updatePreviewLayers();return;}
+   if(action==='up'||action==='down'){const j=current+(action==='up'?-1:1);if(j<0||j>=layers.length||layers[j].side!==viewSide)return;
     [layers[current],layers[j]]=[layers[j],layers[current]];current=j;render();await updatePreviewLayers();return;}
    const l=currentLayer();if(!l)return;
    if(action==='undo'){const arr=undo.get(l.id)||[];const prior=arr.pop();if(!prior)return;
