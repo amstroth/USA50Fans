@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - server.js
+      - Dockerfile
       - role-features.js
       - social-hub.js
       - card-studio.js
