@@ -100,9 +100,9 @@
  const oldCommunity=communityScreen;
  communityScreen=function(){
    const social=getSocial();
-   let page=screenTop('Social Hub','Your favorite USA50 moments, shared by the fans.',btn('ⓘ','social-tour-show','aria-label="Social tutorial" title="How Social works"','btn secondary social-help-button'));
+   let page='<div class="social-compact-heading"><h1>Social</h1>'+
+     btn('ⓘ How it works','social-tour-show','aria-label="Social tutorial" title="How Social works"','btn secondary social-help-button')+'</div>';
    if(openSocialProfile)return page+socialProfileView();
-   page+='<div class="glass panel social-hero"><div><span class="eyebrow">USA50 · THE SOCIAL UNIVERSE</span><h2>Every fan is part of the story ✦</h2><p>Share your edits and fancams, support the creators you love, and rise through the rankings.</p></div><span class="social-hero-stars">✧ ♡ ✦</span></div>';
    
    page+=socialTabs();
    page+=socialTab==='rankings'?socialRanking():socialFeed();
