@@ -29,7 +29,7 @@ function makeWebp(){
 function post(action,data,user=admin){const res={};app.handlePost({user},res,'/api/card-studio/'+action,data);return res;}
 function read(artId,user){return new Promise((resolve,reject)=>{
  const res={writeHead(status,headers){this.status=status;this.headers=headers;},end(body){resolve({status:this.status,headers:this.headers,body});}};
- try{app.handleGet({user},res,'/api/card-studio/art/'+artId);}catch(e){reject(e);}
+ try{app.handleGet({user},res,'/api/card-studio/art/'+artId);if(res.status&&!res.headers)resolve({status:res.status,body:res.body});}catch(e){reject(e);}
 });}
 const face=post('upload',{kind:'face',dataUrl:makeWebp()}).body.artId;
 const mask=post('upload',{kind:'mask',dataUrl:makeWebp()}).body.artId;
