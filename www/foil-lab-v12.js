@@ -172,10 +172,16 @@ async function open({card,member,artUrl,borderUrl,upload,onApply}){
  async function startPreview(container){
   if(!container?.isConnected)return;
   try{
-   engine=await window.USA50ThreeCard.create({container,card:{...card,artUrl,borderUrl},
+   const instance=await window.USA50ThreeCard.create({container,card:{...card,artUrl,borderUrl},
       layers:layers.map(l=>({...l,maskCanvas:maskMap.get(l.id)||undefined})),
       onWarning:setStatus});
-  }catch(err){container.textContent='3D preview unavailable: '+err.message;}
+   if(!container.isConnected || closed){instance.destroy();return;}
+   engine=instance;
+   // Masks may have finished loading or been painted while Three.js was
+   // asynchronously initializing. Always apply the newest editor state.
+   await instance.setLayers(layers.map(l=>({...l,maskCanvas:maskMap.get(l.id)||undefined})));
+   if(!container.isConnected){instance.destroy();if(engine===instance)engine=null;}
+  }catch(err){if(container.isConnected)container.textContent='3D preview unavailable: '+err.message;}
  }
  async function updatePreviewLayers(){
   if(!engine)return;
