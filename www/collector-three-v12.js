@@ -157,11 +157,31 @@ async function create({container,card={},layers=[],onWarning=()=>{},onSide=()=>{
   const overlay=card.overlayText===undefined||card.overlayText===null
    ?(card.border&&card.border!=='none'?{value:card.member||'Arielle',fontFamily:'Georgia',fontSize:40,y:88}:null)
    :card.overlayText;
-  const face=await window.USA50CardFace.composite({artUrl:faceSrc,borderUrl:card.borderUrl||null,overlayText:overlay});
+  let face;
+  try{
+    face=await window.USA50CardFace.composite({
+      artUrl:faceSrc,borderUrl:card.borderUrl||null,overlayText:overlay
+    });
+  }catch(borderOrFaceError){
+    if(!card.borderUrl)throw borderOrFaceError;
+    // A damaged/unavailable frame must never erase a successfully uploaded
+    // photograph. Continue with its face and lettering instead.
+    onWarning('The card border could not load; showing the artwork without it.');
+    face=await window.USA50CardFace.composite({
+      artUrl:faceSrc,borderUrl:null,overlayText:overlay
+    });
+  }
   addSurface(face);
  }catch(e){
   onWarning('Front artwork failed to load: '+e.message);
-  const fallback=canvas(),ctx=fallback.getContext('2d');ctx.fillStyle='#dfc6f4';ctx.fillRect(0,0,660,1020);
+  const fallback=canvas(),ctx=fallback.getContext('2d');
+  ctx.fillStyle='#dfc6f4';ctx.fillRect(0,0,660,1020);
+  // Preserve a usable legacy portrait where a custom upload was removed.
+  // The main collection uses the same locally hosted Arielle artwork.
+  try{
+    const legacy=await image('/assets/portraits/arielle_real.webp');
+    ctx.drawImage(legacy,0,0,660,1020);
+  }catch(_missingLegacy){}
   addSurface(fallback);
  }
  let back=generatedBack();
