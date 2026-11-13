@@ -7,8 +7,9 @@ function nycPredebutFan(){
  // Do not invent artworks: cards without uploaded faces have neutral placeholders.
  const slots=Array.from({length:4},(_,i)=>{
   const card=cards[i],src=card?.artUrl;
-  const image=src?'<img src="'+e(src)+'" alt="'+e(card.title||'NYC50 card')+' R rarity artwork" loading="eager">':'<div class="nyc-predebut-placeholder"><span>USA50</span><strong>NYC50</strong><small>PRE-DEBUT · R</small></div>';
-  return '<div class="nyc-predebut-card card-'+(i+1)+'" aria-label="'+e(card?.title||'NYC50 R card artwork pending')+'">'+image+'</div>';
+  const image=src?'<img class="nyc-predebut-face" src="'+e(src)+'" alt="'+e(card.title||'NYC50 card')+' R rarity artwork" loading="eager">':'<div class="nyc-predebut-placeholder"><span>USA50</span><strong>NYC50</strong><small>PRE-DEBUT · R</small></div>';
+  const border=card?.borderUrl?'<img class="nyc-predebut-border" src="'+e(card.borderUrl)+'" alt="" aria-hidden="true" loading="eager">':'';
+  return '<div class="nyc-predebut-card card-'+(i+1)+'" aria-label="'+e(card?.title||'NYC50 R card artwork pending')+'">'+image+border+'</div>';
  }).join('');
  return '<div class="dream-feature-portrait nyc-predebut-fan" role="img" aria-label="Four R rarity photocards from the NYC50 pre-debut collection displayed in a fan">'+slots+'</div>';
 }
