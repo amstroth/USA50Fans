@@ -7,6 +7,7 @@ const pageNames={ruled:'Ruled paper',grid:'Boxed paper',dots:'Dotted paper',none
 const colors={Cream:'#fff9f0',Blush:'#ffe8f0',Lavender:'#eee7ff',Mint:'#e6f7ee',Blue:'#e5f3ff',White:'#ffffff'};
 let diaryPhotos=[];
 let officialPage=0;
+let officialSwipeStart=null;
 function textEscape(s){return e(s)}
 function diaryDate(d){const t=new Date(d);return Number.isFinite(t.getTime())?t.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):''}
 function paperStyle(entry){
@@ -246,6 +247,23 @@ document.addEventListener('touchend',event=>{
  const dx=event.changedTouches[0].clientX-storyTouchStart.x,dy=event.changedTouches[0].clientY-storyTouchStart.y;
  if(storyMode==='reader'&&Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.5)moveStory(dx<0?1:-1);
  storyTouchStart=null;
+},{passive:true});
+document.addEventListener('touchstart',event=>{
+ const carousel=event.target.closest('.official-carousel');
+ if(!carousel)return;
+ officialSwipeStart={x:event.touches[0].clientX,y:event.touches[0].clientY};
+},{passive:true});
+document.addEventListener('touchend',event=>{
+ const carousel=event.target.closest('.official-carousel');
+ if(!carousel||!officialSwipeStart)return;
+ const deltaX=event.changedTouches[0].clientX-officialSwipeStart.x;
+ const deltaY=event.changedTouches[0].clientY-officialSwipeStart.y;
+ officialSwipeStart=null;
+ if(Math.abs(deltaX)<45||Math.abs(deltaX)<Math.abs(deltaY)*1.4)return;
+ const direction=deltaX<0?'official-next':'official-prev';
+ const block=document.querySelector('.official-social-block');
+ const button=block?.querySelector('.official-carousel-controls [data-action="'+direction+'"]');
+ if(button&&!button.disabled)act(direction,button).catch(err=>toast(err.message));
 },{passive:true});
 document.addEventListener('input',event=>{if(event.target.closest('#diary-entry-form'))updateDiaryPreview()});
 document.addEventListener('change',async event=>{
