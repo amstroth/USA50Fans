@@ -106,3 +106,38 @@
  display:block!important;filter:none!important;pointer-events:none!important;border:0!important;border-radius:0!important;
 }
 .dream-home-banner .nyc-predebut-fan{z-index:2}
+
+/* Idol-to-idol public broadcasts inside familiar messaging threads. */
+.idol-thread-list{display:flex;flex:0 0 auto;gap:7px;max-width:100%;overflow-x:auto;overflow-y:hidden;
+ padding:9px 13px;background:#fff9fd;border-bottom:1px solid #f0e5f5;scrollbar-width:thin}
+.idol-thread-choice{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:3px;
+ min-width:65px;max-width:84px;padding:6px 8px;border:1px solid transparent;background:transparent;
+ border-radius:13px;color:#9477a8;font-size:11px;font-weight:700;cursor:pointer}
+.idol-thread-choice.selected{background:linear-gradient(145deg,#eddbf9,#ffebf6);
+ border-color:#ddc5ed;color:#6c498b}
+.idol-thread-choice .idol-thread-emoji{display:block;width:38px;height:38px;overflow:hidden;border-radius:50%}
+.idol-thread-choice .idol-thread-emoji .member-avatar{width:36px;height:36px;margin:0}
+.idol-thread-choice small{font-size:9px;color:#9c80ba}
+.idol-studio-other{align-items:flex-start}
+.idol-studio-other .idol-studio-bubble{background:linear-gradient(145deg,#f1e7fb,#e6d7f8);color:#5b4474;
+ border-radius:19px 19px 19px 5px}
+.idol-studio-other .idol-studio-bubble small{color:#9877b0}
+.idol-studio-row-actions{display:flex;align-items:center;gap:6px}
+.idol-public-replies{max-width:min(88%,540px);width:100%;display:grid;gap:6px}
+.idol-public-answer{border-left:3px solid #c799e8;background:#f6ecfc;
+ padding:9px 12px;border-radius:12px;overflow-wrap:anywhere}
+.idol-public-answer strong{font-size:11px;color:#845ba3}
+.idol-public-answer p{margin:6px 0;font-size:13px;line-height:1.5;color:#6a5186;white-space:pre-wrap}
+.idol-public-answer small{font-size:10px;color:#967ba8}
+.idol-public-reply-form{display:grid;gap:7px;width:min(100%,520px);
+ padding:10px;border:1px solid #e5ceee;background:#fff;border-radius:14px}
+.idol-public-reply-form textarea{display:block;width:100%;box-sizing:border-box;
+ font:13px/1.5 system-ui,sans-serif;border:1px solid #e4d6eb;border-radius:10px;
+ min-height:60px;resize:vertical;padding:8px;color:#56456c;outline-color:#af87cb}
+.idol-public-reply-form>div{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.idol-public-reply-form small{font-size:10px;color:#947faa}
+.idol-public-reply-form button{border:0;background:linear-gradient(110deg,#b08add,#dfb2e6);color:#fff;
+ border-radius:99px;padding:8px 11px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap}
+@media(max-width:780px){.idol-thread-list{padding:7px 10px}.idol-thread-choice{min-width:61px}
+ .idol-studio-chat-log{gap:19px}.idol-public-replies{max-width:95%}
+ .idol-public-reply-form>div{flex-wrap:wrap}.idol-public-reply-form button{margin-left:auto}}
