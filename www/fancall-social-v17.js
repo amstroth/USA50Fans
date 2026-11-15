@@ -39,7 +39,7 @@ function drawInfo(){
  return '<div class="usa50-lottery-list">'+create+(lottery||'<section class="glass panel"><h3>No open fancall lotteries</h3><p class="lead">Management can publish a free-entry demo lottery here.</p></section>')+sessions+'</div>';
 }
 const oldEvents=eventsScreen;
-eventsScreen=function(){return oldEvents()+'<section class="usa50-fancall-program"><h2>Fancall lotteries</h2>'+drawInfo()+'</section>';};
+eventsScreen=function(){const base=oldEvents().replace('The future application system will use event-specific entries with a free entry route and publicly disclosed official rules. No paid chance-based calls are enabled in this demo.','Free-entry demonstration lotteries are available below. Official rules, real awards and live calls are not enabled.');return base+'<section class="usa50-fancall-program"><h2>Fancall lotteries</h2>'+drawInfo()+'</section>';};
 const oldMenu=menuModal;
 menuModal=function(){
  showModal('Explore USA50','<div class="grid grid-2">'+navItems.filter(([key])=>key!=='recycle').map(([key,title,ic])=>'<button class="quick-action" data-go="'+key+'">'+icon(ic)+' '+e(title)+'</button>').join('')+'</div>');
@@ -104,6 +104,8 @@ submitForm=async function(form){
  }
  return oldSubmit(form);
 };
+// Keep winners and staff synchronized to host-controlled queue transitions.
+setInterval(()=>{if(selectedRoom&&document.visibilityState==='visible')refresh().catch(()=>{});},5000);
 const oldGo=go;
 go=function(screen){composer=false;selectedRoom=null;return oldGo(screen);};
 })();
