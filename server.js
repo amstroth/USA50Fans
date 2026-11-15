@@ -107,7 +107,7 @@ async function api(req,res,url){
  if(ep==='/api/official/delete')return officialDiary.deleteOfficial(req,res,data);
  if(cardStudio.handlePost(req,res,ep,data))return;
  if(await roleFeatures.handle(req,res,ep,data))return;
- if(socialHub.handlePost(req,res,ep,data))return;
+ if(await socialHub.handlePost(req,res,ep,data))return;
  if(fancalls.respond(req,res,ep,data))return;
  if(ep==='/api/auth/register'){
    if(rateLimit(req))return fail(res,429,'Please try again shortly.');
