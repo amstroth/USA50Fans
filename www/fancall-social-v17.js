@@ -2,6 +2,23 @@
 (function(){
 'use strict';
 let composer=false,selectedRoom=null;
+const thumbnailLookupInProgress=new Set();
+function hydrateProfileThumbnails(){
+ const posts=store?.social?.posts||[];
+ const tiles=document.querySelectorAll('.usa50-profile-tile');
+ for(const tile of [...tiles].slice(0,24)){
+   const post=posts.find(p=>p.id===tile.dataset.value);
+   if(!post||post.thumbnailUrl||post.platform!=='TikTok'||thumbnailLookupInProgress.has(post.id))continue;
+   thumbnailLookupInProgress.add(post.id);
+   request('/api/social/resolve?postId='+encodeURIComponent(post.id)).then(result=>{
+     if(!result?.thumbnailUrl)return;
+     post.thumbnailUrl=result.thumbnailUrl;
+     if(!tile.isConnected||tile.querySelector('img'))return;
+     const image=document.createElement('img');image.src=result.thumbnailUrl;image.alt='Post thumbnail';image.className='usa50-profile-thumb';
+     image.loading='lazy';image.onerror=()=>image.remove();tile.prepend(image);
+   }).catch(()=>{}).finally(()=>thumbnailLookupInProgress.delete(post.id));
+ }
+}
 function drawInfo(){
  const d=store?.fancalls||{draws:[],sessions:[]};
  const staff=['admin','management'].includes(store?.me?.role);
@@ -50,6 +67,7 @@ render=function(){
  const content=document.querySelector('.screen');
  if(composer&&content)content.innerHTML=composePage();
  if(selectedRoom&&content)content.innerHTML=roomScreen();
+ hydrateProfileThumbnails();
  const actions=document.querySelector('.top-actions');
  if(actions&&!actions.querySelector('.usa50-top-shortcuts')){
   actions.insertAdjacentHTML('beforeend','<span class="usa50-top-shortcuts"><button class="icon-btn" data-go="events" title="Events & fancalls" aria-label="Events & fancalls">'+icon('calendar',18)+'</button><button class="icon-btn" data-go="shop" title="Fan shop" aria-label="Fan shop">'+icon('bag',18)+'</button></span>');
