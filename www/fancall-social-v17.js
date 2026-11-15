@@ -1,7 +1,8 @@
 /* USA50 v17: dedicated composer, navigation, free fancall lottery & room prototype. */
 (function(){
 'use strict';
-let composer=false,selectedRoom=null;
+let composer=false,selectedRoom=null,localCameraStream=null;
+function stopLocalCamera(){if(localCameraStream){localCameraStream.getTracks().forEach(t=>t.stop());localCameraStream=null;}}
 const thumbnailLookupInProgress=new Set();
 function hydrateProfileThumbnails(){
  const posts=store?.social?.posts||[];
@@ -54,7 +55,7 @@ function roomScreen(){
  if(!room)return '<div class="glass panel">Waiting room not found. <button data-action="usa50-room-close" class="btn secondary">Return</button></div>';
  const canHost=room.canHost,canManage=room.canManage;
  return '<section class="usa50-room"><header><button class="text-btn" data-action="usa50-room-close">← Events</button><h2>'+e(room.title)+'</h2><small>'+e(room.status)+'</small></header>'+
- '<div class="usa50-room-video"><div class="usa50-remote-placeholder">✦<strong>'+(room.status==='live'?'Call session active (demo)':'Waiting for the next fan')+'</strong><small>Secure remote video transport is not yet connected.</small></div><div class="usa50-local-placeholder">Camera preview coming soon</div></div>'+
+ '<div class="usa50-room-video"><div class="usa50-remote-placeholder">✦<strong>'+(room.status==='live'?'Call session active (demo)':'Waiting for the next fan')+'</strong><small>Secure remote video transport is not yet connected.</small></div><div class="usa50-local-placeholder"><video id="usa50-local-preview" autoplay muted playsinline></video><button class="usa50-camera-button" data-action="usa50-camera-preview">Camera preview</button></div></div>'+
  '<div class="usa50-room-queue"><h3>'+(room.isMyTurn&&room.status==='live'?'You are next on screen':room.isMyWinner?'Your waiting room':'Call queue')+'</h3>'+
  '<p class="lead">'+(room.status==='break'?'Idol break in progress. Please remain in the waiting room.':room.status==='waiting'?'The host has not started calls yet.':room.status==='complete'?'This session has finished.':room.isMyTurn?'It is your turn (demo session state).':'Please wait for your turn.')+'</p>'+
  room.queue.map(q=>'<div class="usa50-queue-person '+(q.active?'active':'')+'"><span>#'+q.position+' '+e(q.displayName)+'</span><small>'+(q.done?'Completed':q.active?'Up next':'Waiting')+'</small></div>').join('')+
@@ -66,7 +67,7 @@ render=function(){
  oldRender();
  const content=document.querySelector('.screen');
  if(composer&&content)content.innerHTML=composePage();
- if(selectedRoom&&content)content.innerHTML=roomScreen();
+ if(selectedRoom&&content){content.innerHTML=roomScreen();const preview=document.querySelector('#usa50-local-preview');if(preview&&localCameraStream)preview.srcObject=localCameraStream;}
  hydrateProfileThumbnails();
  const actions=document.querySelector('.top-actions');
  if(actions&&!actions.querySelector('.usa50-top-shortcuts')){
@@ -78,7 +79,12 @@ act=async function(name,node){
  if(name==='social-new-post'){composer=true;selectedRoom=null;view='community';render();window.scrollTo(0,0);return;}
  if(name==='usa50-compose-close'){composer=false;render();return;}
  if(name==='usa50-room-open'){selectedRoom=node.dataset.value;composer=false;view='events';render();window.scrollTo(0,0);return;}
- if(name==='usa50-room-close'){selectedRoom=null;render();return;}
+ if(name==='usa50-room-close'){stopLocalCamera();selectedRoom=null;render();return;}
+ if(name==='usa50-camera-preview'){
+  if(localCameraStream){stopLocalCamera();render();return;}
+  if(!navigator.mediaDevices?.getUserMedia)return toast('Camera requires a supported secure browser.');
+  try{localCameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});render();toast('Local camera preview only — not broadcasting.');}catch(_error){toast('Camera permission was denied or the camera is unavailable.');}return;
+ }
  if(['usa50-draw-join','usa50-draw-withdraw','usa50-draw-finalize'].includes(name)){
   const action=name==='usa50-draw-join'?'join':name==='usa50-draw-withdraw'?'withdraw':'draw';
   if(action==='withdraw'&&!confirm('Withdraw your free lottery entry?'))return;
@@ -107,5 +113,5 @@ submitForm=async function(form){
 // Keep winners and staff synchronized to host-controlled queue transitions.
 setInterval(()=>{if(selectedRoom&&document.visibilityState==='visible')refresh().catch(()=>{});},5000);
 const oldGo=go;
-go=function(screen){composer=false;selectedRoom=null;return oldGo(screen);};
+go=function(screen){composer=false;selectedRoom=null;stopLocalCamera();return oldGo(screen);};
 })();
