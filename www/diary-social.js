@@ -157,7 +157,7 @@ function officialCarousel(posts){
  const count=posts.length;officialPage=Math.min(Math.max(0,officialPage),count-1);
  const pages=Array.from({length:count},(_,i)=>'<div class="official-page" role="group" aria-label="Official posts page '+(i+1)+' of '+count+'" aria-hidden="'+(officialPage!==i)+'"><div class="official-social-grid">'+posts.slice(i,i+1).map(officialCard).join('')+'</div></div>').join('');
  const dots=Array.from({length:count},(_,i)=>'<button type="button" class="official-page-dot '+(i===officialPage?'active':'')+'" data-action="official-page" data-value="'+i+'" aria-current="'+(i===officialPage?'page':'false')+'" aria-label="Show official posts page '+(i+1)+' of '+count+'"><span></span></button>').join('');
- return '<div class="official-carousel"><div class="official-carousel-track" style="transform:translateX(-'+officialPage*100+'%)">'+pages+'</div></div>'+
+ return '<div class="official-carousel"><div class="official-carousel-track" style="transform:translateX(-'+officialPage*50+'%)">'+pages+'</div></div>'+
  (count>1?'<nav class="official-carousel-controls" aria-label="Official channel post pages">'+
  '<button type="button" data-action="official-prev" aria-label="Previous official posts page" '+(officialPage===0?'disabled':'')+'>‹</button>'+
  '<div class="official-page-dots">'+dots+'</div><button type="button" data-action="official-next" aria-label="Next official posts page" '+(officialPage===count-1?'disabled':'')+'>›</button>'+
