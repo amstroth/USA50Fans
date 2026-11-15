@@ -334,9 +334,16 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     }
     u.state.fancallTickets=(u.state.fancallTickets||0)+2*count;
     u.state.pullPoints=(u.state.pullPoints||0)+100*count;
+    u.state.unlockedRings ||= ['classic'];
+    const possibleRings=['starlight','pink-ribbon','moonlight','golden-hour'];
+    const ringsUnlocked=[];
+    for(let i=0;i<count;i++)if(require('node:crypto').randomInt(100)<5){
+      const available=possibleRings.filter(r=>!u.state.unlockedRings.includes(r));
+      if(available.length){const ring=available[require('node:crypto').randomInt(available.length)];u.state.unlockedRings.push(ring);ringsUnlocked.push(ring);}
+    }
     save();
     const complete=publicCards.every(c=>u.state.owned[c.id]>0);
-    return json(res,200,{card:pulled[0],cards:pulled,guaranteed,
+    return json(res,200,{ringsUnlocked,card:pulled[0],cards:pulled,guaranteed,
       stars:u.state.stars,pullPoints:u.state.pullPoints,fancallTickets:u.state.fancallTickets,
       fancallTicketsAwarded:2*count,pullPointsAwarded:100*count,paidPulls:counter.paidPulls,
       albumComplete:complete,pityAchieved:counter.pityAchieved,albumId:packId}),true;
