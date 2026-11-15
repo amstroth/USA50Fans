@@ -237,7 +237,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
       if(Object.hasOwn(data,'bio'))p.bio=bodyText(data.bio,180);
       if(Object.hasOwn(data,'avatarUrl')){
         const photo=String(data.avatarUrl||'');
-        if(photo && (!/^data:image\\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo)||photo.length>205000))return fail(res,400,'Use a compressed photo smaller than 150 KB.'),true;
+        if(photo && (!/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo)||photo.length>205000))return fail(res,400,'Use a compressed photo smaller than 150 KB.'),true;
         p.avatarUrl=photo||null;
       }
       if(Object.hasOwn(data,'ring')){
