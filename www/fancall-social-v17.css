@@ -141,3 +141,35 @@
 .official-social-block .official-post-link{
   border-radius:0!important;
 }
+
+/* Official Channels refinement: no framed cards or empty bottom panels. */
+.official-social-block .official-carousel-track{
+  align-items:flex-start!important;
+}
+.official-social-block .official-page,
+.official-social-block .official-social-grid{
+  height:auto!important;
+  align-self:flex-start!important;
+}
+.official-social-block .official-social-grid .official-social-card{
+  height:auto!important;
+  min-height:0!important;
+  padding:0 12px 4px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.official-social-block .official-page + .official-page .official-social-card{
+  border-left:1px solid rgba(119,83,149,.14)!important;
+}
+.official-social-block .official-post-body{
+  padding:10px 0 3px!important;
+  min-height:0!important;
+}
+.official-social-block .official-post-body h3{
+  margin:4px 18px 7px 0!important;
+}
+.official-social-block .official-post-body .official-open{
+  right:0!important;
+}
