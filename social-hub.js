@@ -51,7 +51,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
     const followers=Object.values(state.follows).filter(ids=>Array.isArray(ids)&&ids.includes(uid)).length;
     const following=(state.follows[uid]||[]).length;
     const stat=ranking.find(x=>x.id===uid);
-    return {id:uid,displayName:u.displayName,handle:p.handle,bio:p.bio,vipLevel:u.state?.vipLevel||'Starter',followers,following,postsCount:state.posts.filter(post=>post.authorId===uid&&!post.hidden).length,fanXP:Math.max(0,p.xp||0),rank:stat?.rank||null,tier:stat?.tier||'Fan',fansite:approvedFansite(uid),isFollowing:Boolean(viewerId&&(state.follows[viewerId]||[]).includes(uid))};
+    return {id:uid,displayName:u.displayName,handle:p.handle,bio:p.bio,avatarUrl:p.avatarUrl||null,ring:p.ring||'classic',unlockedRings:u.state?.unlockedRings||['classic'],vipLevel:u.state?.vipLevel||'Starter',followers,following,postsCount:state.posts.filter(post=>post.authorId===uid&&!post.hidden).length,fanXP:Math.max(0,p.xp||0),rank:stat?.rank||null,tier:stat?.tier||'Fan',fansite:approvedFansite(uid),isFollowing:Boolean(viewerId&&(state.follows[viewerId]||[]).includes(uid))};
   }
   function info(user){
     const uid=user?.id||null,ranking=ranks();
@@ -60,9 +60,9 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
     const profiles={};for(const target of ids){if(target)profiles[target]=publicProfile(target,uid,ranking);}
     const posts=state.posts.filter(p=>!p.hidden).slice(-250).map(post=>{
       const count=counts(post);
-      return {id:post.id,authorId:post.authorId,category:post.category,caption:post.caption,url:post.url,platform:post.platform,embedId:post.embedId,embedKind:post.embedKind,createdAt:post.createdAt,...count,myVote:uid?(state.votes[post.id]?.[uid]||0):0,isFollowing:Boolean(uid&&(state.follows[uid]||[]).includes(post.authorId))};
+      return {id:post.id,authorId:post.authorId,category:post.category,caption:post.caption,url:post.url,platform:post.platform,embedId:post.embedId,embedKind:post.embedKind,createdAt:post.createdAt,repostOf:post.repostOf||null,repostAuthor:post.repostAuthor||null,...count,myVote:uid?(state.votes[post.id]?.[uid]||0):0,isFollowing:Boolean(uid&&(state.follows[uid]||[]).includes(post.authorId))};
     });
-    return {posts,profiles,rankings:ranking,following:uid?(state.follows[uid]||[]):[],myProfile:uid?profiles[uid]:null,top100Limit:100,earnings:{postPullPoints:50,dailyCreditedPosts:2,upvotesPerTicket:100},policy:'Demo awards, not real fancall entry or confirmed ticketing.',reports:role(user)==='admin'?state.reports.filter(x=>x.status==='pending').slice(-80):[],bans:role(user)==='admin'?state.bans:{}};
+    return {posts,profiles,rankings:ranking,following:uid?(state.follows[uid]||[]):[],myProfile:uid?profiles[uid]:null,savedPostIds:uid?(profileFor(uid).savedPostIds||[]):[],top100Limit:100,earnings:{postPullPoints:50,dailyCreditedPosts:2,upvotesPerTicket:100},policy:'Demo awards, not real fancall entry or confirmed ticketing.',reports:role(user)==='admin'?state.reports.filter(x=>x.status==='pending').slice(-80):[],bans:role(user)==='admin'?state.bans:{}};
   }
   // Canonicalize public post links while accepting the short/share links copied on phones.
   // Short links do not include a media ID, so they are link-only previews until
@@ -231,6 +231,40 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
       const i=list.indexOf(target.id);
       if(i>=0)list.splice(i,1);else list.push(target.id);
       save();return json(res,200,{ok:true,following:i<0}),true;
+    }
+    if(ep==='/api/social/profile'){
+      const p=profileFor(u.id);
+      if(Object.hasOwn(data,'bio'))p.bio=bodyText(data.bio,180);
+      if(Object.hasOwn(data,'avatarUrl')){
+        const photo=String(data.avatarUrl||'');
+        if(photo && (!/^data:image\\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo)||photo.length>205000))return fail(res,400,'Use a compressed photo smaller than 150 KB.'),true;
+        p.avatarUrl=photo||null;
+      }
+      if(Object.hasOwn(data,'ring')){
+        const ring=String(data.ring||'classic');
+        if(!(u.state.unlockedRings||['classic']).includes(ring))return fail(res,403,'This ring has not been unlocked.'),true;
+        p.ring=ring;
+      }
+      save();return json(res,200,{ok:true}),true;
+    }
+    if(ep==='/api/social/save'){
+      const post=state.posts.find(p=>p.id===data.postId&&!p.hidden);
+      if(!post)return fail(res,404,'Post not found.'),true;
+      const p=profileFor(u.id);p.savedPostIds ||= [];
+      if(p.savedPostIds.includes(post.id))p.savedPostIds=p.savedPostIds.filter(x=>x!==post.id);
+      else p.savedPostIds.push(post.id);
+      save();return json(res,200,{ok:true,saved:p.savedPostIds.includes(post.id)}),true;
+    }
+    if(ep==='/api/social/repost'){
+      const original=state.posts.find(p=>p.id===data.postId&&!p.hidden);
+      if(!original)return fail(res,404,'Post not found.'),true;
+      if(original.authorId===u.id)return fail(res,400,'You cannot repost your own post.'),true;
+      if(state.posts.some(p=>p.authorId===u.id&&p.repostOf===original.id&&!p.hidden))return fail(res,409,'Already reposted.'),true;
+      const day=now().slice(0,10);
+      if(state.posts.filter(p=>p.authorId===u.id&&p.createdAt.slice(0,10)===day).length>=5)return fail(res,429,'Daily posting limit reached.'),true;
+      const post={id:id(),authorId:u.id,category:'fan',caption:original.caption,url:original.url,platform:original.platform,embedKind:original.embedKind,embedId:original.embedId,repostOf:original.id,repostAuthor:profileFor(original.authorId)?.handle||'USA50 fan',createdAt:now(),hidden:false};
+      state.posts.push(post);profileFor(u.id).xp+=5;save();
+      return json(res,201,{ok:true,postId:post.id}),true;
     }
     if(ep==='/api/social/bio'){
       const bio=bodyText(data.bio,180);
