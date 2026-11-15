@@ -39,14 +39,14 @@
    const author=getPerson(p.authorId),isMine=store.me?.id===p.authorId,isAdmin=store.me?.role==='admin';
    if(!author)return '';
    const code='<button class="social-handle" data-action="social-profile" data-value="'+e(author.id)+'">@'+e(author.handle)+'</button>';
-   const mark=(author.fansite?'<span class="social-mini-badge">Verified Fansite</span>':'<span class="social-mini-badge">Fan Content</span>')+(p.isFollowing?'<span class="social-mini-badge">Following ✓</span>':'');
+   const mark=author.fansite?'<span class="social-mini-badge">Fansite ✓</span>':'';
    return '<article class="glass social-post" id="socialpost-'+e(p.id)+'">'+
-     '<div class="social-post-head"><div class="social-avatar">'+e(author.displayName.slice(0,1).toUpperCase())+'</div><div class="social-post-author">'+code+'<small>'+e(author.displayName)+' · '+e(labelDate(p.createdAt))+'</small></div>'+mark+'</div>'+
-     '<p class="social-caption">'+e(p.caption)+'</p>'+socialEmbed(p)+
+     '<div class="social-post-head"><div class="social-avatar">'+(author.avatarUrl?'<img src="'+e(author.avatarUrl)+'" alt="">':e(author.displayName.slice(0,1).toUpperCase()))+'</div><div class="social-post-author">'+code+'<small>'+e(labelDate(p.createdAt))+'</small></div>'+mark+'</div>'+
+     (p.repostOf?'<p class="social-repost-attribution">↻ Reposted from @'+e(p.repostAuthor||'fan')+'</p>':'')+socialEmbed(p)+'<p class="social-caption">'+e(p.caption)+'</p>'+
      '<div class="social-post-footer"><div class="social-votes">'+
        '<button aria-label="Upvote" class="social-vote '+(p.myVote===1?'on':'')+'" data-action="social-vote" data-value="'+e(p.id)+'" data-vote="1">▲ '+Number(p.upvotes||0)+'</button>'+
        '<button aria-label="Downvote" class="social-vote down '+(p.myVote===-1?'on':'')+'" data-action="social-vote" data-value="'+e(p.id)+'" data-vote="-1">▼ '+Number(p.downvotes||0)+'</button>'+
-       '<span class="social-score">'+(p.score>0?'+':'')+Number(p.score||0)+' score</span></div>'+
+       '<button class="social-repost-action" data-action="usa50-repost" data-value="'+e(p.id)+'" aria-label="Repost">↻ Repost</button><button class="social-save-action" data-action="usa50-save" data-value="'+e(p.id)+'" aria-label="Save">'+((getSocial().savedPostIds||[]).includes(p.id)?'♥ Saved':'♡ Save')+'</button></div>'+
        '<div class="social-post-links"><a href="'+e(p.url)+'" target="_blank" rel="noopener noreferrer">Open on '+e(p.platform)+' ↗</a>'+
        (isMine?'':isAdmin?'<button class="text-btn" data-action="social-admin-hide" data-value="'+e(p.id)+'">Remove</button>':'<button class="text-btn" data-action="social-report" data-value="'+e(p.id)+'">Report</button>')+
        '</div></div></article>';
@@ -89,6 +89,7 @@
    const person=getPerson(openSocialProfile),own=store.me?.id===openSocialProfile;
    if(!person)return '<div class="glass panel">This fan profile is not available.</div>';
    const posts=getPosts().filter(p=>p.authorId===openSocialProfile).sort((a,b)=>Date.parse(b.createdAt)-Date.parse(a.createdAt));
+   if(window.USA50RenderFanProfile)return '<button class="text-btn social-back" data-action="social-back">← Back to Social Hub</button>'+window.USA50RenderFanProfile(person,false);
    return '<button class="text-btn social-back" data-action="social-back">← Back to Social Hub</button>'+
       '<section class="glass panel social-public-profile"><div class="social-profile-heading"><div class="social-avatar large">'+e(person.displayName.charAt(0).toUpperCase())+'</div><div><span class="eyebrow">'+e(person.fansite?'APPROVED FANSITE · ':'')+e(person.tier)+'</span><h2>@'+e(person.handle)+'</h2><p>'+e(person.bio||'Fan of USA50 ♡')+'</p></div></div>'+
       '<div class="social-profile-stats"><div><strong>'+person.postsCount+'</strong><small>Posts</small></div><div><strong>'+person.followers+'</strong><small>Followers</small></div><div><strong>'+person.following+'</strong><small>Following</small></div><div><strong>'+(person.rank?'#'+person.rank:'—')+'</strong><small>Rank</small></div></div>'+
@@ -101,7 +102,7 @@
  communityScreen=function(){
    const social=getSocial();
    let page='<div class="social-compact-heading"><h1>Social</h1>'+
-     btn('ⓘ How it works','social-tour-show','aria-label="Social tutorial" title="How Social works"','btn secondary social-help-button')+'</div>';
+     btn('ⓘ','social-tour-show','aria-label="Social information" title="Social information"','btn secondary social-help-button')+'</div>';
    if(openSocialProfile)return page+socialProfileView();
    
    page+=socialTabs();
