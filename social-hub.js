@@ -150,7 +150,13 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
     const p=state.posts.find(x=>x.id===postId&&!x.hidden);
     if(!p)return null;
     if(p.embedKind==='link'&&p.platform==='TikTok')await resolveTikTokShort(p);
-    return {postId:p.id,embedId:p.embedId||null,embedKind:p.embedKind,platform:p.platform,url:p.url};
+    if(!p.thumbnailUrl&&p.platform==='TikTok'){
+      try{
+        const resp=await fetch('https://www.tiktok.com/oembed?url='+encodeURIComponent(p.url),{signal:AbortSignal.timeout(3500)});
+        if(resp.ok){const meta=await resp.json();if(typeof meta.thumbnail_url==='string'&&meta.thumbnail_url.startsWith('https://')){p.thumbnailUrl=meta.thumbnail_url.slice(0,1200);save();}}
+      }catch(_err){}
+    }
+    return {postId:p.id,embedId:p.embedId||null,embedKind:p.embedKind,platform:p.platform,url:p.url,thumbnailUrl:p.thumbnailUrl||null};
   }
   function requireFan(req,res){
     const u=userFrom(req);
