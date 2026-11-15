@@ -154,8 +154,8 @@ function openDiaryStory(id){
  storyIdol=id;storyIndex=group.entries.length-1;diaryStoryArchive();
 }
 function officialCarousel(posts){
- const count=Math.ceil(posts.length/4);officialPage=Math.min(Math.max(0,officialPage),count-1);
- const pages=Array.from({length:count},(_,i)=>'<div class="official-page" role="group" aria-label="Official posts page '+(i+1)+' of '+count+'" aria-hidden="'+(officialPage!==i)+'"><div class="official-social-grid">'+posts.slice(i*4,i*4+4).map(officialCard).join('')+'</div></div>').join('');
+ const count=posts.length;officialPage=Math.min(Math.max(0,officialPage),count-1);
+ const pages=Array.from({length:count},(_,i)=>'<div class="official-page" role="group" aria-label="Official posts page '+(i+1)+' of '+count+'" aria-hidden="'+(officialPage!==i)+'"><div class="official-social-grid">'+posts.slice(i,i+1).map(officialCard).join('')+'</div></div>').join('');
  const dots=Array.from({length:count},(_,i)=>'<button type="button" class="official-page-dot '+(i===officialPage?'active':'')+'" data-action="official-page" data-value="'+i+'" aria-current="'+(i===officialPage?'page':'false')+'" aria-label="Show official posts page '+(i+1)+' of '+count+'"><span></span></button>').join('');
  return '<div class="official-carousel"><div class="official-carousel-track" style="transform:translateX(-'+officialPage*100+'%)">'+pages+'</div></div>'+
  (count>1?'<nav class="official-carousel-controls" aria-label="Official channel post pages">'+
@@ -165,13 +165,13 @@ function officialCarousel(posts){
 }
 function officialDiarySection(){
  const data=getData(),groups=diaryGroups(),official=data.officialPosts||[];
- return '<section class="official-diary-section"><div class="diary-stories-heading"><div><span class="eyebrow">FROM THE IDOLS · USA50</span><h2>Diary Entries ♡</h2></div><span class="diary-story-hint">Tap a story to read</span></div>'+
+ return '<section class="official-diary-section"><div class="diary-stories-heading"><div><h2>Diary Entries ♡</h2></div><span class="diary-story-hint">Tap a story to read</span></div>'+
  (groups.length||data.canPost?diaryStoryStrip(groups,data.canPost):
  '<div class="glass panel diary-empty">The diary is waiting for its first page. ♡<p>New pages from the idols will appear here.</p></div>')+
- '<div class="official-social-block"><div class="social-section-heading"><div><span class="eyebrow">OFFICIAL USA50 UPDATES</span><h2>Official Channels</h2><p class="lead">Latest videos and posts from USA50.</p></div></div>'+
+ '<div class="official-social-block"><div class="social-section-heading"><div><h2>Official Channels</h2></div></div>'+
  (official.length?officialCarousel(official):
  '<div class="glass panel official-social-empty">No official posts added yet. YouTube imports from its configured channel ID; Instagram and TikTok need a verified provider integration or a post added by management.</div>')+'</div>'+
- '<div class="diary-fan-divider"><span>✦ FAN COMMUNITY ✦</span><p>Continue scrolling for fan posts</p></div></section>';
+ '</section>';
 }
 const previousCommunity=communityScreen;
 communityScreen=function(){const page=previousCommunity();return page.includes('class="social-tabs"')?page.replace('<div class="social-tabs"',officialDiarySection()+'<div class="social-tabs"'):page;};
