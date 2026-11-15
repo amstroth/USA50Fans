@@ -180,6 +180,7 @@ function updateOfficialCarouselControls(){
  if(label)label.textContent='Post '+(officialPage+1)+' / '+(getData().officialPosts||[]).length;
 }
 function officialDiarySection(){
+ queueMicrotask(updateOfficialCarouselPosition);
  const data=getData(),groups=diaryGroups(),official=data.officialPosts||[];
  return '<section class="official-diary-section"><div class="diary-stories-heading"><div><h2>Diary Entries ♡</h2></div><span class="diary-story-hint">Tap a story to read</span></div>'+
  (groups.length||data.canPost?diaryStoryStrip(groups,data.canPost):
