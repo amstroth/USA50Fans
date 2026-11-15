@@ -65,7 +65,7 @@ function availableToList(u,cardId){let reserved=db.tradeListings.filter(t=>t.own
 function cardForRarity(r){let pool=cards.filter(c=>c.rarity===r);return pool[crypto.randomInt(pool.length)];}
 function drawRarity(){let n=crypto.randomInt(100),total=0;for(let [r,p] of Object.entries(RARITY_WEIGHTS)){total+=p;if(n<total)return r;}return 'R';}
 function now(){return new Date().toISOString();}
-function getProfileState(){return {stars:9000,pullPoints:300,fancallTickets:0,paidPulls:0,pityAchieved:false,owned:{'tl-01':2,'tl-02':1,'tl-06':1},physicalOrders:[],freePhysicalUsed:false,subscriberPreview:false,likedPosts:[],favoriteMembers:['arielle'],fansiteApplicationId:null,demoClaimCode:'USA50-DEMO-'+crypto.randomBytes(4).toString('hex').toUpperCase(),demoClaimed:false,dailyClaimed:{},recycleCoupons:0,recycleHistory:[]};}
+function getProfileState(){return {stars:9000,pullPoints:300,fancallTickets:0,paidPulls:0,pityAchieved:false,owned:{'tl-01':2,'tl-02':1,'tl-06':1},physicalOrders:[],freePhysicalUsed:false,subscriberPreview:false,likedPosts:[],favoriteMembers:['arielle'],fansiteApplicationId:null,demoClaimCode:'USA50-DEMO-'+crypto.randomBytes(4).toString('hex').toUpperCase(),demoClaimed:false,dailyClaimed:{},recycleCoupons:0,recycleHistory:[],unlockedRings:['classic']};}
 function resolveUser(id){let u=db.users[id];return u?u.displayName:'Fan';}
 function publicState(u){return {me:u?cleanUser(u):null,members,cards,albums:cardStudio.publicAlbums(),packCards:cardStudio.publicCardsByPack(),homeFeaturedCards:cardStudio.homeFeaturedCards(),rarities:RARITY_WEIGHTS,packCost:PACK_COST,hardPity:HARD_PITY,cooldownDays:90,posts:db.posts.slice().reverse().map(p=>({...p,likedCount:p.likedBy.length,likedBy:undefined,liked:u? p.likedBy.includes(u.id):false})),fansites:db.fansites.filter(f=>f.status==='approved').map(f=>({id:f.id,name:f.name,portfolioUrl:f.portfolioUrl,instagram:f.instagram,tiktok:f.tiktok,description:f.description,votes:Object.values(db.fansiteVotes).filter(id=>id===f.id).length})).sort((a,b)=>b.votes-a.votes),tradeListings:[],announcements:db.announcements.slice().reverse(),events:db.events};}
 const roleFeatures=require('./role-features.js')({db,save,id,hashPass,checkPass,userFrom,adminFrom,bodyText,now,json,fail});
@@ -93,7 +93,7 @@ async function api(req,res,url){
 
  if(method!=='POST')return fail(res,404,'Unknown API endpoint');
  if(url.pathname==='/api/card-studio/upload' && (!['admin','idol'].includes(userFrom(req)?.role)||userFrom(req)?.mustChangePassword))return fail(res,403,'Card Studio login required.');
- const maxPostBytes=url.pathname==='/api/card-studio/upload'?7200000:url.pathname==='/api/diary/publish'?3600000:url.pathname==='/api/official/publish'?1900000:50000;
+ const maxPostBytes=url.pathname==='/api/card-studio/upload'?7200000:url.pathname==='/api/diary/publish'?3600000:url.pathname==='/api/official/publish'?1900000:url.pathname==='/api/social/profile'?220000:50000;
  let raw='';try{for await (const chunk of req){raw+=chunk;if(raw.length>maxPostBytes)return fail(res,413,'Request is too large.');}}catch{return fail(res,400,'Unreadable request.');}
  let data;try{data=raw?JSON.parse(raw):{};}catch{return fail(res,400,'Invalid JSON.');}
  const ep=url.pathname;
@@ -154,7 +154,17 @@ async function api(req,res,url){
  if(ep==='/api/demo/subscriber-preview'){
    u.state.subscriberPreview=!!data.enabled;save();return json(res,200,{ok:true});
  }
- function grantPullRewards(u, source='stars'){ if(source==='stars'){ if(u.state.stars<PACK_COST)return {error:'Not enough demo STARS. Refill your test balance in My Page.'}; u.state.stars-=PACK_COST; u.state.paidPulls++; } else { if((u.state.pullPoints||0)<PACK_COST)return {error:'Not enough Pull Points for a free pull.'}; u.state.pullPoints-=PACK_COST; } let rarity=drawRarity(),c=cardForRarity(rarity); u.state.owned[c.id]=(u.state.owned[c.id]||0)+1; u.state.fancallTickets=(u.state.fancallTickets||0)+2; u.state.pullPoints=(u.state.pullPoints||0)+100; let guaranteed=[]; if(source==='stars' && u.state.paidPulls===HARD_PITY && !u.state.pityAchieved){ for(let x of cards)if(!ownCard(u,x.id)){u.state.owned[x.id]=1;guaranteed.push(x.id);} u.state.pityAchieved=true; } save(); return {card:c,guaranteed,stars:u.state.stars,pullPoints:u.state.pullPoints,fancallTickets:u.state.fancallTickets,fancallTicketsAwarded:2,pullPointsAwarded:100,paidPulls:u.state.paidPulls,albumComplete:complete(u),pityAchieved:u.state.pityAchieved}; }
+ function awardProfileRing(u,count=1){
+   const rings=['starlight','pink-ribbon','moonlight','golden-hour'];
+   u.state.unlockedRings ||= ['classic'];
+   const unlocked=[];
+   for(let i=0;i<count;i++)if(crypto.randomInt(100)<5){
+     const available=rings.filter(r=>!u.state.unlockedRings.includes(r));
+     if(available.length){const ring=available[crypto.randomInt(available.length)];u.state.unlockedRings.push(ring);unlocked.push(ring);}
+   }
+   return unlocked;
+ }
+ function grantPullRewards(u, source='stars'){ if(source==='stars'){ if(u.state.stars<PACK_COST)return {error:'Not enough demo STARS. Refill your test balance in My Page.'}; u.state.stars-=PACK_COST; u.state.paidPulls++; } else { if((u.state.pullPoints||0)<PACK_COST)return {error:'Not enough Pull Points for a free pull.'}; u.state.pullPoints-=PACK_COST; } let rarity=drawRarity(),c=cardForRarity(rarity); u.state.owned[c.id]=(u.state.owned[c.id]||0)+1; u.state.fancallTickets=(u.state.fancallTickets||0)+2; u.state.pullPoints=(u.state.pullPoints||0)+100; let guaranteed=[]; if(source==='stars' && u.state.paidPulls===HARD_PITY && !u.state.pityAchieved){ for(let x of cards)if(!ownCard(u,x.id)){u.state.owned[x.id]=1;guaranteed.push(x.id);} u.state.pityAchieved=true; } const ringsUnlocked=awardProfileRing(u);save(); return {ringsUnlocked,card:c,guaranteed,stars:u.state.stars,pullPoints:u.state.pullPoints,fancallTickets:u.state.fancallTickets,fancallTicketsAwarded:2,pullPointsAwarded:100,paidPulls:u.state.paidPulls,albumComplete:complete(u),pityAchieved:u.state.pityAchieved}; }
  if(ep==='/api/cards/pull10'){
    if(u.state.stars<PACK_COST*10)return fail(res,400,'You need 3,000 demo STARS for ten pulls.');
    const pulled=[];let guaranteed=[];
@@ -165,7 +175,7 @@ async function api(req,res,url){
    }
    u.state.fancallTickets=(u.state.fancallTickets||0)+20;
    u.state.pullPoints=(u.state.pullPoints||0)+1000;
-   save();return json(res,200,{card:pulled[0],cards:pulled,guaranteed,stars:u.state.stars,paidPulls:u.state.paidPulls,fancallTickets:u.state.fancallTickets,pullPoints:u.state.pullPoints,fancallTicketsAwarded:20,pullPointsAwarded:1000,albumComplete:complete(u),pityAchieved:u.state.pityAchieved});
+   const ringsUnlocked=awardProfileRing(u,10);save();return json(res,200,{ringsUnlocked,card:pulled[0],cards:pulled,guaranteed,stars:u.state.stars,paidPulls:u.state.paidPulls,fancallTickets:u.state.fancallTickets,pullPoints:u.state.pullPoints,fancallTicketsAwarded:20,pullPointsAwarded:1000,albumComplete:complete(u),pityAchieved:u.state.pityAchieved});
  }
  if(ep==='/api/cards/pull'){ const result=grantPullRewards(u,'stars'); if(result.error)return fail(res,400,result.error); return json(res,200,result); }
  if(ep==='/api/cards/pull-points'){ const result=grantPullRewards(u,'points'); if(result.error)return fail(res,400,result.error); return json(res,200,result); }
