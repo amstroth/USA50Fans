@@ -1,0 +1,19 @@
+/* USA50 Social quick compose — always above the mobile bottom navigation. */
+.social-compose-fab{
+  position:fixed;
+  z-index:85;
+  left:max(18px,env(safe-area-inset-left));
+  bottom:calc(102px + env(safe-area-inset-bottom));
+  display:flex;align-items:center;justify-content:center;
+  width:58px;height:58px;min-width:58px;padding:0;
+  border-radius:50%;border:2px solid rgba(255,255,255,.9);
+  color:white;background:linear-gradient(140deg,#ed9ed9,#9462ca);
+  box-shadow:0 8px 23px rgba(133,77,159,.27);
+  cursor:pointer;
+}
+.social-compose-fab svg{width:26px;height:26px}
+.social-feed-count{margin-bottom:12px}
+.social-feed-count h2{font-family:inherit;font-size:1.1rem;font-style:normal;line-height:1.35}
+@media(min-width:900px){
+  .social-compose-fab{left:calc(260px + 28px);bottom:30px}
+}
