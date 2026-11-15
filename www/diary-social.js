@@ -161,7 +161,7 @@ function officialCarousel(posts){
  (count>1?'<nav class="official-carousel-controls" aria-label="Official channel post pages">'+
  '<button type="button" data-action="official-prev" aria-label="Previous official posts page" '+(officialPage===0?'disabled':'')+'>‹</button>'+
  '<div class="official-page-dots">'+dots+'</div><button type="button" data-action="official-next" aria-label="Next official posts page" '+(officialPage===count-1?'disabled':'')+'>›</button>'+
- '<small>Page '+(officialPage+1)+' / '+count+'</small></nav>':'');
+ '<small>Post '+(officialPage+1)+' / '+count+'</small></nav>':'');
 }
 function officialDiarySection(){
  const data=getData(),groups=diaryGroups(),official=data.officialPosts||[];
@@ -225,14 +225,20 @@ function resizeDiaryPhoto(file){
 const previousDiaryAct=act;
 act=async function(name,node){
  if(name==='official-page'||name==='official-next'||name==='official-prev'){
-  const posts=getData().officialPosts||[],count=Math.ceil(posts.length/4);
-  officialPage=Math.max(0,Math.min(count-1,name==='official-page'?Number(node.dataset.value):officialPage+(name==='official-next'?1:-1)));
+  const posts=getData().officialPosts||[],count=posts.length;
+  officialPage=Math.max(0,Math.min(Math.max(0,count-1),name==='official-page'?Number(node.dataset.value):officialPage+(name==='official-next'?1:-1)));
   const block=document.querySelector('.official-social-block');
-  if(block){
-    const wrapper=document.createElement('div');wrapper.innerHTML=officialCarousel(posts);
-    block.querySelector('.official-carousel')?.remove();
-    block.querySelector('.official-carousel-controls')?.remove();
-    while(wrapper.firstElementChild)block.appendChild(wrapper.firstElementChild);
+  const track=block?.querySelector('.official-carousel-track');
+  if(track){
+    track.style.transform='translateX(-'+officialPage*50+'%)';
+    track.querySelectorAll('.official-page').forEach((page,i)=>page.setAttribute('aria-hidden',String(Math.abs(i-officialPage)>1)));
+    const controls=block.querySelector('.official-carousel-controls');
+    if(controls){
+      controls.querySelector('[data-action="official-prev"]')?.toggleAttribute('disabled',officialPage===0);
+      controls.querySelector('[data-action="official-next"]')?.toggleAttribute('disabled',officialPage>=count-1);
+      controls.querySelectorAll('.official-page-dot').forEach((dot,i)=>{dot.classList.toggle('active',i===officialPage);dot.setAttribute('aria-current',i===officialPage?'page':'false');});
+      const label=controls.querySelector('small');if(label)label.textContent='Post '+(officialPage+1)+' / '+count;
+    }
   }
   return;
  }
