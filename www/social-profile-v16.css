@@ -1,0 +1,70 @@
+/* USA50 compact social feed, profile and floating in-nav compose */
+.social-compose-fab{display:none!important}
+.bottom-nav{overflow:visible!important;position:fixed!important}
+.usa50-nav-compose{position:absolute;left:50%;top:-35px;transform:translateX(-50%);width:64px;height:64px;border:3px solid rgba(255,255,255,.95);border-radius:50%;background:linear-gradient(135deg,#e6a0d6,#985ec9);color:#fff;box-shadow:0 7px 18px #8561ac40;display:flex;align-items:center;justify-content:center;z-index:5;cursor:pointer}
+.usa50-nav-compose svg{width:29px;height:29px}
+.official-social-grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;max-width:580px;margin:0 auto}
+.official-social-card{width:100%;min-width:0}
+.official-social-block .social-section-heading h2,.official-diary-section .diary-stories-heading h2{font-size:clamp(23px,5vw,30px)!important;font-weight:650;line-height:1.2;margin:0}
+.official-social-block .social-section-heading,.official-diary-section .diary-stories-heading{margin-bottom:13px!important}
+.official-social-block .eyebrow,.official-social-block .social-section-heading .lead,.official-diary-section .diary-stories-heading .eyebrow,.diary-fan-divider{display:none!important}
+.official-social-block{margin-top:22px!important}
+.official-social-block .official-post-body h3{font-size:clamp(15px,3.5vw,20px)!important;line-height:1.25}
+.social-feed-count{display:none!important}
+.social-compact-heading{margin-bottom:10px!important}
+.social-help-button{font-size:0!important;width:42px!important;height:42px!important;padding:0!important;border-radius:50%!important}
+.social-help-button::first-letter{font-size:20px}
+.social-tabs{margin-bottom:12px!important}
+.social-post{padding:0 0 12px!important;margin-bottom:13px!important;background:transparent!important;box-shadow:none!important;border:none!important;border-bottom:1px solid #af88be4d!important;border-radius:0!important}
+.social-post-head{padding:10px 4px!important;gap:9px}
+.social-post-author small{font-size:11px!important}
+.social-mini-badge{font-size:10px!important;padding:3px 7px!important}
+.social-post .social-embed{margin:0!important}
+.social-caption{margin:9px 4px!important;font-size:14px!important;line-height:1.35!important}
+.social-post-footer{padding:2px 4px 0!important;gap:6px!important}
+.social-votes{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.social-vote{padding:5px!important}
+.social-repost-action,.social-save-action{border:0;background:transparent;color:#805996;font-size:13px;font-weight:700;padding:7px;cursor:pointer}
+.social-avatar{overflow:hidden;flex-shrink:0}
+.social-avatar img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
+.social-repost-attribution{font-size:11px;color:#805996;margin:0 5px 6px}
+.usa50-instagram-profile{max-width:760px;margin:0 auto;padding-bottom:50px}
+.usa50-profile-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.usa50-profile-title strong{font-size:clamp(20px,5vw,28px);word-break:break-word}
+.usa50-profile-menu{display:grid;place-items:center;padding:9px;border:0;background:none;color:#6b477f;cursor:pointer}
+.usa50-profile-main{display:flex;align-items:center;gap:clamp(14px,4vw,38px);padding:0 2px 10px}
+.usa50-avatar-frame,.usa50-ring-swatch{background:linear-gradient(135deg,#f3d4ff,#ae80d4);border-radius:50%;padding:4px;display:grid;place-items:center;flex-shrink:0}
+.usa50-avatar-frame{width:clamp(86px,25vw,130px);height:clamp(86px,25vw,130px);box-shadow:0 5px 13px #8657aa40}
+.usa50-avatar-inner{border:3px solid #fff;border-radius:50%;width:100%;height:100%;display:grid;place-items:center;overflow:hidden;background:#e9d4f4;color:#775295;font-family:Georgia,serif;font-size:43px}
+.usa50-avatar-inner img{width:100%;height:100%;object-fit:cover}
+.ring-starlight{background:conic-gradient(#b6a5eb,#fff,#8671d4,#d3c5ff,#fff,#b6a5eb)}
+.ring-pink-ribbon{background:repeating-conic-gradient(#ff91c3 0 18deg,#ffdbed 18deg 35deg,#bd81ca 35deg 50deg)}
+.ring-moonlight{background:conic-gradient(#17234f,#777ed3,#eef7ff,#2a387c,#17234f)}
+.ring-golden-hour{background:conic-gradient(#a76d20,#fff2c0,#e5a84c,#8f5826,#ffdc86)}
+.usa50-change-avatar{border:0;background:transparent;padding:0;cursor:pointer;flex-shrink:0}
+.usa50-profile-stats{display:flex;flex:1;justify-content:space-around;gap:8px}
+.usa50-profile-stats div{text-align:center;min-width:0}
+.usa50-profile-stats b{display:block;font-size:clamp(18px,4vw,24px);color:#55366c}
+.usa50-profile-stats small{display:block;font-size:clamp(11px,2.6vw,14px);color:#846b92}
+.usa50-profile-details{margin:12px 1px;color:#593e69}
+.usa50-profile-details strong{font-size:16px}.usa50-profile-details p{font-size:14px;white-space:pre-wrap;margin:4px 0 10px}
+.usa50-vip-row{display:flex;gap:7px;flex-wrap:wrap}
+.usa50-vip-row span{font-size:12px;font-weight:700;border-radius:15px;background:#f6e9fb;border:1px solid #ffffffba;padding:7px 10px}
+.usa50-profile-buttons{display:flex;gap:8px;margin:16px 0 23px}
+.usa50-profile-buttons .btn{flex:1;min-width:0;padding:10px;font-size:13px}
+.usa50-profile-tabs{display:flex;justify-content:space-around;border-top:1px solid #a78eb755;margin-top:18px}
+.usa50-profile-tabs button{border:0;border-top:3px solid transparent;background:transparent;flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px;color:#9674a5;cursor:pointer}
+.usa50-profile-tabs button.selected{border-top-color:#8f61b2;color:#593775}
+.usa50-profile-tabs button span{font-size:22px}.usa50-profile-tabs button small{font-size:11px}
+.usa50-profile-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}
+.usa50-profile-tile{aspect-ratio:1;min-width:0;border:0;background:linear-gradient(140deg,#d4b1ec,#f8d6e9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;overflow:hidden;padding:7px;color:#58396e;cursor:pointer}
+.usa50-profile-tile-icon{font-size:30px;color:#fff}
+.usa50-profile-tile>span:last-child{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:11px;font-weight:650}
+.usa50-profile-empty{text-align:center;padding:50px 8px;color:#896c9d}
+.usa50-settings-back{border:0;background:transparent;color:#78519a;font-size:15px;font-weight:800;cursor:pointer;margin:0 0 16px}
+.usa50-ring-options{display:flex;gap:9px;flex-wrap:wrap;margin-top:8px}
+.usa50-ring-option{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px}
+.usa50-ring-option input{accent-color:#8f61b2}
+.usa50-ring-swatch{height:38px;width:38px}
+.usa50-ring-option:has(input:disabled){opacity:.42}
+@media(min-width:900px){.usa50-nav-compose{display:none}}
