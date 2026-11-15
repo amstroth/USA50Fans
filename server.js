@@ -65,9 +65,9 @@ function availableToList(u,cardId){let reserved=db.tradeListings.filter(t=>t.own
 function cardForRarity(r){let pool=cards.filter(c=>c.rarity===r);return pool[crypto.randomInt(pool.length)];}
 function drawRarity(){let n=crypto.randomInt(100),total=0;for(let [r,p] of Object.entries(RARITY_WEIGHTS)){total+=p;if(n<total)return r;}return 'R';}
 function now(){return new Date().toISOString();}
-function getProfileState(){return {stars:9000,pullPoints:300,fancallTickets:0,paidPulls:0,pityAchieved:false,owned:{'tl-01':2,'tl-02':1,'tl-06':1},physicalOrders:[],freePhysicalUsed:false,subscriberPreview:false,likedPosts:[],favoriteMembers:['arielle'],fansiteApplicationId:null,demoClaimCode:'USA50-DEMO-'+crypto.randomBytes(4).toString('hex').toUpperCase(),demoClaimed:false,dailyClaimed:{}};}
+function getProfileState(){return {stars:9000,pullPoints:300,fancallTickets:0,paidPulls:0,pityAchieved:false,owned:{'tl-01':2,'tl-02':1,'tl-06':1},physicalOrders:[],freePhysicalUsed:false,subscriberPreview:false,likedPosts:[],favoriteMembers:['arielle'],fansiteApplicationId:null,demoClaimCode:'USA50-DEMO-'+crypto.randomBytes(4).toString('hex').toUpperCase(),demoClaimed:false,dailyClaimed:{},recycleCoupons:0,recycleHistory:[]};}
 function resolveUser(id){let u=db.users[id];return u?u.displayName:'Fan';}
-function publicState(u){return {me:u?cleanUser(u):null,members,cards,albums:cardStudio.publicAlbums(),packCards:cardStudio.publicCardsByPack(),homeFeaturedCards:cardStudio.homeFeaturedCards(),rarities:RARITY_WEIGHTS,packCost:PACK_COST,hardPity:HARD_PITY,cooldownDays:90,posts:db.posts.slice().reverse().map(p=>({...p,likedCount:p.likedBy.length,likedBy:undefined,liked:u? p.likedBy.includes(u.id):false})),fansites:db.fansites.filter(f=>f.status==='approved').map(f=>({id:f.id,name:f.name,portfolioUrl:f.portfolioUrl,instagram:f.instagram,tiktok:f.tiktok,description:f.description,votes:Object.values(db.fansiteVotes).filter(id=>id===f.id).length})).sort((a,b)=>b.votes-a.votes),tradeListings:db.tradeListings.map(t=>({...t,ownerName:resolveUser(t.ownerId)})),announcements:db.announcements.slice().reverse(),events:db.events};}
+function publicState(u){return {me:u?cleanUser(u):null,members,cards,albums:cardStudio.publicAlbums(),packCards:cardStudio.publicCardsByPack(),homeFeaturedCards:cardStudio.homeFeaturedCards(),rarities:RARITY_WEIGHTS,packCost:PACK_COST,hardPity:HARD_PITY,cooldownDays:90,posts:db.posts.slice().reverse().map(p=>({...p,likedCount:p.likedBy.length,likedBy:undefined,liked:u? p.likedBy.includes(u.id):false})),fansites:db.fansites.filter(f=>f.status==='approved').map(f=>({id:f.id,name:f.name,portfolioUrl:f.portfolioUrl,instagram:f.instagram,tiktok:f.tiktok,description:f.description,votes:Object.values(db.fansiteVotes).filter(id=>id===f.id).length})).sort((a,b)=>b.votes-a.votes),tradeListings:[],announcements:db.announcements.slice().reverse(),events:db.events};}
 const roleFeatures=require('./role-features.js')({db,save,id,hashPass,checkPass,userFrom,adminFrom,bodyText,now,json,fail});
 const socialHub=require('./social-hub.js')({db,save,id,bodyText,now,json,fail,userFrom});
 const officialDiary=require('./official-diary.js')({db,save,id,now,json,fail,userFrom,dataDir:DATA_DIR});
@@ -183,6 +183,24 @@ async function api(req,res,url){
    u.state.physicalOrders.push({id:id(),date:now(),kind:free?'free-reward-preview':'paid-order-preview',status:'demo-only'});
    if(free)u.state.freePhysicalUsed=true;save();return json(res,200,{ok:true,free,preview:true});
  }
+ if(ep==='/api/cards/recycle'){
+   const allCards=[...cards,...Object.values(cardStudio.publicCardsByPack()||{}).flat()];
+   const card=allCards.find(c=>c.id===data.cardId);
+   if(!card)return fail(res,400,'Unknown card.');
+   u.state.owned ||= {};
+   if(!Number.isInteger(u.state.owned[card.id]) || u.state.owned[card.id]<2)return fail(res,400,'Only duplicates may be recycled. Keep at least one copy.');
+   const roll=crypto.randomInt(100);
+   let reward,label;
+   if(roll<60){const amount=[50,100,150][crypto.randomInt(3)];u.state.stars=(u.state.stars||0)+amount;reward={type:'stars',amount};label=amount+' demo STARS';}
+   else if(roll<90){const amount=crypto.randomInt(1,4);u.state.fancallTickets=(u.state.fancallTickets||0)+amount;reward={type:'fancallTickets',amount};label=amount+' demo Fancall Ticket'+(amount===1?'':'s');}
+   else {u.state.recycleCoupons=(u.state.recycleCoupons||0)+1;reward={type:'shopCoupon',amount:1,discountPercent:10};label='a 10% shop coupon (preview)';}
+   u.state.owned[card.id]--;
+   u.state.recycleHistory ||= [];
+   u.state.recycleHistory.push({id:id(),cardId:card.id,reward,createdAt:now()});
+   save();
+   return json(res,200,{ok:true,reward,label,remaining:u.state.owned[card.id],coupons:u.state.recycleCoupons||0});
+ }
+ if(ep.startsWith('/api/trades/'))return fail(res,410,'Card trading has been retired. Recycle duplicates instead.');
  if(ep==='/api/trades/create'){
    let c=cards.find(c=>c.id===data.cardId);if(!c)return fail(res,400,'Unknown card.');
    if(availableToList(u,c.id)<1)return fail(res,400,'You may only list extra duplicate copies. Your last copy stays protected.');
