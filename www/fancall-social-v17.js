@@ -112,6 +112,7 @@ submitForm=async function(form){
 };
 // Keep winners and staff synchronized to host-controlled queue transitions.
 setInterval(()=>{if(selectedRoom&&document.visibilityState==='visible')refresh().catch(()=>{});},5000);
+setInterval(()=>{if(view==='events'&&!selectedRoom&&!composer&&document.visibilityState==='visible'&&!document.querySelector('#usa50-lottery-create:focus-within'))refresh().catch(()=>{});},15000);
 const oldGo=go;
 go=function(screen){composer=false;selectedRoom=null;stopLocalCamera();return oldGo(screen);};
 })();
