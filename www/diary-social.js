@@ -154,14 +154,30 @@ function openDiaryStory(id){
  storyIdol=id;storyIndex=group.entries.length-1;diaryStoryArchive();
 }
 function officialCarousel(posts){
- const count=posts.length;officialPage=Math.min(Math.max(0,officialPage),count-1);
- const pages=Array.from({length:count},(_,i)=>'<div class="official-page" role="group" aria-label="Official posts page '+(i+1)+' of '+count+'" aria-hidden="'+(officialPage!==i)+'"><div class="official-social-grid">'+posts.slice(i,i+1).map(officialCard).join('')+'</div></div>').join('');
- const dots=Array.from({length:count},(_,i)=>'<button type="button" class="official-page-dot '+(i===officialPage?'active':'')+'" data-action="official-page" data-value="'+i+'" aria-current="'+(i===officialPage?'page':'false')+'" aria-label="Show official posts page '+(i+1)+' of '+count+'"><span></span></button>').join('');
- return '<div class="official-carousel"><div class="official-carousel-track" style="transform:translateX(-'+officialPage*50+'%)">'+pages+'</div></div>'+
- (count>1?'<nav class="official-carousel-controls" aria-label="Official channel post pages">'+
- '<button type="button" data-action="official-prev" aria-label="Previous official posts page" '+(officialPage===0?'disabled':'')+'>‹</button>'+
- '<div class="official-page-dots">'+dots+'</div><button type="button" data-action="official-next" aria-label="Next official posts page" '+(officialPage===count-1?'disabled':'')+'>›</button>'+
+ const count=posts.length;
+ officialPage=Math.max(0,Math.min(officialPage,count-1));
+ const pages=posts.map((post,i)=>'<div class="official-page" role="group" aria-label="Official post '+(i+1)+' of '+count+'"><div class="official-social-grid">'+officialCard(post)+'</div></div>').join('');
+ const dots=posts.map((_,i)=>'<button type="button" class="official-page-dot '+(i===officialPage?'active':'')+'" data-action="official-page" data-value="'+i+'" aria-current="'+(i===officialPage?'page':'false')+'" aria-label="Go to official post '+(i+1)+'"><span></span></button>').join('');
+ return '<div class="official-carousel" aria-label="Swipe through USA50 official posts"><div class="official-carousel-track">'+pages+'</div></div>'+
+ (count>1?'<nav class="official-carousel-controls" aria-label="Official channel posts">'+
+ '<button type="button" data-action="official-prev" aria-label="Previous official post">‹</button>'+
+ '<div class="official-page-dots">'+dots+'</div>'+
+ '<button type="button" data-action="official-next" aria-label="Next official post">›</button>'+
  '<small>Post '+(officialPage+1)+' / '+count+'</small></nav>':'');
+}
+function updateOfficialCarouselPosition(){
+ const carousel=document.querySelector('.official-carousel');
+ if(carousel)carousel.scrollLeft=officialPage*(carousel.clientWidth/2);
+}
+function updateOfficialCarouselControls(){
+ const block=document.querySelector('.official-social-block'), controls=block?.querySelector('.official-carousel-controls');
+ if(!controls)return;
+ controls.querySelectorAll('.official-page-dot').forEach((dot,i)=>{
+  dot.classList.toggle('active',i===officialPage);
+  dot.setAttribute('aria-current',i===officialPage?'page':'false');
+ });
+ const label=controls.querySelector('small');
+ if(label)label.textContent='Post '+(officialPage+1)+' / '+(getData().officialPosts||[]).length;
 }
 function officialDiarySection(){
  const data=getData(),groups=diaryGroups(),official=data.officialPosts||[];
@@ -225,21 +241,14 @@ function resizeDiaryPhoto(file){
 const previousDiaryAct=act;
 act=async function(name,node){
  if(name==='official-page'||name==='official-next'||name==='official-prev'){
-  const posts=getData().officialPosts||[],count=posts.length;
-  officialPage=Math.max(0,Math.min(Math.max(0,count-1),name==='official-page'?Number(node.dataset.value):officialPage+(name==='official-next'?1:-1)));
-  const block=document.querySelector('.official-social-block');
-  const track=block?.querySelector('.official-carousel-track');
-  if(track){
-    track.style.transform='translateX(-'+officialPage*50+'%)';
-    track.querySelectorAll('.official-page').forEach((page,i)=>page.setAttribute('aria-hidden',String(Math.abs(i-officialPage)>1)));
-    const controls=block.querySelector('.official-carousel-controls');
-    if(controls){
-      controls.querySelector('[data-action="official-prev"]')?.toggleAttribute('disabled',officialPage===0);
-      controls.querySelector('[data-action="official-next"]')?.toggleAttribute('disabled',officialPage>=count-1);
-      controls.querySelectorAll('.official-page-dot').forEach((dot,i)=>{dot.classList.toggle('active',i===officialPage);dot.setAttribute('aria-current',i===officialPage?'page':'false');});
-      const label=controls.querySelector('small');if(label)label.textContent='Post '+(officialPage+1)+' / '+count;
-    }
-  }
+  const count=(getData().officialPosts||[]).length;
+  if(!count)return;
+  officialPage=name==='official-page'?Number(node.dataset.value):officialPage+(name==='official-next'?1:-1);
+  // Wrap at the ends so all posts remain reachable without dead-end arrows.
+  officialPage=(officialPage+count)%count;
+  const carousel=document.querySelector('.official-carousel');
+  if(carousel)carousel.scrollTo({left:officialPage*(carousel.clientWidth/2),behavior:'smooth'});
+  updateOfficialCarouselControls();
   return;
  }
  if(name==='official-sync-now'){
@@ -290,23 +299,18 @@ document.addEventListener('touchend',event=>{
  if(storyMode==='reader'&&Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.5)moveStory(dx<0?1:-1);
  storyTouchStart=null;
 },{passive:true});
-document.addEventListener('touchstart',event=>{
- const carousel=event.target.closest('.official-carousel');
- if(!carousel)return;
- officialSwipeStart={x:event.touches[0].clientX,y:event.touches[0].clientY};
-},{passive:true});
-document.addEventListener('touchend',event=>{
- const carousel=event.target.closest('.official-carousel');
- if(!carousel||!officialSwipeStart)return;
- const deltaX=event.changedTouches[0].clientX-officialSwipeStart.x;
- const deltaY=event.changedTouches[0].clientY-officialSwipeStart.y;
- officialSwipeStart=null;
- if(Math.abs(deltaX)<45||Math.abs(deltaX)<Math.abs(deltaY)*1.4)return;
- const direction=deltaX<0?'official-next':'official-prev';
- const block=document.querySelector('.official-social-block');
- const button=block?.querySelector('.official-carousel-controls [data-action="'+direction+'"]');
- if(button&&!button.disabled)act(direction,button).catch(err=>toast(err.message));
-},{passive:true});
+// Native horizontal momentum scrolling allows dragging through consecutive cards.
+let carouselScrollTimer;
+document.addEventListener('scroll',event=>{
+ if(!event.target?.classList?.contains('official-carousel'))return;
+ clearTimeout(carouselScrollTimer);
+ carouselScrollTimer=setTimeout(()=>{
+  const carousel=event.target,count=(getData().officialPosts||[]).length;
+  if(!count||!carousel.clientWidth)return;
+  officialPage=Math.min(count-1,Math.max(0,Math.round(carousel.scrollLeft/(carousel.clientWidth/2))));
+  updateOfficialCarouselControls();
+ },100);
+},true);
 document.addEventListener('input',event=>{if(event.target.closest('#diary-entry-form'))updateDiaryPreview()});
 document.addEventListener('change',async event=>{
  if(event.target?.id!=='diary-photo-picker')return;
