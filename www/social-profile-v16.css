@@ -12,7 +12,7 @@
 .official-social-block .official-post-body h3{font-size:clamp(15px,3.5vw,20px)!important;line-height:1.25}
 .social-feed-count{display:none!important}
 .social-compact-heading{margin-bottom:10px!important}
-.social-help-button{font-size:0!important;width:42px!important;height:42px!important;padding:0!important;border-radius:50%!important}
+.social-help-button{font-size:21px!important;width:42px!important;height:42px!important;padding:0!important;border-radius:50%!important}
 .social-help-button::first-letter{font-size:20px}
 .social-tabs{margin-bottom:12px!important}
 .social-post{padding:0 0 12px!important;margin-bottom:13px!important;background:transparent!important;box-shadow:none!important;border:none!important;border-bottom:1px solid #af88be4d!important;border-radius:0!important}
