@@ -52,3 +52,5 @@
 .usa50-local-placeholder{display:flex;flex-direction:column;gap:5px;padding:5px!important}
 .usa50-local-placeholder video{display:block;width:100%;flex:1;min-height:70px;max-height:100px;object-fit:cover;background:#3e304b;border-radius:10px}
 .usa50-camera-button{background:#eee1f4;border:0;border-radius:11px;padding:5px;font-size:10px;color:#62437f;font-weight:700;width:100%}
+
+@media(max-width:600px){.top-mobile-brand .brand{font-size:26px!important}.top-bar{gap:5px!important}.top-actions{gap:2px!important}.top-actions>.icon-btn{width:30px!important;height:30px!important}.top-actions>.stars-pill{padding:6px 7px!important;font-size:11px!important;gap:3px!important}.usa50-top-shortcuts .icon-btn{width:28px!important;height:28px!important}.usa50-top-shortcuts .icon-btn svg{width:15px!important;height:15px!important}}
