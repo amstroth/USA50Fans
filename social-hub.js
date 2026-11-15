@@ -60,7 +60,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
     const profiles={};for(const target of ids){if(target)profiles[target]=publicProfile(target,uid,ranking);}
     const posts=state.posts.filter(p=>!p.hidden).slice(-250).map(post=>{
       const count=counts(post);
-      return {id:post.id,authorId:post.authorId,category:post.category,caption:post.caption,url:post.url,platform:post.platform,embedId:post.embedId,embedKind:post.embedKind,createdAt:post.createdAt,repostOf:post.repostOf||null,repostAuthor:post.repostAuthor||null,...count,myVote:uid?(state.votes[post.id]?.[uid]||0):0,isFollowing:Boolean(uid&&(state.follows[uid]||[]).includes(post.authorId))};
+      return {id:post.id,authorId:post.authorId,category:post.category,caption:post.caption,url:post.url,platform:post.platform,embedId:post.embedId,embedKind:post.embedKind,createdAt:post.createdAt,thumbnailUrl:post.thumbnailUrl||null,repostOf:post.repostOf||null,repostAuthor:post.repostAuthor||null,...count,myVote:uid?(state.votes[post.id]?.[uid]||0):0,isFollowing:Boolean(uid&&(state.follows[uid]||[]).includes(post.authorId))};
     });
     return {posts,profiles,rankings:ranking,following:uid?(state.follows[uid]||[]):[],myProfile:uid?profiles[uid]:null,savedPostIds:uid?(profileFor(uid).savedPostIds||[]):[],top100Limit:100,earnings:{postPullPoints:50,dailyCreditedPosts:2,upvotesPerTicket:100},policy:'Demo awards, not real fancall entry or confirmed ticketing.',reports:role(user)==='admin'?state.reports.filter(x=>x.status==='pending').slice(-80):[],bans:role(user)==='admin'?state.bans:{}};
   }
@@ -186,7 +186,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
     }
     state.importedLegacy=true;save();
   }
-  function handlePost(req,res,ep,data){
+  async function handlePost(req,res,ep,data){
     if(!ep.startsWith('/api/social/'))return false;
     const u=requireFan(req,res);if(!u)return true;
     const text=field=>bodyText(data[field],650);
@@ -200,7 +200,16 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
       if(state.posts.some(p=>p.authorId===u.id&&p.url===source.url&&!p.hidden))return fail(res,409,'You already shared this post.'),true;
       const day=now().slice(0,10);
       if(state.posts.filter(p=>p.authorId===u.id&&p.createdAt.slice(0,10)===day).length>=5)return fail(res,429,'Limit 5 submissions per day in this development preview.'),true;
-      const post={id:id(),authorId:u.id,category,caption,url:source.url,platform:source.platform,embedKind:source.embedKind,embedId:source.embedId,createdAt:now(),hidden:false};
+      const post={id:id(),authorId:u.id,category,caption,url:source.url,platform:source.platform,embedKind:source.embedKind,embedId:source.embedId,thumbnailUrl:null,createdAt:now(),hidden:false};
+      // Resolve only provider-approved thumbnail metadata for a verified post URL.
+      // Failure never blocks publishing; Instagram may require provider credentials.
+      if(source.platform==='TikTok' && source.embedId){
+        try{
+          const metaUrl='https://www.tiktok.com/oembed?url='+encodeURIComponent(source.url);
+          const metaRes=await fetch(metaUrl,{signal:AbortSignal.timeout(3500)});
+          if(metaRes.ok){const meta=await metaRes.json();if(typeof meta.thumbnail_url==='string'&&meta.thumbnail_url.startsWith('https://'))post.thumbnailUrl=meta.thumbnail_url.slice(0,1200);}
+        }catch(_err){}
+      }
       state.posts.push(post);
       const credit=state.dailyCredits[u.id]||{day,count:0};if(credit.day!==day){credit.day=day;credit.count=0;}
       let pointsAwarded=0;
@@ -262,7 +271,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
       if(state.posts.some(p=>p.authorId===u.id&&p.repostOf===original.id&&!p.hidden))return fail(res,409,'Already reposted.'),true;
       const day=now().slice(0,10);
       if(state.posts.filter(p=>p.authorId===u.id&&p.createdAt.slice(0,10)===day).length>=5)return fail(res,429,'Daily posting limit reached.'),true;
-      const post={id:id(),authorId:u.id,category:'fan',caption:original.caption,url:original.url,platform:original.platform,embedKind:original.embedKind,embedId:original.embedId,repostOf:original.id,repostAuthor:profileFor(original.authorId)?.handle||'USA50 fan',createdAt:now(),hidden:false};
+      const post={id:id(),authorId:u.id,category:'fan',caption:original.caption,url:original.url,platform:original.platform,embedKind:original.embedKind,embedId:original.embedId,repostOf:original.id,repostAuthor:profileFor(original.authorId)?.handle||'USA50 fan',thumbnailUrl:original.thumbnailUrl||null,createdAt:now(),hidden:false};
       state.posts.push(post);profileFor(u.id).xp+=5;save();
       return json(res,201,{ok:true,postId:post.id}),true;
     }
