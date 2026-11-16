@@ -1,0 +1,175 @@
+/* USA50 Livestream + Fancall interactive preview studio · mobile-first */
+.usa50-preview-launcher{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:12px 0 23px;padding:19px 21px;border-radius:24px;border:1px solid rgba(255,255,255,.95);background:linear-gradient(120deg,rgba(254,237,252,.95),rgba(223,207,251,.95));box-shadow:0 10px 28px rgba(130,77,155,.12);color:#68437b}
+.usa50-preview-launcher small{display:block;font-size:10px;letter-spacing:2.1px;font-weight:850;color:#B26DAD}
+.usa50-preview-launcher h3{font-size:25px;font-style:italic;font-family:Georgia,serif;margin:6px 0}
+.usa50-preview-launcher p{margin:0;font-size:12px;line-height:1.55;color:#886b98;max-width:370px}
+.usa50-preview-launch-buttons{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.usa50-preview-launch-buttons button{border:1px solid rgba(255,255,255,.95);background:#fff9;color:#70428b;padding:12px 15px;border-radius:999px;font-size:12px;font-weight:800;box-shadow:0 5px 16px #a778bb20;cursor:pointer}
+.usa50-preview-launch-buttons button:first-child{background:linear-gradient(115deg,#E2AFEA,#CF9EDD);color:#59366e}
+.usa50-stream-preview-shortcut,.usa50-fancall-preview-shortcut{margin-top:11px;align-self:flex-start}
+.usa50-preview-overlay{position:fixed;inset:0;z-index:99999;background:linear-gradient(125deg,rgba(55,25,78,.78),rgba(66,38,107,.78));display:flex;align-items:center;justify-content:center;padding:0;overflow:hidden;isolation:isolate;color:#64447d}
+.usa50-preview-window{height:min(96dvh,1080px);width:min(100%,1120px);min-width:0;display:flex;flex-direction:column;overflow:hidden;border:1px solid #fff;border-radius:24px;box-shadow:0 30px 90px #3520478e;background:radial-gradient(ellipse at 4% 11%,#dad2ff 0,transparent 45%),radial-gradient(ellipse at 90% 31%,#fde0f4 0,transparent 50%),#f7effe}
+.usa50-preview-header{flex-shrink:0;display:flex;align-items:center;gap:12px;padding:18px 25px 12px;min-width:0}
+.usa50-preview-back{width:37px;height:37px;flex:0 0 37px;border:1px solid #fff;background:#fff9;display:grid;place-items:center;border-radius:100%;font-size:22px;color:#865e9a;cursor:pointer;line-height:1}
+.usa50-preview-header>div{flex:1;min-width:0}
+.usa50-preview-header small{letter-spacing:1.8px;font-size:10px;color:#AC70AC;font-weight:900;display:block}
+.usa50-preview-header h2{font-style:italic;font-family:Georgia,serif;font-size:26px;line-height:1.05;color:#644278;margin:2px 0}
+.usa50-preview-sim-pill{font-size:10px;letter-spacing:.5px;white-space:nowrap;font-weight:800;border-radius:25px;color:#9e548a;background:#fff8;padding:9px 12px;border:1px solid #fff}
+.usa50-preview-tabs,.usa50-preview-rolebar{display:flex;flex-shrink:0;gap:7px;padding:0 24px 10px;align-items:center}
+.usa50-preview-tabs button{flex:1;border:1px solid #fff8;background:#fff9;border-radius:100px;padding:11px;color:#846797;font-size:12px;font-weight:800;cursor:pointer}
+.usa50-preview-tabs button.selected{background:linear-gradient(120deg,#d6a4e7,#ecc0e1);box-shadow:0 4px 12px #a567b832;color:#603b77}
+.usa50-preview-rolebar{padding-bottom:14px;border-bottom:1px solid #c9aad12a}
+.usa50-preview-rolebar span{font-size:11px;font-weight:850;letter-spacing:.2px;color:#9679a1;margin-right:5px}
+.usa50-preview-rolebar button{padding:8px 16px;border:1px solid #fff;background:#fff7;color:#795691;border-radius:20px;font-size:11px;font-weight:800;cursor:pointer}
+.usa50-preview-rolebar button.selected{background:#E63A84;color:#fff;border-color:#E63A84;box-shadow:0 4px 12px #e63a8435}
+.usa50-preview-content{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.usa50-preview-main{padding:16px 22px 22px;display:grid;gap:16px}
+.usa50-preview-intro{display:flex;align-items:end;justify-content:space-between;gap:12px}
+.usa50-preview-intro small{font-size:10px;font-weight:900;letter-spacing:2px;color:#b16dad}
+.usa50-preview-intro h3{font-size:24px;font-family:Georgia,serif;font-style:italic;color:#68477f;margin:5px 0 0;font-weight:700}
+.usa50-preview-intro>span{color:#a183ae;font-size:11px;white-space:nowrap}
+.usa50-preview-live-columns{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(295px,1fr);gap:15px;align-items:start}
+.usa50-preview-stream-screen{width:100%;aspect-ratio:16/9;background:linear-gradient(130deg,#493a66,#b484c7);border:2px solid #fff;box-shadow:0 10px 22px #51366f25;border-radius:20px;overflow:hidden;position:relative;isolation:isolate}
+.usa50-preview-live-persons{display:grid;grid-template-columns:1fr 1fr;position:absolute;inset:0}
+.usa50-preview-talent{position:relative;min-width:0;overflow:hidden;background:linear-gradient(125deg,#8369a9,#e5c9ef)}
+.usa50-preview-talent:nth-child(2){background:linear-gradient(130deg,#a9b6e3,#f2aace)}
+.usa50-preview-person-image{display:block;width:100%;height:100%;object-fit:cover;object-position:center 24%;border:0}
+.usa50-preview-avatar-art{display:grid;place-items:center;font-size:clamp(65px,11vw,132px);filter:saturate(.85)}
+.usa50-preview-talents-caption{position:absolute;left:12px;bottom:15px;background:#24143680;border:1px solid #ffffff8a;backdrop-filter:blur(5px);padding:7px 11px;border-radius:100px;color:#fff;display:flex;align-items:center;gap:6px}
+.usa50-preview-talents-caption strong{font-size:12px}
+.usa50-preview-talents-caption .usa50-verified-badge{width:16px;height:16px}
+.usa50-preview-live-top{position:absolute;top:12px;left:12px;right:12px;display:flex;align-items:center;justify-content:space-between;gap:7px;color:#fff}
+.usa50-preview-live-top>span:last-child{font-size:11px;background:#1810289a;padding:6px 9px;border-radius:20px}
+.usa50-preview-liveflag,.usa50-preview-offflag{font-size:11px;font-weight:900;letter-spacing:1px;background:#E63A84;color:#fff;padding:7px 12px;border:1px solid #fffb;border-radius:999px}
+.usa50-preview-offflag{background:#655a73}
+.usa50-preview-live-bottom{position:absolute;bottom:0;left:0;right:0;display:flex;gap:10px;align-items:center;padding:15px 15px 44px;background:linear-gradient(0deg,#1d112ba8,transparent);color:#fff;pointer-events:none}
+.usa50-preview-motion-blob{font-size:30px}
+.usa50-preview-live-bottom small{font-size:9px;letter-spacing:1.6px;font-weight:850;color:#f1bcf1}
+.usa50-preview-live-bottom h3{margin:2px 0;font-size:17px;line-height:1.13;color:#fff}
+.usa50-preview-live-bottom p{margin:3px 0;font-size:11px;color:#f4e4f7}
+.usa50-preview-gift-float{position:absolute;top:48px;right:10px;color:#fff;font-size:11px;padding:9px 12px;max-width:85%;border-radius:13px;background:#e63a84dc;box-shadow:0 9px 23px #4a14577d;animation:usa50-preview-pop .32s both}
+@keyframes usa50-preview-pop{from{opacity:0;transform:translateY(12px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
+.usa50-preview-chat-card,.usa50-preview-mini-panel,.usa50-preview-waiting,.usa50-preview-video-stage{min-width:0;border:1px solid #fff;background:#ffffff94;border-radius:20px;padding:14px;box-shadow:0 7px 15px #845ca112}
+.usa50-preview-chat-heading{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e1d0e6;padding:4px 0 11px}
+.usa50-preview-chat-heading span{font-weight:850;color:#704f86;font-size:14px}
+.usa50-preview-chat-heading i{font-style:normal;color:#E63A84;font-size:12px}
+.usa50-preview-chat-heading small{color:#a08cae;font-size:10px}
+.usa50-preview-chat-list{display:flex;flex-direction:column;gap:14px;overflow-y:auto;height:210px;padding:14px 1px;scrollbar-width:thin}
+.usa50-preview-chat-line{display:flex;align-items:flex-start;gap:9px;min-width:0}
+.usa50-preview-chat-avatar{display:grid;place-items:center;width:31px;height:31px;flex:0 0 31px;border-radius:50%;background:#eecdf3;border:2px solid #fff;color:#8e619c}
+.usa50-preview-chat-line>div{flex:1;min-width:0}
+.usa50-preview-chat-name{font-weight:800;color:#9160a2;font-size:12px;display:flex;align-items:center;gap:3px}
+.usa50-preview-chat-name .usa50-verified-badge{width:16px;height:16px}
+.usa50-preview-chat-line p{color:#694b7a;margin:4px 0 0;font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+.usa50-preview-compose{display:flex;gap:6px;background:#fff;border:1px solid #e1cce9;border-radius:100px;padding:5px}
+.usa50-preview-compose input{width:100%;flex:1;min-width:0;border:0;background:transparent;outline:0;padding:6px 11px;font-size:12px;color:#62477f}
+.usa50-preview-compose button,.usa50-preview-gifts-action button{border:0;border-radius:30px;background:#ad7dd0;color:#fff;padding:9px 14px;font-size:11px;font-weight:800;cursor:pointer}
+.usa50-preview-compose button:disabled{opacity:.45}
+.usa50-preview-gifts-action{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:10px 0 0}
+.usa50-preview-gifts-action button{background:linear-gradient(120deg,#E63A84,#BD71C8)}
+.usa50-preview-gifts-action span{font-size:11px;font-weight:800;color:#8c639c}
+.usa50-preview-mini-panel h3{margin:0 0 10px;font-size:16px;color:#674780}
+.usa50-preview-mini-panel p{font-size:12px;line-height:1.5;color:#866c96;margin:5px 0 14px}
+.usa50-preview-mini-panel>.btn{margin-top:5px}
+.usa50-preview-gift-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.usa50-preview-gift-grid button{display:grid;place-items:center;gap:3px;min-width:0;border:2px solid #f9e8fa;background:#fbf2fe;padding:9px 3px;border-radius:13px;color:#78528f;cursor:pointer}
+.usa50-preview-gift-grid button.selected{border-color:#E63A84;background:#ffecf5}
+.usa50-preview-gift-grid button span{font-size:25px}
+.usa50-preview-gift-grid button strong{font-size:10px;overflow-wrap:anywhere;text-align:center}
+.usa50-preview-gift-grid button small{font-size:10px}
+.usa50-preview-preview-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0}
+.usa50-preview-preview-actions button{font-size:12px!important}
+.usa50-preview-preview-actions span{font-size:11px;color:#917ba0}
+.usa50-preview-requests{border-top:1px solid #e1d1ec;padding-top:12px;margin-top:12px}
+.usa50-preview-requests h4{font-size:13px;margin:0 0 10px;color:#78548d}
+.usa50-preview-request{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #e5d6ee;font-size:12px}
+.usa50-preview-request button{padding:7px 9px;background:#edd6f7;border:1px solid #fff;color:#775589;border-radius:9px;cursor:pointer;font-size:11px}
+.usa50-preview-request button:first-child{background:#E63A84;color:#fff}
+.usa50-preview-request>span{min-width:0}
+.usa50-preview-ledger{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}
+.usa50-preview-ledger span{background:#fff;border:1px solid #eee;border-radius:13px;padding:9px;color:#936b9f;font-size:12px}
+.usa50-preview-ledger strong{color:#684783}
+.usa50-preview-footnote{font-size:11px!important;color:#9c84a8!important;line-height:1.55!important;margin:11px 0!important}
+.usa50-preview-call-columns{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:16px;align-items:start}
+.usa50-preview-video-stage{background:linear-gradient(150deg,#d4bdf0,#f7dff5);padding:12px}
+.usa50-preview-videos{display:grid;grid-template-columns:minmax(0,1fr) minmax(96px,28%);gap:9px;align-items:start;min-height:305px}
+.usa50-preview-main-video{min-width:0}
+.usa50-preview-video-tile{position:relative;overflow:hidden;border-radius:17px;min-height:300px;background:linear-gradient(125deg,#7760a4,#e3b5e8);box-shadow:0 5px 15px #4e276135}
+.usa50-preview-video-tile.main .usa50-preview-person-image{height:325px;object-position:center 20%}
+.usa50-preview-video-tile.self{min-height:153px;background:linear-gradient(125deg,#654c84,#a97fb0)}
+.usa50-preview-video-tile.self video{width:100%;height:160px;object-fit:cover;display:block;transform:scaleX(-1)}
+.usa50-preview-video-caption{position:absolute;bottom:9px;left:8px;right:8px;border-radius:10px;background:#25182ab8;padding:7px;color:#fff;font-size:11px;text-align:left}
+.usa50-preview-video-emoji{display:grid;place-items:center;height:160px;font-size:50px}
+.usa50-preview-video-disabled{height:160px;display:grid;place-items:center;color:#fff;font-size:12px}
+.usa50-preview-no-remote{display:grid;place-items:center;min-height:300px;font-size:66px;color:#f4e5ff}
+.usa50-preview-empty-call{display:grid;place-items:center;align-content:center;gap:6px;min-height:305px;color:#fff;text-align:center;padding:12px}
+.usa50-preview-empty-call>span{font-size:54px}
+.usa50-preview-empty-call strong{font-size:16px}
+.usa50-preview-empty-call small{font-size:11px;color:#e7d6f4}
+.usa50-preview-call-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;margin:12px 3px 0;color:#78548d}
+.usa50-preview-waiting{text-align:center;min-height:310px;display:flex;align-items:center;justify-content:center;flex-direction:column;background:linear-gradient(130deg,#f7eafc,#e9d8f7)}
+.usa50-preview-status-circle{width:70px;height:70px;border:3px solid #fff;display:grid;place-items:center;border-radius:50%;font-size:39px;background:#f0cee9;box-shadow:0 5px 12px #9870a03d}
+.usa50-preview-waiting h3{font-family:Georgia,serif;font-style:italic;font-size:23px;color:#764b8d;margin:14px 0 5px}
+.usa50-preview-waiting p{max-width:300px;font-size:12px;color:#86699c;line-height:1.55}
+.usa50-preview-wait-stat{display:flex;gap:10px;margin:12px 0}
+.usa50-preview-wait-stat>div{display:grid;gap:2px;padding:11px 19px;background:#fff9;border:1px solid #fff;border-radius:14px}
+.usa50-preview-wait-stat strong{color:#8b51a9;font-size:22px}
+.usa50-preview-wait-stat small{font-size:10px;color:#9981a6}
+.usa50-preview-queue-help{font-size:10px;color:#9982a3;max-width:360px;margin:4px auto 12px}
+.usa50-preview-mini-header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.usa50-preview-mini-header small{font-size:10px;font-weight:850;color:#aa7aa8}
+.usa50-preview-queue-row{display:flex;align-items:center;gap:12px;border-bottom:1px solid #eadbed;padding:12px 3px;color:#7b6193;font-size:12px}
+.usa50-preview-queue-row span:nth-child(2){flex:1}
+.usa50-preview-queue-row small{font-weight:800;font-size:10px;color:#957cac}
+.usa50-preview-queue-row.active{color:#dd418d}
+.usa50-preview-queue-index{display:grid;place-items:center;width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:#ead1f0;color:#865a98;font-weight:850}
+.usa50-preview-call-controls{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}
+.usa50-preview-call-controls button{padding:10px;border-radius:11px;border:1px solid #fff;background:linear-gradient(120deg,#E9CBF5,#F7E0EF);color:#724b87;font-size:11px;font-weight:800;cursor:pointer}
+.usa50-preview-call-controls button:disabled{opacity:.4;cursor:not-allowed}
+.usa50-preview-call-controls button:nth-child(4){color:#c03975}
+.usa50-preview-host-panel{margin-bottom:12px}
+.usa50-preview-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 24px;border-top:1px solid #ffffffa5;background:rgba(255,255,255,.54);flex-shrink:0}
+.usa50-preview-footer span{font-size:10px;line-height:1.4;color:#9c83aa}
+.usa50-preview-footer button{white-space:nowrap;background:#fff;border:1px solid #fff;padding:9px 12px;border-radius:30px;color:#784e91;font-size:11px;font-weight:800;cursor:pointer}
+@media(max-width:900px){
+ .usa50-preview-launcher{flex-direction:column;align-items:stretch}
+ .usa50-preview-launch-buttons{width:100%}
+ .usa50-preview-launch-buttons button{flex:1}
+ .usa50-preview-live-columns,.usa50-preview-call-columns{grid-template-columns:minmax(0,1fr)}
+ .usa50-preview-gift-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+}
+@media(max-width:650px){
+ .usa50-preview-overlay{padding:0}
+ .usa50-preview-window{height:100dvh;width:100%;max-width:none;border:0;border-radius:0}
+ .usa50-preview-header{padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;gap:9px}
+ .usa50-preview-header h2{font-size:21px}
+ .usa50-preview-header small{font-size:8px;letter-spacing:1.1px}
+ .usa50-preview-sim-pill{font-size:8px;padding:7px;letter-spacing:0}
+ .usa50-preview-tabs,.usa50-preview-rolebar{padding-left:13px;padding-right:13px}
+ .usa50-preview-main{padding:14px 11px 20px;gap:12px}
+ .usa50-preview-intro h3{font-size:21px}
+ .usa50-preview-intro>span{font-size:10px}
+ .usa50-preview-live-columns,.usa50-preview-call-columns{gap:12px}
+ .usa50-preview-live-persons .usa50-preview-person-image{object-position:center 22%}
+ .usa50-preview-stream-screen{border-radius:14px;aspect-ratio:16/10}
+ .usa50-preview-live-bottom{padding-bottom:38px}
+ .usa50-preview-live-bottom h3{font-size:13px}
+ .usa50-preview-live-bottom p{font-size:9px}
+ .usa50-preview-talents-caption{padding:4px 7px;left:6px;bottom:8px}
+ .usa50-preview-talents-caption strong{font-size:10px}
+ .usa50-preview-chat-list{height:195px}
+ .usa50-preview-chat-card,.usa50-preview-mini-panel,.usa50-preview-waiting,.usa50-preview-video-stage{border-radius:16px;padding:12px}
+ .usa50-preview-gift-grid{gap:5px}
+ .usa50-preview-gift-grid button span{font-size:21px}
+ .usa50-preview-gift-grid button strong{font-size:9px}
+ .usa50-preview-gift-grid button small{font-size:9px}
+ .usa50-preview-videos{grid-template-columns:minmax(0,1fr) minmax(85px,27%);min-height:290px}
+ .usa50-preview-video-tile.main .usa50-preview-person-image{height:290px}
+ .usa50-preview-video-tile,.usa50-preview-empty-call{min-height:290px}
+ .usa50-preview-footer{padding:10px 12px calc(11px + env(safe-area-inset-bottom,0px))}
+ .usa50-preview-footer span{font-size:9px}
+ .usa50-preview-rolebar button{padding:8px 10px}
+}
+@media(prefers-reduced-motion:reduce){
+ .usa50-preview-gift-float{animation:none}
+}
