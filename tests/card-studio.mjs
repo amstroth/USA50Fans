@@ -94,8 +94,12 @@ assert.equal(post(admin,'border/delete',{id:borderId,confirm:'DELETE'}).status,2
 assert.ok(!get(admin).body.borderPresets.some(b=>b.id===borderId));
 const pull={};app.customPull({user:fan},pull,'/api/cards/pull',{albumId:packId},fan);
 assert.equal(pull.status,200);
-assert.equal(pull.body.card.albumId,packId);
-assert.equal(pull.body.fancallTicketsAwarded,2);
+assert.equal(pull.body.rewards.length,1,'A custom pack pull awards exactly one item');
+const reward=pull.body.rewards[0];
+assert.ok(['card','vipXP','pullPoints','idolTicket','merchCoupon'].includes(reward.type));
+if(reward.type==='card')assert.equal(reward.card.albumId,packId);
+if(reward.type==='idolTicket')assert.equal(reward.idolId,'kellie','Solo packs award only that idol ticket');
+assert.equal(pull.body.fancallTicketsAwarded,reward.type==='idolTicket'?1:0);
 assert.equal(fan.state.stars,8700);
 const unavailable={};app.customPull({user:fan},unavailable,'/api/cards/pull',{albumId:'nyc50-debut'},fan);
 assert.equal(unavailable.status,400);
