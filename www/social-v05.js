@@ -41,7 +41,7 @@
    const code='<button class="social-handle" data-action="social-profile" data-value="'+e(author.id)+'">@'+e(author.handle)+'</button>'+(author.verifiedIdol?'<span class="usa50-idol-verified" title="Verified USA50 idol" aria-label="Verified USA50 idol">★<i>✓</i></span>':'');
    const mark=author.fansite?'<span class="social-mini-badge">Fansite ✓</span>':'';
    return '<article class="glass social-post" id="socialpost-'+e(p.id)+'">'+
-     '<div class="social-post-head"><div class="social-avatar">'+(author.avatarUrl?'<img src="'+e(author.avatarUrl)+'" alt="">':e(author.displayName.slice(0,1).toUpperCase()))+'</div><div class="social-post-author">'+code+'<small>'+e(labelDate(p.createdAt))+'</small></div>'+mark+'</div>'+
+     '<div class="social-post-head"><div class="social-avatar '+(author.verifiedIdol?'usa50-feed-idol-avatar':author.rank===1?'usa50-feed-gold-avatar':author.rank===2?'usa50-feed-silver-avatar':author.rank===3?'usa50-feed-bronze-avatar':author.rank&&author.rank<=10?'usa50-feed-top-avatar':'')+'">'+(author.avatarUrl?'<img src="'+e(author.avatarUrl)+'" alt="">':e(author.displayName.slice(0,1).toUpperCase()))+'</div><div class="social-post-author">'+code+'<small>'+e(labelDate(p.createdAt))+'</small></div>'+mark+'</div>'+
      (p.repostOf?'<p class="social-repost-attribution">↻ Reposted from @'+e(p.repostAuthor||'fan')+'</p>':'')+socialEmbed(p)+'<p class="social-caption">'+e(p.caption)+'</p>'+
      '<div class="social-post-footer"><div class="social-votes">'+
        '<button aria-label="Upvote" class="social-vote '+(p.myVote===1?'on':'')+'" data-action="social-vote" data-value="'+e(p.id)+'" data-vote="1">▲ '+Number(p.upvotes||0)+'</button>'+
