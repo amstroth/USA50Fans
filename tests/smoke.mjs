@@ -32,13 +32,33 @@ try{
  assert.equal(a.httpStatus,201);assert.equal(b.httpStatus,201);passed++;
  const ta=a.token,tb=b.token;
  const initial=await api('/api/bootstrap',null,ta);assert.equal(initial.me.state.owned['tl-01'],2);passed++;
- const noTrade=await api('/api/trades/create',{cardId:'tl-06'},ta);assert.equal(noTrade.httpStatus,400);passed++;
- const trade=await api('/api/trades/create',{cardId:'tl-01'},ta);assert.equal(trade.httpStatus,200);passed++;
+ // Card trading has been retired. No account may list cards for trading.
+ const noTrade=await api('/api/trades/create',{cardId:'tl-06'},ta);
+ assert.equal(noTrade.httpStatus,410);passed++;
+ const retiredTrade=await api('/api/trades/create',{cardId:'tl-01'},ta);
+ assert.equal(retiredTrade.httpStatus,410);
+ // Recycling protects the final copy and only consumes a genuine duplicate.
+ const refusedRecycle=await api('/api/cards/recycle',{cardId:'tl-06'},ta);
+ assert.equal(refusedRecycle.httpStatus,400);
+ const recycled=await api('/api/cards/recycle',{cardId:'tl-01'},ta);
+ assert.equal(recycled.httpStatus,200);
+ assert.equal(recycled.remaining,1);
+ assert.ok(['stars','fancallTickets','shopCoupon'].includes(recycled.reward.type));
+ assert.equal((await api('/api/cards/recycle',{cardId:'tl-01'},ta)).httpStatus,400);
+ passed++;
  const code=b.me.state.demoClaimCode;const claim=await api('/api/cards/redeem',{code},tb);assert.equal(claim.httpStatus,200);assert.equal((await api('/api/cards/redeem',{code},tb)).httpStatus,400);passed++;
  const paidReward=await api('/api/cards/pull',{},tb);
- assert.equal(paidReward.httpStatus,200);assert.equal(paidReward.fancallTicketsAwarded,2);assert.equal(paidReward.pullPointsAwarded,100);passed++;
+ assert.equal(paidReward.httpStatus,200);
+ assert.equal(paidReward.rewards.length,1,'One paid pull awards one reward');
+ assert.ok(['card','vipXP','pullPoints','idolTicket','merchCoupon'].includes(paidReward.rewards[0].type));
+ assert.equal(paidReward.fancallTicketsAwarded,paidReward.rewards.filter(x=>x.type==='idolTicket').length);
+ assert.equal(paidReward.paidPulls,1);passed++;
  const freeReward=await api('/api/cards/pull-points',{},tb);
- assert.equal(freeReward.httpStatus,200);assert.equal(freeReward.fancallTickets,4);assert.equal(freeReward.paidPulls,1);passed++;
+ assert.equal(freeReward.httpStatus,200);
+ assert.equal(freeReward.rewards.length,1,'One free pull awards one reward');
+ assert.ok(['card','vipXP','pullPoints','idolTicket'].includes(freeReward.rewards[0].type));
+ assert.equal(freeReward.fancallTicketsAwarded,freeReward.rewards.filter(x=>x.type==='idolTicket').length);
+ assert.equal(freeReward.paidPulls,1,'Free draws must not advance paid pity');passed++;
  const task=await api('/api/daily/claim',{task:'checkin'},tb);
  assert.equal(task.httpStatus,200);assert.equal(task.pullPointsAwarded,100);
  assert.equal((await api('/api/daily/claim',{task:'checkin'},tb)).httpStatus,400);
@@ -123,7 +143,15 @@ try{
  assert.equal((await api('/api/admin/messaging-ban',{userId:b.me.id,banned:false},admin.token)).httpStatus,200);passed++;
  await api('/api/demo/refill',{},tb);
  const ten=await api('/api/cards/pull10',{},tb);
- assert.equal(ten.httpStatus,200);assert.equal(ten.cards.length,10);assert.equal(ten.fancallTicketsAwarded,20);assert.equal(ten.pullPointsAwarded,1000);passed++;
+ assert.equal(ten.httpStatus,200);
+ assert.equal(ten.rewards.length,10,'Ten pulls = ten rewards, not ten guaranteed cards');
+ assert.ok(ten.cards.length>=1&&ten.cards.length<=10,'10-pull guarantees at least one photocard');
+ assert.equal(ten.cards.length,ten.rewards.filter(x=>x.type==='card').length);
+ assert.equal(ten.fancallTicketsAwarded,ten.rewards.filter(x=>x.type==='idolTicket').length);
+ assert.equal(ten.pullPointsAwarded,ten.rewards.filter(x=>x.type==='pullPoints').reduce((n,x)=>n+x.amount,0));
+ assert.ok(ten.rewards.every(x=>['card','vipXP','pullPoints','idolTicket','merchCoupon'].includes(x.type)));
+ assert.equal(ten.paidPulls,11,'Ten paid draws must count as ten toward pity');
+ passed++;
 
  const linkA=await api('/api/social/post',{caption:'My latest USA50 fancam edit!',url:'https://www.tiktok.com/@creator/video/7341234567890123456'},ta);
  assert.equal(linkA.httpStatus,201);
