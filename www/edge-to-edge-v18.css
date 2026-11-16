@@ -1,0 +1,75 @@
+/* Edge-to-edge Social media and Instagram-style profile thumbnails.
+   Keep text and controls padded; remove only the media gutters. */
+@media(max-width:780px){
+  .content-area:has(.social-feed),
+  .content-area:has(.usa50-instagram-profile){
+    overflow-x:visible!important;
+  }
+  .screen:has(.social-feed),
+  .screen:has(.usa50-instagram-profile){
+    overflow-x:visible!important;
+  }
+  /* The feed itself occupies the full viewport, despite the 15px page inset. */
+  .screen .social-feed{
+    width:calc(100% + 30px)!important;
+    max-width:none!important;
+    margin-left:-15px!important;
+    margin-right:-15px!important;
+    padding:0!important;
+    gap:0!important;
+  }
+  .screen .social-feed .social-post,
+  .screen .social-feed .social-post.glass{
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+    padding:12px 0 17px!important;
+    overflow:hidden!important;
+  }
+  .screen .social-feed .social-post-head,
+  .screen .social-feed .social-caption,
+  .screen .social-feed .social-post-footer,
+  .screen .social-feed .social-repost-attribution{
+    padding-left:15px!important;
+    padding-right:15px!important;
+  }
+  .screen .social-feed .social-embed,
+  .screen .social-feed .social-post .social-embed{
+    width:100%!important;
+    max-width:none!important;
+    margin-left:0!important;
+    margin-right:0!important;
+    padding-left:0!important;
+    padding-right:0!important;
+    border-radius:0!important;
+    box-sizing:border-box!important;
+  }
+  .screen .social-feed .social-embed iframe{
+    width:100%!important;
+    max-width:100%!important;
+  }
+  /* Profiles retain their header inset but their three thumbnail columns do not. */
+  .screen .usa50-instagram-profile{
+    width:100%!important;
+    max-width:none!important;
+    overflow:visible!important;
+  }
+  .screen .usa50-instagram-profile .usa50-profile-grid{
+    width:calc(100% + 30px)!important;
+    max-width:none!important;
+    margin-left:-15px!important;
+    margin-right:-15px!important;
+    padding:0!important;
+    gap:0!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    box-sizing:border-box!important;
+  }
+  .screen .usa50-instagram-profile .usa50-profile-tile{
+    margin:0!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:0!important;
+    min-width:0!important;
+    aspect-ratio:1!important;
+  }
+}
