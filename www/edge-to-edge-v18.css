@@ -73,3 +73,67 @@
     aspect-ratio:1!important;
   }
 }
+
+/* Official Channels: remove the SAME 15px mobile page inset as the Social feed.
+   Keep the heading and controls in the normal page column. */
+@media(max-width:780px){
+ .content-area:has(.official-carousel),
+ .screen:has(.official-carousel){
+   overflow-x:visible!important;
+ }
+ .screen .official-diary-section,
+ .screen .official-social-block{
+   min-width:0!important;
+   max-width:none!important;
+   overflow:visible!important;
+ }
+ .screen .official-social-block .official-carousel{
+   width:calc(100% + 30px)!important;
+   max-width:none!important;
+   margin-left:-15px!important;
+   margin-right:-15px!important;
+   padding:0!important;
+   border:0!important;
+   border-radius:0!important;
+   overflow-x:auto!important;
+   overflow-y:hidden!important;
+   scroll-snap-type:x mandatory!important;
+ }
+ .screen .official-social-block .official-carousel-track{
+   width:100%!important;
+   min-width:100%!important;
+   gap:0!important;
+ }
+ .screen .official-social-block .official-page{
+   flex:0 0 50%!important;
+   width:50%!important;
+   min-width:50%!important;
+   max-width:50%!important;
+   margin:0!important;
+   padding:0!important;
+ }
+ .screen .official-social-block .official-social-grid,
+ .screen .official-social-block .official-social-card{
+   width:100%!important;
+   max-width:none!important;
+   margin:0!important;
+   padding:0!important;
+   background:transparent!important;
+   box-shadow:none!important;
+   border:0!important;
+   border-radius:0!important;
+ }
+ .screen .official-social-block .official-page + .official-page .official-social-card{
+   border-left:1px solid rgba(119,83,149,.12)!important;
+ }
+ .screen .official-social-block .official-post-thumbnail,
+ .screen .official-social-block .official-post-link{
+   display:block;
+   width:100%!important;
+   margin:0!important;
+   border-radius:0!important;
+ }
+ .screen .official-social-block .official-post-body{
+   padding:10px 9px 4px!important;
+ }
+}
