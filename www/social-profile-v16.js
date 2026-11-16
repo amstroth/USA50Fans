@@ -13,7 +13,7 @@ function postPreview(post){
  const thumbnail=typeof post.thumbnailUrl==='string' && /^https:\/\//i.test(post.thumbnailUrl)?post.thumbnailUrl:null;
  if(thumbnail)return '<img class="usa50-profile-thumb" src="'+e(thumbnail)+'" alt="Thumbnail for '+e(post.caption||'shared post')+'" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true">';
  // TikTok embeds show the video's original poster when provider thumbnail metadata is unavailable.
- if(post.platform==='TikTok'&&/^\\d{12,25}$/.test(String(post.embedId||''))){
+ if(post.platform==='TikTok'&&/^[0-9]{12,25}$/.test(String(post.embedId||''))){
   return '<iframe class="usa50-profile-embed usa50-profile-tiktok" title="TikTok post preview" tabindex="-1" loading="lazy" src="https://www.tiktok.com/player/v1/'+e(post.embedId)+'?controls=0&description=0&music_info=0&autoplay=0" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
  }
  // For Instagram, use the shared post's actual public embed instead of a generic pink placeholder.
