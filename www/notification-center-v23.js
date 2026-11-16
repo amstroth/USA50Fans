@@ -55,6 +55,13 @@ act=async function(name,node){
   hideModal();updateMailIcon();
   if(selected?.type?.startsWith('fancall')){go('events');return;}
   if(selected?.type==='idol-heart'&&selected.postId){go('community');return;}
+  if(selected?.type==='livestream-live'){
+   go('events');
+   const streams=store?.liveEvents?.streams||[];
+   const position=streams.findIndex(x=>x.id===selected.streamId);
+   if(position>=0)requestAnimationFrame(()=>document.querySelectorAll('.usa50-stream-card')[position]?.scrollIntoView({behavior:'smooth',block:'center'}));
+   return;
+  }
   if(selected?.type==='idol-reply'){go('messages');return;}
   if(selected?.type==='fan-rank'||selected?.type==='vip-tier'){go('profile');return;}
   return openMail();
