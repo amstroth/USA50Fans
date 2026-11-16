@@ -209,3 +209,22 @@
 .store-art .photocard{width:min(115px,76%)!important;margin:auto!important;max-width:115px!important}
 .store-art .photocard .art{width:94%!important;height:96%!important;max-height:none!important;max-width:none!important;object-fit:cover!important}
 .store-art .photocard .frame{max-height:none!important;max-width:none!important;height:100%!important;width:100%!important}
+
+/* Seven equal navigation positions with create centered at position four. */
+@media(max-width:899px){
+ .bottom-nav{
+   grid-template-columns:repeat(7,minmax(0,1fr))!important;
+   gap:0!important;
+ }
+ .bottom-nav .usa50-nav-compose{
+   grid-column:4!important;
+   grid-row:1!important;
+   width:clamp(40px,10vw,52px)!important;
+   height:clamp(40px,10vw,52px)!important;
+ }
+ .bottom-nav .bottom-link{
+   font-size:clamp(8px,1.8vw,10px)!important;
+   padding:7px 0!important;
+ }
+ .bottom-nav .bottom-link svg{width:19px!important;height:19px!important}
+}
