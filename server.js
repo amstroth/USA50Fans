@@ -73,7 +73,9 @@ function resolveUser(id){let u=db.users[id];return u?u.displayName:'Fan';}
 function publicState(u){return {me:u?cleanUser(u):null,members,cards,albums:cardStudio.publicAlbums(),packCards:cardStudio.publicCardsByPack(),homeFeaturedCards:cardStudio.homeFeaturedCards(),rarities:RARITY_WEIGHTS,packCost:PACK_COST,hardPity:HARD_PITY,cooldownDays:90,posts:db.posts.slice().reverse().map(p=>({...p,likedCount:p.likedBy.length,likedBy:undefined,liked:u? p.likedBy.includes(u.id):false})),fansites:db.fansites.filter(f=>f.status==='approved').map(f=>({id:f.id,name:f.name,portfolioUrl:f.portfolioUrl,instagram:f.instagram,tiktok:f.tiktok,description:f.description,votes:Object.values(db.fansiteVotes).filter(id=>id===f.id).length})).sort((a,b)=>b.votes-a.votes),tradeListings:[],announcements:db.announcements.slice().reverse(),events:db.events};}
 const notifier=require('./notification-center.js')({db,save,id,now,userFrom,json,fail});
 const fancalls=require('./fancall-lottery.js')({db,save,id,now,json,fail,userFrom,notify:notifier.push});
-const eventStreams=require('./event-streams.js')({db,save,id,now,json,fail,userFrom});
+let liveSocial;
+const eventStreams=require('./event-streams.js')({db,save,id,now,json,fail,userFrom,members,notifyMany:notifier.pushMany,onStatus:stream=>liveSocial?.onStreamEnd(stream)});
+liveSocial=require('./livestream-social.js')({db,save,id,now,json,fail,userFrom,expandHosts:eventStreams.expandHosts});
 const rtc=require('./fancall-rtc.js')({db,userFrom,json,fail});
 const roleFeatures=require('./role-features.js')({db,save,id,hashPass,checkPass,userFrom,adminFrom,bodyText,now,json,fail,notify:notifier.push});
 const socialHub=require('./social-hub.js')({db,save,id,bodyText,now,json,fail,userFrom,notify:notifier.push,rankNotice:notifier.rank});
@@ -91,6 +93,7 @@ async function api(req,res,url){
  if(method==='GET'&&url.pathname==='/api/bootstrap'){const u=userFrom(req);return json(res,200,{...publicState(u),messaging:roleFeatures.info(u),social:socialHub.info(u),officialDiary:officialDiary.info(u),fancalls:fancalls.info(u),economy:economy.info(u),gacha:gacha.publicInfo(u),mailbox:notifier.info(u),liveEvents:eventStreams.info(u)});}
  if(method==='GET'&&url.pathname==='/api/social/resolve'){const id=url.searchParams.get('postId')||'';if(id.length>128)return fail(res,400,'Invalid post ID.');const result=await socialHub.resolveEmbed(id);return result?json(res,200,result):fail(res,404,'Post not found.');}
  if(method==='GET'&&url.pathname==='/api/fancalls/rtc/poll')return rtc.endpoint(req,res,url.pathname,{},url);
+ if(method==='GET'&&liveSocial.handleGet(req,res,url.pathname,url.searchParams))return;
  if(method==='GET'&&url.pathname==='/api/events-v2/info')return json(res,200,eventStreams.info(userFrom(req)));
  if(method==='GET'&&url.pathname==='/api/livestreams/host-config')return eventStreams.hostConfig(req,res);
  if(method==='GET'&&url.pathname==='/api/notifications/list'){const u=userFrom(req);return u?json(res,200,notifier.info(u)):fail(res,401,'Sign in to see notifications.');}
@@ -121,6 +124,7 @@ async function api(req,res,url){
  if(fancalls.respond(req,res,ep,data))return;
  if(rtc.endpoint(req,res,ep,data,url))return;
  if(eventStreams.handle(req,res,ep,data))return;
+ if(liveSocial.handle(req,res,ep,data))return;
  if(notifier.handle(req,res,ep,data))return;
  if(economy.handlePost(req,res,ep,data,{userFrom,save,json,fail}))return;
  if(ep==='/api/auth/register'){
@@ -344,6 +348,8 @@ const server=http.createServer((req,res)=>{
  else if(req.method==='GET'||req.method==='HEAD')serve(req,res,url);
  else fail(res,405,'Method not allowed');
 });
+// Persist weekly virtual STAR creator settlements without claiming cash disbursement.
+setInterval(()=>{try{liveSocial.expireStale();liveSocial.settleDue();}catch(err){console.error('Livestream settlement check',err);}},10*60*1000).unref();
 // Poll the public official YouTube feed when YOUTUBE_CHANNEL_ID is configured.
 setTimeout(()=>officialDiary.pollYouTube().catch(console.warn),7000);
 setInterval(()=>officialDiary.pollYouTube().catch(console.warn),10*60*1000).unref();
