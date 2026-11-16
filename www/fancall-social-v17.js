@@ -54,7 +54,7 @@ function roomScreen(){
  const room=store?.fancalls?.sessions?.find(s=>s.id===selectedRoom);
  if(!room)return '<div class="glass panel">Waiting room not found. <button data-action="usa50-room-close" class="btn secondary">Return</button></div>';
  const canHost=room.canHost,canManage=room.canManage;
- return '<section class="usa50-room"><header><button class="text-btn" data-action="usa50-room-close">← Events</button><h2>'+e(room.title)+'</h2><small>'+e(room.status)+'</small></header>'+
+ return '<section class="usa50-room" data-room-id="'+e(room.id)+'"><header><button class="text-btn" data-action="usa50-room-close">← Events</button><h2>'+e(room.title)+'</h2><small>'+e(room.status)+'</small></header>'+
  '<div class="usa50-room-video"><div class="usa50-remote-placeholder">✦<strong>'+(room.status==='live'?'Call session active (demo)':'Waiting for the next fan')+'</strong><small>Secure remote video transport is not yet connected.</small></div><div class="usa50-local-placeholder"><video id="usa50-local-preview" autoplay muted playsinline></video><button class="usa50-camera-button" data-action="usa50-camera-preview">Camera preview</button></div></div>'+
  '<div class="usa50-room-queue"><h3>'+(room.isMyTurn&&room.status==='live'?'You are next on screen':room.isMyWinner?'Your waiting room':'Call queue')+'</h3>'+
  '<p class="lead">'+(room.status==='break'?'Idol break in progress. Please remain in the waiting room.':room.status==='waiting'?'The host has not started calls yet.':room.status==='complete'?'This session has finished.':room.isMyTurn?'It is your turn (demo session state).':'Please wait for your turn.')+'</p>'+
@@ -112,7 +112,7 @@ submitForm=async function(form){
 };
 // Keep winners and staff synchronized to host-controlled queue transitions.
 setInterval(()=>{if(selectedRoom&&document.visibilityState==='visible')refresh().catch(()=>{});},5000);
-setInterval(()=>{if(view==='events'&&!selectedRoom&&!composer&&document.visibilityState==='visible'&&!document.querySelector('#usa50-lottery-create:focus-within'))refresh().catch(()=>{});},15000);
+setInterval(()=>{if(view==='events'&&!selectedRoom&&!composer&&document.visibilityState==='visible'&&!document.querySelector('form:focus-within'))refresh().catch(()=>{});},15000);
 const oldGo=go;
 go=function(screen){composer=false;selectedRoom=null;stopLocalCamera();return oldGo(screen);};
 })();
