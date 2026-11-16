@@ -1,6 +1,6 @@
 'use strict';
 /* USA50 managed livestream metadata. Playback uses an external RTMPS/HLS provider. */
-module.exports=function makeLiveEvents({db,save,id,now,json,fail,userFrom,members=[],notifyMany=()=>{},onStatus=()=>{}}){
+module.exports=function makeLiveEvents({db,save,id,now,json,fail,userFrom,members=[],notifyMany=()=>{},pushLive=()=>{},onStatus=()=>{}}){
  db.liveEvents ||= [];db.liveStreams ||= [];
  const managers=u=>['admin','management'].includes(u?.role);
  const idols=u=>u?.role==='idol';
@@ -158,6 +158,7 @@ module.exports=function makeLiveEvents({db,save,id,now,json,fail,userFrom,member
       stream.liveRevision=(stream.liveRevision||0)+1;stream.liveAt=now();
       const ids=Object.values(db.users||{}).filter(x=>!['admin','management','staff','idol'].includes(x.role)).map(x=>x.id);
       notifyMany(ids,'livestream-live',liveHeadline(stream.hosts),{key:'live:'+stream.id+':'+stream.liveRevision,streamId:stream.id});
+      Promise.resolve(pushLive(ids,liveHeadline(stream.hosts),stream.id)).catch(err=>console.warn('Live push delivery',err.message));
     }
     if(status==='ended')onStatus(stream);
     save();
