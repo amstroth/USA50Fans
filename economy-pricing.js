@@ -17,7 +17,7 @@ function history(u){return Array.isArray(u?.state?.economyDemoPurchases)?u.state
 function eligible(u){return !!u&&!history(u).some(p=>p.month===monthKey()&&p.monthlyBonus>0);}
 function quote(u,sku){
  const pack=BUNDLES.find(x=>x.sku===sku);if(!pack)return null;
- const monthlyBonus=u&&eligible(u)?Math.floor(pack.stars*MONTHLY_BONUS_PERCENT/100):0;
+ const monthlyBonus=(!u||eligible(u))?Math.floor(pack.stars*MONTHLY_BONUS_PERCENT/100):0;
  return {...pack,monthlyBonus,totalStars:pack.stars+monthlyBonus};
 }
 function info(u){
