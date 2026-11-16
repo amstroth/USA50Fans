@@ -122,7 +122,7 @@ module.exports=function makeLiveSocial({db,save,id,now,userFrom,json,fail,expand
    if(!s||!s.overlayTokenHash||token.length!==64){fail(res,403,'Invalid overlay access.');return true;}
    const digest=crypto.createHash('sha256').update(token).digest('hex');
    if(!crypto.timingSafeEqual(Buffer.from(digest),Buffer.from(s.overlayTokenHash))){fail(res,403,'Invalid overlay access.');return true;}
-   const tts=(state.gifts[s.id]||[]).filter(g=>g.status==='credited'&&g.ttsRequested)
+   const tts=(state.gifts[s.id]||[]).filter(g=>g.status==='credited'&&g.ttsRequested&&!getMessages(s).some(m=>m.id===g.messageId&&m.hidden))
     .slice(-30).map(g=>({id:g.id,text:g.text,username:userLabel(db.users[g.authorId]).username,createdAt:g.resolvedAt}));
    json(res,200,{status:s.status,items:tts});return true;
   }
