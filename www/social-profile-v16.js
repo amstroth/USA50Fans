@@ -36,7 +36,7 @@ profileScreen=function(){
 const previousBottom=bottomNav;
 bottomNav=function(){
  const html=previousBottom();
- return html.replace('</nav>','<button class="usa50-nav-compose" data-action="social-new-post" aria-label="Create social post" title="Create post">'+icon('plus',25)+'</button></nav>');
+ return html.replace('<button class="bottom-link', '<button class="bottom-link').replace(/(<button class="bottom-link[^>]*data-go="collection"[\s\S]*?<\/button>)/, '$1<button class="usa50-nav-compose" data-action="social-new-post" aria-label="Create social post" title="Create post">'+icon('plus',25)+'</button>');
 };
 function editProfile(){
  const p=current();if(!p)return;
