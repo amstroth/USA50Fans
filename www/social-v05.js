@@ -1,7 +1,7 @@
 /* USA50 Social Hub v0.5 — public fans, fansites, original-platform embeds. */
 (function(){
  'use strict';
- let socialTab='recent',openSocialProfile=null;
+ let socialTab='recent',openSocialProfile=null,socialQuery='';
  const getSocial=()=>store?.social||{posts:[],profiles:{},rankings:[],following:[]};
  const getPerson=id=>getSocial().profiles[id]||null;
  const getPosts=()=>getSocial().posts||[];
@@ -38,7 +38,7 @@
  function socialPost(p,compact=false){
    const author=getPerson(p.authorId),isMine=store.me?.id===p.authorId,isAdmin=store.me?.role==='admin';
    if(!author)return '';
-   const code='<button class="social-handle" data-action="social-profile" data-value="'+e(author.id)+'">@'+e(author.handle)+'</button>';
+   const code='<button class="social-handle" data-action="social-profile" data-value="'+e(author.id)+'">@'+e(author.handle)+'</button>'+(author.verifiedIdol?'<span class="usa50-idol-verified" title="Verified USA50 idol" aria-label="Verified USA50 idol">★<i>✓</i></span>':'');
    const mark=author.fansite?'<span class="social-mini-badge">Fansite ✓</span>':'';
    return '<article class="glass social-post" id="socialpost-'+e(p.id)+'">'+
      '<div class="social-post-head"><div class="social-avatar">'+(author.avatarUrl?'<img src="'+e(author.avatarUrl)+'" alt="">':e(author.displayName.slice(0,1).toUpperCase()))+'</div><div class="social-post-author">'+code+'<small>'+e(labelDate(p.createdAt))+'</small></div>'+mark+'</div>'+
@@ -46,17 +46,23 @@
      '<div class="social-post-footer"><div class="social-votes">'+
        '<button aria-label="Upvote" class="social-vote '+(p.myVote===1?'on':'')+'" data-action="social-vote" data-value="'+e(p.id)+'" data-vote="1">▲ '+Number(p.upvotes||0)+'</button>'+
        '<button aria-label="Downvote" class="social-vote down '+(p.myVote===-1?'on':'')+'" data-action="social-vote" data-value="'+e(p.id)+'" data-vote="-1">▼ '+Number(p.downvotes||0)+'</button>'+
-       '<button class="social-repost-action" data-action="usa50-repost" data-value="'+e(p.id)+'" aria-label="Repost">↻ Repost</button><button class="social-save-action" data-action="usa50-save" data-value="'+e(p.id)+'" aria-label="Save">'+((getSocial().savedPostIds||[]).includes(p.id)?'♥ Saved':'♡ Save')+'</button></div>'+
+       '<span class="usa50-heart-group">'+
+        (store?.me?.role==='idol'&&store?.me?.id!==p.authorId?'<button class="usa50-idol-heart-action '+(p.myHeart?'hearted':'')+'" data-action="usa50-idol-heart" data-value="'+e(p.id)+'" aria-label="Heart this post">♥</button>':'')+
+        (p.heartedBy?.length?'<span class="usa50-hearted-by">Hearted by '+e(p.heartedBy.map(x=>x.name).join(p.heartedBy.length===2?' and ':', '))+'</span>':'')+
+        '</span>'+'<button class="social-repost-action" data-action="usa50-repost" data-value="'+e(p.id)+'" aria-label="Repost">↻ Repost</button><button class="social-save-action" data-action="usa50-save" data-value="'+e(p.id)+'" aria-label="Save">'+((getSocial().savedPostIds||[]).includes(p.id)?'♥ Saved':'♡ Save')+'</button></div>'+
        '<div class="social-post-links"><a href="'+e(p.url)+'" target="_blank" rel="noopener noreferrer">Open on '+e(p.platform)+' ↗</a>'+
        (isMine?'':isAdmin?'<button class="text-btn" data-action="social-admin-hide" data-value="'+e(p.id)+'">Remove</button>':'<button class="text-btn" data-action="social-report" data-value="'+e(p.id)+'">Report</button>')+
        '</div></div></article>';
  }
+ const searchMarkup='<form id="usa50-social-search-form" class="usa50-social-search-form"><input type="search" name="query" maxlength="55" placeholder="Search hashtags or posts" value="'+e(socialQuery)+'" aria-label="Search posts and hashtags"><button type="submit" class="btn tiny">Search</button>'+(socialQuery?'<button type="button" class="btn tiny secondary" data-action="usa50-search-clear">Clear</button>':'')+'</form>'+
+ '<div class="usa50-popular-tags"><small>Top hashtags</small>'+((getSocial().topHashtags||[]).length?(getSocial().topHashtags||[]).slice(0,7):[{tag:'#truelove'},{tag:'#arielle'},{tag:'#nyc50'}]).map(x=>'<button type="button" data-action="usa50-search-tag" data-value="'+e(x.tag)+'">'+e(x.tag)+'</button>').join('')+'</div>';
  function socialFeed(){
    let posts=getPosts().slice();
    if(socialTab==='top')posts.sort((a,b)=>b.score-a.score||b.upvotes-a.upvotes||Date.parse(b.createdAt)-Date.parse(a.createdAt));
    else posts.sort((a,b)=>Date.parse(b.createdAt)-Date.parse(a.createdAt));
    if(socialTab==='following')posts=posts.filter(p=>getSocial().following.includes(p.authorId));
    if(socialTab==='fansites')posts=posts.filter(p=>p.category==='fansite');
+    if(socialQuery.trim())posts=posts.filter(p=>{const q=socialQuery.trim().toLowerCase();return (p.caption||'').toLowerCase().includes(q)||(getPerson(p.authorId)?.handle||'').toLowerCase().includes(q.replace(/^@/,''));});
    const special=socialTab==='fansites'?
       '<section class="glass panel social-fansite-banner"><span class="eyebrow">FANSITES · PROFESSIONAL CREATOR PROGRAM</span><h2>Through the fans’ lens ✦</h2><p>Approved high-quality USA50 photographers and videographers receive priority press-area opportunities, press gifts, and—proposed for each comeback—one complimentary event and two discounted event passes, subject to venue capacity and management approval.</p><button class="btn" data-action="open-fansite-application">Apply to Be a Fansite '+icon('arrow',15)+'</button><p class="social-fineprint">Application requires camera equipment details and a strong original USA50 portfolio. Access is not yet active.</p></section>'+
        '<div class="social-section-heading"><h2>Approved Fansites</h2></div>'+fansiteFeed()+
@@ -214,6 +220,7 @@
  const previousSubmit=submitForm;
  submitForm=async function(form){
    const v=Object.fromEntries(new FormData(form));
+   if(form.id==='usa50-social-search-form'){socialQuery=String(v.query||'').trim().slice(0,55);socialTab='recent';render();return;}
    if(form.id==='social-post-form'){
      const result=await request('/api/social/post',{method:'POST',body:JSON.stringify(v)});
      hideModal();socialTab=v.category==='fansite'?'fansites':'recent';openSocialProfile=null;await refresh();
