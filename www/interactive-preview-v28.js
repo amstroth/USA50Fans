@@ -33,7 +33,7 @@ function init(mode){
    {id:4,user:'starryfan',message:'The outfits are so cute'},
    {id:5,user:'jaylene_bunni',message:'Sending love from NYC ♡'}
   ],
-  giftRequests:[],giftLast:null,giftLedger:{arielle:0,z:0},giftCount:0,
+  giftRequests:[],giftLast:null,giftLedger:{arielle:0,z:0},giftCount:0,giftsOpen:false,
   callStatus:'waiting',cursor:0,queue:[
    {id:'one',name:'Mia',emoji:'🌸'},
    {id:'me',name:'You',emoji:'♡'},
@@ -70,44 +70,45 @@ function streamStage(){
  return '<div class="usa50-preview-stream-screen">'+sample+
  '<div class="usa50-preview-live-top"><span class="'+(state.streamLive?'usa50-preview-liveflag':'usa50-preview-offflag')+'">'+label+'</span><span>👁 128 watching · simulated</span></div>'+
  '<div class="usa50-preview-live-bottom"><span class="usa50-preview-motion-blob">✦</span><div><small>USA50 LIVE · NYC50</small><h3>Arielle and Z are Live now!</h3><p>This is a visual preview, not a video transmission.</p></div></div>'+
- (state.giftLast?'<div class="usa50-preview-gift-float">'+esc(state.giftLast)+'</div>':'')+'</div>';
+ (state.giftLast?'<div class="usa50-preview-gift-float">'+esc(state.giftLast)+'</div>':'')+streamChat()+'</div>';
 }
 function streamChat(){
- return '<section class="usa50-preview-chat-card"><div class="usa50-preview-chat-heading"><span><i>●</i> Live chat</span><small>Sample comments · '+state.streamMsg.length+' messages</small></div>'+
- '<div class="usa50-preview-chat-list" role="log" aria-label="Preview livestream chat">'+state.streamMsg.map(m=>{
+ return '<section class="usa50-preview-chat-card" aria-label="Livestream comments and gifts">'+
+ '<div class="usa50-preview-chat-list" role="log" aria-label="Preview livestream comments">'+state.streamMsg.map(m=>{
  const p=previewPeople.find(x=>x.name===m.user);
  const badge=m.idol&&window.USA50VerifiedBadge?window.USA50VerifiedBadge({verifiedIdol:true}):'';
  return '<div class="usa50-preview-chat-line"><span class="usa50-preview-chat-avatar">'+esc(p?.emoji||m.user.charAt(0).toUpperCase())+'</span>'+
  '<div><span class="usa50-preview-chat-name">@'+esc(m.user)+badge+'</span><p>'+esc(m.message)+'</p></div></div>';
  }).join('')+'</div>'+
- '<form class="usa50-preview-compose" data-preview-form="chat"><input name="message" maxlength="180" placeholder="Send a sample message…" autocomplete="off" '+(!state.streamLive?'disabled':'')+' required>'+
- '<button type="submit" '+(!state.streamLive?'disabled':'')+'>Send</button></form>'+
- '<div class="usa50-preview-gifts-action"><button data-preview-action="gift-show" type="button" '+(!state.streamLive?'disabled':'')+'>🎁 Preview live gifts</button>'+
- '<span>Demo STARS: ✦ '+state.credits.toLocaleString()+'</span></div></section>';
+ (state.giftsOpen?giftArea():'')+
+ '<form class="usa50-preview-compose" data-preview-form="chat"><input name="message" maxlength="180" placeholder="Say something nice…" autocomplete="off" '+(!state.streamLive?'disabled':'')+' required>'+
+ '<button class="usa50-preview-send" type="submit" '+(!state.streamLive?'disabled':'')+' aria-label="Send message">➤</button>'+
+ '<button class="usa50-preview-gift-toggle" data-preview-action="gift-show" type="button" '+(!state.streamLive?'disabled':'')+' aria-expanded="'+state.giftsOpen+'" aria-label="Choose a live gift">🎁</button></form>'+
+ '<div class="usa50-preview-credit-hint">Demo STARS ✦ '+state.credits.toLocaleString()+' · no actual charge</div></section>';
 }
 function giftArea(){
- return '<section class="usa50-preview-mini-panel"><h3>Gift selection and TTS approval</h3>'+
+ return '<aside class="usa50-preview-gift-popover" aria-label="Choose a live gift">'+
+ '<div class="usa50-preview-gift-head"><strong>Send a little love ♡</strong><button type="button" data-preview-action="gift-close" aria-label="Close gifts">×</button></div>'+
  '<div class="usa50-preview-gift-grid">'+giftCatalog.map(g=>
  '<button type="button" data-preview-action="gift-pick" data-preview-value="'+g.id+'" class="'+(liveGiftPick===g.id?'selected':'')+'"><span>'+g.icon+'</span><strong>'+esc(g.name)+'</strong><small>✦ '+g.stars+'</small></button>').join('')+'</div>'+
  '<div class="usa50-preview-preview-actions"><button type="button" class="btn" data-preview-action="gift-send">Send sample gift</button>'+
- '<span>No STARS deducted from your actual account</span></div>'+
- (state.giftRequests.length?'<div class="usa50-preview-requests"><h4>TTS review queue (host and management)</h4>'+
+ '<span>Preview balance ✦ '+state.credits.toLocaleString()+'</span></div>'+
+ (state.giftRequests.length?'<div class="usa50-preview-requests"><h4>TTS review queue</h4>'+
  state.giftRequests.map((g,i)=>'<div class="usa50-preview-request"><span>'+esc(g.title)+' · '+g.stars+' demo STARS</span><div>'+
  (g.status==='pending'&&state.role!=='fan'?'<button data-preview-action="tts-approve" data-preview-value="'+i+'">Approve</button><button data-preview-action="tts-reject" data-preview-value="'+i+'">Refund</button>':'<small>'+esc(g.status)+'</small>')+
- '</div></div>').join('')+'</div>':'')+'</section>';
+ '</div></div>').join('')+'</div>':'')+'</aside>';
 }
 function streamAdmin(){
  if(state.role==='fan')return '';
- return '<section class="usa50-preview-mini-panel"><h3>'+ (state.role==='idol'?'Idol Live Studio':'Management Live Studio')+'</h3>'+
+ return '<section class="usa50-preview-mini-panel usa50-preview-stream-admin"><h3>'+ (state.role==='idol'?'Idol Live Studio':'Management Live Studio')+'</h3>'+
  '<p>Arielle and Z selected · Creator share: 70%, split evenly · this is not real earnings.</p>'+
  '<div class="usa50-preview-ledger"><span>Arielle <strong>'+state.giftLedger.arielle.toFixed(2)+' ★</strong></span><span>Z <strong>'+state.giftLedger.z.toFixed(2)+' ★</strong></span></div>'+
  '<button type="button" class="btn secondary" data-preview-action="stream-toggle">'+(state.streamLive?'Simulate ending live':'Restart sample stream')+'</button>'+
  '<p class="usa50-preview-footnote">In the real studio, assigned idols or management add an OBS playback URL and start the livestream. Actual media is not connected in this preview.</p></section>';
 }
 function liveView(){
- return '<div class="usa50-preview-main"><div class="usa50-preview-intro"><div><small>LIVE VIEWER & HOST EXPERIENCE</small><h3>Arielle × Z · NYC50 Live</h3></div><span>Simulated 16:9 video</span></div>'+
- '<div class="usa50-preview-live-columns"><div>'+streamStage()+streamAdmin()+'</div><div>'+streamChat()+'</div></div>'+
- giftArea()+'</div>';
+ return '<div class="usa50-preview-main usa50-preview-live-main"><div class="usa50-preview-live-layout">'+
+ streamStage()+streamAdmin()+'</div></div>';
 }
 function activeFan(){return state.queue[state.cursor]||null;}
 function callWaiting(){
@@ -219,7 +220,7 @@ function gift(){
  state.streamMsg.push({id:Date.now()+state.giftCount,user:'You',message:state.giftLast});
  if(selected.tts){state.giftRequests.push({title:selected.name,stars:selected.stars,status:'pending'});}
  else {state.giftLedger.arielle+=selected.stars*.35;state.giftLedger.z+=selected.stars*.35;}
- renderPreview();
+ state.giftsOpen=false;renderPreview();
 }
 function addLauncher(){
  if(view!=='events')return;
@@ -249,7 +250,8 @@ function action(name,value){
  if(name==='mode'){stopCamera();init(value);renderPreview();return;}
  if(name==='role'){stopCamera();state.role=['fan','idol','staff'].includes(value)?value:'fan';renderPreview();return;}
  if(name==='gift-pick'){liveGiftPick=value;renderPreview();return;}
- if(name==='gift-show'){renderPreview();document.querySelector('.usa50-preview-gift-grid')?.scrollIntoView({behavior:'smooth',block:'center'});return;}
+ if(name==='gift-show'){state.giftsOpen=!state.giftsOpen;renderPreview();return;}
+ if(name==='gift-close'){state.giftsOpen=false;renderPreview();return;}
  if(name==='gift-send'){gift();return;}
  if(name==='stream-toggle'){state.streamLive=!state.streamLive;renderPreview();return;}
  if(name==='tts-approve'||name==='tts-reject'){
