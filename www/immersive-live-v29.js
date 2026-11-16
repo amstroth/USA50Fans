@@ -170,6 +170,8 @@ document.addEventListener('click',function(event){
   const stream=locate(card.dataset.immersiveStreamId);
   if(stream?.status==='live'){
    event.preventDefault();open(stream.id);
+  }else if(stream){
+   event.preventDefault();window.USA50Preview?.open('livestream');
   }
  }
 },true);
