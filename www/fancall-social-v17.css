@@ -228,3 +228,60 @@
  }
  .bottom-nav .bottom-link svg{width:19px!important;height:19px!important}
 }
+
+/* Profile grids show the actual shared social media, with no text-only test tiles. */
+.usa50-profile-grid .usa50-profile-tile{
+ position:relative!important;
+ padding:0!important;
+ overflow:hidden!important;
+ background:#d8c8e5!important;
+ border-radius:0!important;
+ isolation:isolate;
+}
+.usa50-profile-grid .usa50-profile-thumb{
+ position:absolute!important;
+ inset:0!important;
+ width:100%!important;
+ height:100%!important;
+ object-fit:cover!important;
+ display:block!important;
+ z-index:1;
+}
+.usa50-profile-grid .usa50-profile-embed{
+ position:absolute!important;
+ border:0!important;
+ pointer-events:none!important;
+ z-index:1;
+}
+.usa50-profile-grid .usa50-profile-tiktok{
+ width:180%!important;
+ height:180%!important;
+ top:-32%!important;
+ left:-40%!important;
+}
+.usa50-profile-grid .usa50-profile-instagram{
+ width:250%!important;
+ height:280%!important;
+ top:-48%!important;
+ left:-75%!important;
+}
+.usa50-profile-grid .usa50-profile-platform{
+ position:absolute;
+ right:5px;
+ top:5px;
+ z-index:3;
+ background:rgba(35,22,50,.5);
+ color:#fff;
+ border-radius:50%;
+ padding:3px 7px;
+ font-size:12px;
+}
+.usa50-profile-grid .usa50-profile-fallback{
+ position:absolute;
+ inset:0;
+ display:grid;
+ place-items:center;
+ background:linear-gradient(130deg,#bba1d8,#e0c7e8);
+ font-size:30px;
+ color:#fff;
+}
