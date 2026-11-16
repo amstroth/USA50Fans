@@ -105,7 +105,7 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
  function safeColor(input,def){return typeof input==='string'&&/^#[a-f\d]{6}$/i.test(input)?input:def;}
  function isIdol(u){return Boolean(u&&u.role==='idol'&&!u.mustChangePassword);}
  function authorName(u){return u?.idolName||u?.memberName||u?.displayName||'USA50 Idol';}
- function publicEntry(e){return {id:e.id,authorId:e.authorId,author:e.author,number:e.number,publishedAt:e.publishedAt,text:e.text,layout:e.layout,paper:e.paper,lineColor:e.lineColor,textColor:e.textColor,stickers:e.stickers,photos:e.photos.map(p=>({id:p.id,url:'/api/diary/photo/'+p.id,caption:p.caption}))};}
+ function publicEntry(e){return {id:e.id,authorId:e.authorId,author:e.author,number:e.number,publishedAt:e.publishedAt,text:e.text,layout:e.layout,paper:e.paper,lineColor:e.lineColor,textColor:e.textColor,stickers:e.stickers,placedItems:e.placedItems||[],photos:e.photos.map(p=>({id:p.id,url:'/api/diary/photo/'+p.id,caption:p.caption}))};}
  function view(){return {diaries:state.diaries.slice(-100).reverse().map(publicEntry),
    officialPosts:state.officialPosts.slice(-100).reverse().map(publicOfficial),
    canPost:false,sourceStatus:{youtube:Boolean(state.sources.youtubeChannelId||process.env.YOUTUBE_CHANNEL_ID),
@@ -131,11 +131,33 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
    const layout=Object.hasOwn(lines,data.layout)?data.layout:'ruled';
    const paper=safeColor(data.paper,palettes.cream),lineColor=safeColor(data.lineColor,'#c6b7b0'),textColor=safeColor(data.textColor,'#4c3c53');
    const stickers=Array.isArray(data.stickers)?data.stickers.slice(0,18).filter(s=>allowedEmojis.includes(s)).map(String):[];
+   const placedInput=Array.isArray(data.placedItems)?data.placedItems:[];
+   if(placedInput.length>22)return fail(res,400,'Up to 18 stickers and 4 polaroids per diary page');
+   const placedItems=[];
+   let stickerCount=0;
+   const clamp=(value,min,max,defaultValue)=>Number.isFinite(Number(value))?Math.min(max,Math.max(min,Number(value))):defaultValue;
+   for(const rawItem of placedInput){
+     if(!rawItem||typeof rawItem!=='object')return fail(res,400,'Invalid diary layout');
+     const kind=String(rawItem.kind||'');
+     if(!['sticker','photo'].includes(kind))return fail(res,400,'Invalid diary decoration type');
+     const record={kind,x:clamp(rawItem.x,5,95,50),y:clamp(rawItem.y,4,96,50),
+       scale:clamp(rawItem.scale,.45,2.5,1),rotation:clamp(rawItem.rotation,-45,45,0)};
+     if(kind==='sticker'){
+       if(!allowedEmojis.includes(rawItem.emoji)||++stickerCount>18)return fail(res,400,'Invalid diary emoji sticker');
+       record.emoji=rawItem.emoji;
+     }else{
+       const index=Number(rawItem.photoIndex);
+       if(!Number.isInteger(index)||index<0||index>3)return fail(res,400,'Invalid polaroid reference');
+       record.photoIndex=index;
+     }
+     placedItems.push(record);
+   }
    const imgs=Array.isArray(data.photos)?data.photos:[];
    if(imgs.length>4)return fail(res,400,'Up to four polaroid photos per entry');
+   if(placedItems.some(x=>x.kind==='photo'&&x.photoIndex>=imgs.length))return fail(res,400,'A placed polaroid is missing its photo');
    let photos=[];try{photos=imgs.map(photoUpload);}catch(err){for(const p of photos)try{fs.unlinkSync(path.join(dir,p.id+p.ext));}catch{}return fail(res,400,err.message);}
    const number=(state.sequence[user.id]||0)+1;
-   const entry={id:id(),authorId:user.id,author:authorName(user),number,publishedAt:now(),text,layout,paper,lineColor,textColor,stickers,photos};
+   const entry={id:id(),authorId:user.id,author:authorName(user),number,publishedAt:now(),text,layout,paper,lineColor,textColor,stickers,photos,placedItems};
    state.sequence[user.id]=number;state.diaries.push(entry);save();
    return json(res,201,{ok:true,entry:publicEntry(entry)});
  }
