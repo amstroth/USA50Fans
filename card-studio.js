@@ -10,7 +10,7 @@ const RARITIES=['R','SR','SSR','MR','UR'];
 const BORDERS=['none'];
 const STATES=['draft','scheduled','published','preview'];
 const MAX_CARDS=50,MAX_IMAGE_BYTES=5000000;
-module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,userFrom,dataDir,baseCards,baseAlbums,rarityWeights,packCost,hardPity,baseAlbumId}){
+module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,userFrom,dataDir,baseCards,baseAlbums,rarityWeights,packCost,hardPity,baseAlbumId,notify=()=>{}}){
   const artworkDir=path.join(dataDir,'card-studio-art');
   fs.mkdirSync(artworkDir,{recursive:true});
   const studio=db.cardStudio||(db.cardStudio={packs:[],media:{},audit:[]});
@@ -321,7 +321,10 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     const counter=progress[packId]||(progress[packId]={paidPulls:0,pityAchieved:false});
     const guaranteed=[];
     const publicCards=p.cards.map((c,i)=>cardPublic(c,p,i));
+    const beforeVip=require('./gacha-rewards.js').tier(u.state.vipXP).level;
     const result=require('./gacha-rewards.js').rollRewards({u,count,free,drawCard:()=>draw(publicCards),ticketPool:require('./gacha-rewards.js').ticketPoolForPack(p)});
+    const currentVip=require('./gacha-rewards.js').tier(u.state.vipXP);
+    if(currentVip.level>beforeVip)notify(u.id,'vip-tier','You advanced to '+currentVip.label+'!',{key:'vip-'+u.id+'-'+currentVip.level});
     if(!free){
       for(let i=0;i<count;i++){
         counter.paidPulls++;
