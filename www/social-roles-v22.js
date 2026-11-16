@@ -33,7 +33,7 @@ function enhanceProfile(html,person,own){
  }
  if(person.verifiedIdol){
   const stats=root.querySelector('.usa50-profile-stats');
-  if(stats)stats.insertAdjacentHTML('beforeend','<div><b>'+Number(person.oshiCount||0)+'</b><small>Oshi fans</small></div>');
+  if(stats){stats.classList.add('usa50-oshi-stats-only');stats.innerHTML='<div><b>'+Number(person.oshiCount||0)+'</b><small>Oshi fans ♡</small></div>';}
   const oldTabs=root.querySelector('.usa50-profile-tabs');
   const oldGrid=root.querySelector('.usa50-profile-grid,.usa50-profile-empty');
   const all=store?.social?.posts||[];
@@ -72,7 +72,7 @@ function editProfileExtended(){
  '<label>Username <input name="handle" value="'+e(p.handle)+'" required minlength="3" maxlength="22" pattern="[A-Za-z][A-Za-z0-9_]{2,21}"></label><label>Profile picture border <div class="usa50-custom-rings">'+ringChoices+'</div></label>';
  showModal('Edit your profile','<form id="usa50-extended-profile" class="form-grid"><label>Profile picture<input type="file" name="avatar" accept="image/jpeg,image/png,image/webp"></label>'+identity+
  '<label>Bio<textarea name="bio" maxlength="180" rows="3">'+e(p.bio||'')+'</textarea></label>'+
- '<div class="form-field"><label>Your oshi / bias (select multiple)</label><div class="usa50-oshi-options">'+opts+'</div></div>'+
+ (p.verifiedIdol?'':'<div class="form-field"><label>Your oshi / bias (select multiple)</label><div class="usa50-oshi-options">'+opts+'</div></div>')+
  '<button class="btn full" type="submit">Save profile</button></form>');
 }
 async function readPhoto(file){
@@ -102,7 +102,8 @@ act=async function(name,node){
 const priorSubmit=submitForm;
 submitForm=async function(form){
  if(form.id!=='usa50-extended-profile')return priorSubmit(form);
- const fd=new FormData(form),payload={bio:String(fd.get('bio')||''),oshiIds:fd.getAll('oshiIds').map(String)};
+ const fd=new FormData(form),payload={bio:String(fd.get('bio')||'')};
+ if(store?.me?.role!=='idol')payload.oshiIds=fd.getAll('oshiIds').map(String);
  for(const key of ['handle','ring','idolBorderColor'])if(fd.has(key))payload[key]=String(fd.get(key)||'');
  const img=await readPhoto(fd.get('avatar'));if(img)payload.avatarUrl=img;
  await request('/api/social/profile',{method:'POST',body:JSON.stringify(payload)});
