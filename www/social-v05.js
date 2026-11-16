@@ -54,8 +54,9 @@
        (isMine?'':isAdmin?'<button class="text-btn" data-action="social-admin-hide" data-value="'+e(p.id)+'">Remove</button>':'<button class="text-btn" data-action="social-report" data-value="'+e(p.id)+'">Report</button>')+
        '</div></div></article>';
  }
- const searchMarkup='<form id="usa50-social-search-form" class="usa50-social-search-form"><input type="search" name="query" maxlength="55" placeholder="Search hashtags or posts" value="'+e(socialQuery)+'" aria-label="Search posts and hashtags"><button type="submit" class="btn tiny">Search</button>'+(socialQuery?'<button type="button" class="btn tiny secondary" data-action="usa50-search-clear">Clear</button>':'')+'</form>'+
+ function searchMarkup(){return '<form id="usa50-social-search-form" class="usa50-social-search-form"><input type="search" name="query" maxlength="55" placeholder="Search hashtags or posts" value="'+e(socialQuery)+'" aria-label="Search posts and hashtags"><button type="submit" class="btn tiny">Search</button>'+(socialQuery?'<button type="button" class="btn tiny secondary" data-action="usa50-search-clear">Clear</button>':'')+'</form>'+
  '<div class="usa50-popular-tags"><small>Top hashtags</small>'+((getSocial().topHashtags||[]).length?(getSocial().topHashtags||[]).slice(0,7):[{tag:'#truelove'},{tag:'#arielle'},{tag:'#nyc50'}]).map(x=>'<button type="button" data-action="usa50-search-tag" data-value="'+e(x.tag)+'">'+e(x.tag)+'</button>').join('')+'</div>';
+ }
  function socialFeed(){
    let posts=getPosts().slice();
    if(socialTab==='top')posts.sort((a,b)=>b.score-a.score||b.upvotes-a.upvotes||Date.parse(b.createdAt)-Date.parse(a.createdAt));
