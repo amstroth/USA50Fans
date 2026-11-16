@@ -49,13 +49,13 @@
        '<span class="usa50-heart-group">'+
         (store?.me?.role==='idol'&&store?.me?.id!==p.authorId?'<button class="usa50-idol-heart-action '+(p.myHeart?'hearted':'')+'" data-action="usa50-idol-heart" data-value="'+e(p.id)+'" aria-label="Heart this post">♥</button>':'')+
         (p.heartedBy?.length?'<span class="usa50-hearted-by">Hearted by '+e(p.heartedBy.map(x=>x.name).join(p.heartedBy.length===2?' and ':', '))+'</span>':'')+
-        '</span>'+'<button class="social-repost-action" data-action="usa50-repost" data-value="'+e(p.id)+'" aria-label="Repost">↻ Repost</button><button class="social-save-action" data-action="usa50-save" data-value="'+e(p.id)+'" aria-label="Save">'+((getSocial().savedPostIds||[]).includes(p.id)?'♥ Saved':'♡ Save')+'</button></div>'+
+        '</span>'+'<button class="social-repost-action" data-action="usa50-repost" data-value="'+e(p.id)+'" aria-label="Repost">↻ Repost</button><button class="social-save-action" data-action="usa50-save" data-value="'+e(p.id)+'" aria-label="Save">'+((getSocial().savedPostIds||[]).includes(p.id)?'🔖 Saved':'▯ Save')+'</button></div>'+
        '<div class="social-post-links"><a href="'+e(p.url)+'" target="_blank" rel="noopener noreferrer">Open on '+e(p.platform)+' ↗</a>'+
        (isMine?'':isAdmin?'<button class="text-btn" data-action="social-admin-hide" data-value="'+e(p.id)+'">Remove</button>':'<button class="text-btn" data-action="social-report" data-value="'+e(p.id)+'">Report</button>')+
        '</div></div></article>';
  }
  function searchMarkup(){return '<form id="usa50-social-search-form" class="usa50-social-search-form"><input type="search" name="query" maxlength="55" placeholder="Search hashtags or posts" value="'+e(socialQuery)+'" aria-label="Search posts and hashtags"><button type="submit" class="btn tiny">Search</button>'+(socialQuery?'<button type="button" class="btn tiny secondary" data-action="usa50-search-clear">Clear</button>':'')+'</form>'+
- '<div class="usa50-popular-tags"><small>Top hashtags</small>'+((getSocial().topHashtags||[]).length?(getSocial().topHashtags||[]).slice(0,7):[{tag:'#truelove'},{tag:'#arielle'},{tag:'#nyc50'}]).map(x=>'<button type="button" data-action="usa50-search-tag" data-value="'+e(x.tag)+'">'+e(x.tag)+'</button>').join('')+'</div>';
+ '<div class="usa50-popular-tags"><small>Top hashtags</small>'+((getSocial().topHashtags||[]).length?(getSocial().topHashtags||[]).slice(0,7):[{tag:'#truelove'},{tag:'#arielle'},{tag:'#nyc50'}]).map(x=>'<button type="button" data-action="usa50-search-tag" data-value="'+e(x.tag)+'">'+e(({'#truelove':'#TrueLove','#arielle':'#Arielle','#nyc50':'#NYC50'})[x.tag]||x.tag)+'</button>').join('')+'</div>';
  }
  function socialFeed(){
    let posts=getPosts().slice();
