@@ -17,7 +17,7 @@ function enhanceProfile(html,person,own){
  if(!person)return html;
  const root=document.createElement('div');root.innerHTML=html;
  const title=root.querySelector('.usa50-profile-title strong');
- if(title&&(person.verifiedIdol||person.verifiedStaff))title.insertAdjacentHTML('afterend',window.USA50VerifiedBadge?.(person)||verified());
+ if(title&&(person.verifiedIdol||person.verifiedStaff)){const group=document.createElement('span');group.className='usa50-profile-name';title.before(group);group.append(title);group.insertAdjacentHTML('beforeend',window.USA50VerifiedBadge?.(person)||verified());}
  const avatar=root.querySelector('.usa50-avatar-frame');
  if(avatar){
   const ring=person.ring||'classic';
