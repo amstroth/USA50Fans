@@ -67,7 +67,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,n
   }
   function info(user){
     const uid=user?.id||null,ranking=ranks();
-    const ids=new Set([...state.posts.map(x=>x.authorId),...ranking.map(x=>x.id),...Object.values(db.users).filter(x=>role(x)==='idol').map(x=>x.id)]);
+    const ids=new Set([...state.posts.map(x=>x.authorId),...ranking.map(x=>x.id),...Object.values(db.users).filter(x=>['idol','admin','management','staff'].includes(role(x))).map(x=>x.id)]);
     if(uid)ids.add(uid);
     const profiles={};for(const target of ids){if(target)profiles[target]=publicProfile(target,uid,ranking);}
     const posts=state.posts.filter(p=>!p.hidden).slice(-250).map(post=>{
