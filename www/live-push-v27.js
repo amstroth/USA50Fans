@@ -30,15 +30,20 @@ act=async function(name,node){
  if(name!=='usa50-live-push')return oldAct(name,node);
  if(!store?.me)return toast('Sign in to enable live alerts.');
  if(!supports())return toast('This browser does not support Web Push. On iPhone, install USA50 to the Home Screen first.');
+ if(pushState==='subscribed'){
+  const {existing}=await subscription();
+  if(existing){
+   await request('/api/push/unsubscribe',{method:'POST',body:JSON.stringify({endpoint:existing.endpoint})});
+   await existing.unsubscribe();pushState='off';update();toast('Live push alerts disabled.');return;
+  }
+ }
+ // Browser permission must be requested immediately within the user's tap.
+ const allowed=Notification.permission==='granted'?'granted':await Notification.requestPermission();
+ if(allowed!=='granted')return toast('Notification permission was not granted. Change it in your device settings.');
  const cfg=await request('/api/push/config');
  if(!cfg.configured)return toast('Live alerts are not configured yet. In-app mail will still notify you.');
  const {registration,existing}=await subscription();
- if(existing){
-  await request('/api/push/unsubscribe',{method:'POST',body:JSON.stringify({endpoint:existing.endpoint})});
-  await existing.unsubscribe();pushState='off';update();toast('Live push alerts disabled.');return;
- }
- const allowed=await Notification.requestPermission();
- if(allowed!=='granted')return toast('Notification permission was not granted. Change it in your device settings.');
+ if(existing){pushState='subscribed';update();toast('Live alerts are already enabled.');return;}
  const sub=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:decode(cfg.publicKey)});
  await request('/api/push/subscribe',{method:'POST',body:JSON.stringify({subscription:sub.toJSON()})});
  pushState='subscribed';update();toast('You will get an alert when USA50 goes live!');return;
