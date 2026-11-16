@@ -1,0 +1,34 @@
+/* Idol diary scrapbook layout: repositionable, scaleable decorations */
+.diary-sheet{position:relative;isolation:isolate}
+.diary-sheet-heading,.diary-handwriting,.diary-signature{position:relative;z-index:1}
+.diary-decorations{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+.diary-decorations.editing{z-index:6;overflow:visible}
+.diary-deco-item{
+ position:absolute;display:flex;align-items:center;justify-content:center;
+ min-width:34px;min-height:34px;transform-origin:center;
+ user-select:none;-webkit-user-select:none;white-space:nowrap;
+}
+.diary-deco-item.draggable{pointer-events:auto;touch-action:none;cursor:grab;border:1.5px dashed transparent;border-radius:9px}
+.diary-deco-item.draggable.selected{border-color:#E63A84;outline:2px solid #ffffffdd;background:#fce5f530;box-shadow:0 0 0 2px #E63A8480}
+.diary-deco-item.draggable:active{cursor:grabbing}
+.diary-deco-item .diary-deco-emoji{font-size:36px;line-height:1.2;filter:drop-shadow(0 2px 3px #60416942)}
+.diary-deco-polaroid{
+ width:115px;min-width:115px;margin:0!important;
+ background:#fffdf9;border:0;padding:6px 6px 15px;
+ box-shadow:0 5px 12px #50365c35;transform:none!important;
+}
+.diary-deco-polaroid img{width:100%;display:block;aspect-ratio:1;object-fit:cover;pointer-events:none}
+.diary-deco-polaroid figcaption{font:10px/1.2 'Segoe Print',cursive;color:#674d66;text-align:center;margin-top:5px;max-width:100px;overflow:hidden;text-overflow:ellipsis}
+.diary-layout-editor{max-height:none!important;overflow:visible!important;margin:14px 0}
+.diary-layout-editor .diary-sheet{min-height:530px!important}
+.diary-edit-tip{margin:12px 0;color:#826893;font-size:12px;line-height:1.5}
+.diary-edit-controls{display:grid;gap:9px;padding:12px;border-radius:15px;border:1px solid #e8c6f1;background:#fdf2ff;color:#77548c;font-size:12px}
+.diary-edit-controls[hidden]{display:none!important}
+.diary-slider-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.diary-slider-row label{display:grid;gap:4px;font-weight:700}
+.diary-slider-row input{width:100%;accent-color:#E63A84}
+@media(max-width:600px){
+ .diary-deco-polaroid{width:100px;min-width:100px}
+ .diary-deco-item .diary-deco-emoji{font-size:30px}
+ .diary-layout-editor .diary-sheet{min-height:500px!important}
+}
