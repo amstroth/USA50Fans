@@ -321,7 +321,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     const counter=progress[packId]||(progress[packId]={paidPulls:0,pityAchieved:false});
     const guaranteed=[];
     const publicCards=p.cards.map((c,i)=>cardPublic(c,p,i));
-    const result=require('./gacha-rewards.js').rollRewards({u,count,free,drawCard:()=>draw(publicCards)});
+    const result=require('./gacha-rewards.js').rollRewards({u,count,free,drawCard:()=>draw(publicCards),ticketPool:require('./gacha-rewards.js').ticketPoolForPack(p)});
     if(!free){
       for(let i=0;i<count;i++){
         counter.paidPulls++;
