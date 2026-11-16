@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 let decorations=[],photos=[],selected=-1,drag=null;
-const clamp=(x,min,max)=>Math.min(max,Math.max(min,Number(x)||min));
+const clamp=(x,min,max)=>{const n=Number(x);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):min;};
 const escapeText=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function htmlOne(item,index,photoList,edit){
  const x=clamp(item.x,6,94),y=clamp(item.y,5,95);
