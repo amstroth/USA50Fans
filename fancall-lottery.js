@@ -2,7 +2,7 @@
 /* Free demo fancall draws and moderated waiting-room queue.
  * Video transport intentionally NOT active: session state is only a prototype. */
 const crypto=require('node:crypto');
-module.exports=function makeFancalls({db,save,id,now,json,fail,userFrom}){
+module.exports=function makeFancalls({db,save,id,now,json,fail,userFrom,notify=()=>{}}){
  db.fancallLottery ||= {draws:[],sessions:[]};
  const state=db.fancallLottery;
  const role=u=>u?.role||'fan';
@@ -52,6 +52,7 @@ module.exports=function makeFancalls({db,save,id,now,json,fail,userFrom}){
    const pool=[...new Set(d.entries||[])];
    for(let i=pool.length-1;i>0;i--){const j=crypto.randomInt(i+1);[pool[i],pool[j]]=[pool[j],pool[i]];}
    d.winners=pool.slice(0,Math.min(d.winnerCount,pool.length));d.status='drawn';d.drawnAt=now();
+   for(const uid of pool){const won=d.winners.includes(uid);notify(uid,won?'fancall-won':'fancall-lost',won?'You won the '+d.title+' fancall lottery! Open Events to join the waiting room.':'The '+d.title+' fancall lottery has ended. You were not selected this time.',{drawId:d.id,key:'fancall:'+d.id+':'+uid});}
    if(d.winners.length)state.sessions.push({id:id(),drawId:d.id,title:d.title,winnerIds:d.winners,cursor:0,status:'waiting',history:[],createdAt:now()});
    save();return json(res,200,{ok:true,winners:d.winners.length}),true;
   }
