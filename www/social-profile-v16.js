@@ -9,9 +9,22 @@ function pictures(person){
  const ring=rings.includes(person?.ring)?person.ring:'classic';
  return '<span class="usa50-avatar-frame ring-'+ring+'"><span class="usa50-avatar-inner">'+(person?.avatarUrl?'<img src="'+e(person.avatarUrl)+'" alt="Profile picture">':'<span>'+e((person?.displayName||'F').charAt(0).toUpperCase())+'</span>')+'</span></span>';
 }
+function postPreview(post){
+ const thumbnail=typeof post.thumbnailUrl==='string' && /^https:\/\//i.test(post.thumbnailUrl)?post.thumbnailUrl:null;
+ if(thumbnail)return '<img class="usa50-profile-thumb" src="'+e(thumbnail)+'" alt="Thumbnail for '+e(post.caption||'shared post')+'" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true">';
+ // TikTok embeds show the video's original poster when provider thumbnail metadata is unavailable.
+ if(post.platform==='TikTok'&&/^\\d{12,25}$/.test(String(post.embedId||''))){
+  return '<iframe class="usa50-profile-embed usa50-profile-tiktok" title="TikTok post preview" tabindex="-1" loading="lazy" src="https://www.tiktok.com/player/v1/'+e(post.embedId)+'?controls=0&description=0&music_info=0&autoplay=0" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+ }
+ // For Instagram, use the shared post's actual public embed instead of a generic pink placeholder.
+ if(post.platform==='Instagram'&&/^[A-Za-z0-9_-]{5,32}$/.test(String(post.embedId||''))&&['p','reel','tv'].includes(post.embedKind)){
+  return '<iframe class="usa50-profile-embed usa50-profile-instagram" title="Instagram post preview" tabindex="-1" loading="lazy" src="https://www.instagram.com/'+e(post.embedKind)+'/'+e(post.embedId)+'/embed/" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+ }
+ return '<span class="usa50-profile-fallback">'+(post.platform==='TikTok'?'♪':'◎')+'</span>';
+}
 function gridPosts(person,tab){
  const posts=(store?.social?.posts||[]).filter(p=>tab==='saved'?(store?.social?.savedPostIds||[]).includes(p.id):tab==='reposts'?p.authorId===person.id&&!!p.repostOf:p.authorId===person.id&&!p.repostOf).slice().reverse();
- return posts.length?'<div class="usa50-profile-grid">'+posts.map(p=>'<button class="usa50-profile-tile" data-action="social-open-post" data-value="'+e(p.id)+'" aria-label="Open post"><span class="usa50-profile-tile-icon">'+(p.platform==='TikTok'?'♪':'◎')+'</span><span>'+e(p.caption||'USA50 post')+'</span></button>').join('')+'</div>':'<p class="usa50-profile-empty">No '+(tab==='reposts'?'reposts':tab==='saved'?'saved posts':'posts')+' yet.</p>';
+ return posts.length?'<div class="usa50-profile-grid">'+posts.map(p=>'<button class="usa50-profile-tile" data-action="social-open-post" data-value="'+e(p.id)+'" aria-label="Open shared post">'+postPreview(p)+'<span class="usa50-profile-platform">'+(p.platform==='TikTok'?'♪':'◎')+'</span></button>').join('')+'</div>':'<p class="usa50-profile-empty">No '+(tab==='reposts'?'reposts':tab==='saved'?'saved posts':'posts')+' yet.</p>';
 }
 window.USA50RenderFanProfile=function(person,own){
  if(!person)return '<p class="lead">This profile is unavailable.</p>';
