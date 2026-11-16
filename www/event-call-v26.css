@@ -52,3 +52,7 @@
  .usa50-rtc-self,.usa50-rtc-self video{min-height:100px}
  .usa50-event-tile{padding:13px}
 }
+
+/* Idol profile shows a single Oshi statistic instead of posts/followers/following. */
+.usa50-profile-stats.usa50-oshi-stats-only{display:flex!important;align-items:center!important;justify-content:center!important;grid-template-columns:1fr!important}
+.usa50-profile-stats.usa50-oshi-stats-only>div{min-width:105px!important;max-width:none!important;text-align:center}
