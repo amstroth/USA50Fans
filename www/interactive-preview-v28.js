@@ -122,7 +122,7 @@ function callWaiting(){
  '<h3>'+(turn?'You are connected to Arielle ♡':'Your fancall waiting room')+'</h3><p>'+esc(line)+'</p>'+
  '<div class="usa50-preview-wait-stat"><div><strong>#'+(queuePosition+1)+'</strong><small>Your queue number</small></div><div><strong>'+state.queue.length+'</strong><small>Winners in queue</small></div></div>'+
  '<div class="usa50-preview-queue-help">Once it is your turn, the real app automatically offers the secured call room. This preview does not contact another person.</div>'+
- '<button type="button" data-preview-action="jump-my-turn" class="btn secondary" '+(state.callStatus==='complete'?'disabled':'')+'>Simulate my turn</button></div>';
+ '<button type="button" data-preview-action="jump-my-turn" class="btn secondary" '+(state.callStatus==='complete'?'disabled':'')+'>Simulate my turn</button>'+ (camera?'<div class="usa50-preview-wait-camera"><video id="usa50-preview-camera" autoplay playsinline muted></video><small>Only you can see this local camera test</small></div>':'')+'</div>';
 }
 function videoTile(person,caption,kind='main'){
  const media=person?face(person):'<span class="usa50-preview-no-remote">☆</span>';
