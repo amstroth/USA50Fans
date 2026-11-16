@@ -20,8 +20,21 @@ module.exports=function makeNotifications({db,save,id,now,userFrom,json,fail}){
   const item={id:id(),type:String(type||'general'),text:String(text||'').slice(0,350),
    createdAt:now(),read:false,...(key?{key}:{}),
    ...(meta.postId?{postId:String(meta.postId)}:{}),
-   ...(meta.drawId?{drawId:String(meta.drawId)}:{})};
+   ...(meta.drawId?{drawId:String(meta.drawId)}:{}),
+   ...(meta.streamId?{streamId:String(meta.streamId)}:{})};
   inbox.unshift(item);if(inbox.length>120)inbox.length=120;save();return item;
+ }
+ function pushMany(userIds,type,message,meta={}){
+  let added=0;const key=meta.key?String(meta.key).slice(0,200):null;
+  for(const uid of [...new Set(userIds)]){
+   if(!db.users?.[uid])continue;
+   const inbox=db.userNotifications[uid]||(db.userNotifications[uid]=[]);
+   if(key&&inbox.some(n=>n.key===key))continue;
+   const item={id:id(),type:String(type||'general'),text:String(message||'').slice(0,350),
+    createdAt:now(),read:false,...(key?{key}:{}),...(meta.streamId?{streamId:String(meta.streamId)}:{})};
+   inbox.unshift(item);if(inbox.length>120)inbox.length=120;added++;
+  }
+  if(added)save();return added;
  }
  function info(user){
   const notifications=user?(db.userNotifications[user.id]||[]).slice(0,100):[];
@@ -49,5 +62,5 @@ module.exports=function makeNotifications({db,save,id,now,userFrom,json,fail}){
   if(before===null||position<before)push(uid,'fan-rank',before?'You climbed to fan rank #'+position+'!':'You entered the fan rankings at #'+position+'!',{key:'rank-'+uid+'-'+position+'-'+now()});
   else save();
  }
- return {push,info,handle,rank};
+ return {push,pushMany,info,handle,rank};
 };
