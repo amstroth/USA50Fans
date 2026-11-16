@@ -75,6 +75,6 @@ act=async function(name,node){
 };
 setInterval(()=>{
  if(!store?.me||document.visibilityState!=='visible'||view==='events')return;
- request('/api/state').then(data=>{if(data?.liveEvents){store.liveEvents=data.liveEvents;updateEventDots();}}).catch(()=>{});
+ request('/api/events-v2/info').then(data=>{if(data&&typeof data.newCount==='number'){store.liveEvents=data;updateEventDots();}}).catch(()=>{});
 },60000);
 })();
