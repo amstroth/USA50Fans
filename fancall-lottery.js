@@ -18,12 +18,12 @@ module.exports=function makeFancalls({db,save,id,now,json,fail,userFrom,notify=(
       winnersDrawn:w.length,disclaimer:'Snapshot only: based on the current number of entries. Your actual chance at drawing may change as people enter or withdraw. One free entry per account. Demo only.'};
  };
  function info(u){
-  return {draws:state.draws.map(d=>viewDraw(d,u)),sessions:state.sessions.filter(s=>staff(u)||host(u)||s.winnerIds.includes(u?.id)).map(s=>({
+  return {draws:state.draws.map(d=>viewDraw(d,u)),sessions:state.sessions.filter(s=>staff(u)||(role(u)==='idol'&&(!s.idolId||s.idolId===u?.id))||s.winnerIds.includes(u?.id)).map(s=>({
    id:s.id,drawId:s.drawId,title:s.title,status:s.status,queue:s.winnerIds.map((uid,index)=>({position:index+1,displayName:db.users[uid]?.displayName||'Fan',isMe:uid===u?.id,userId:staff(u)||host(u)?uid:undefined,done:index<s.cursor,active:index===s.cursor})),
    idolId:s.idolId||null,idolName:s.idolId?(db.users[s.idolId]?.displayName||'USA50 Idol'):'Assigned idol pending',
    cursor:s.cursor,activeUserId:s.winnerIds[s.cursor]||null,activeName:db.users[s.winnerIds[s.cursor]]?.displayName||null,
    isMyTurn:s.winnerIds[s.cursor]===u?.id,isMyWinner:s.winnerIds.includes(u?.id),
-   canHost:host(u),canManage:staff(u),breakMode:s.status==='break'}))};
+   canHost:staff(u)||(role(u)==='idol'&&(!s.idolId||s.idolId===u?.id)),canManage:staff(u),breakMode:s.status==='break'}))};
  }
  function respond(req,res,ep,data){
   if(!ep.startsWith('/api/fancalls/'))return false;
@@ -35,8 +35,9 @@ module.exports=function makeFancalls({db,save,id,now,json,fail,userFrom,notify=(
    const closesAt=String(data.closesAt||'');
    if(title.length<3||!Number.isInteger(winnerCount)||winnerCount<1||winnerCount>100||!Number.isFinite(Date.parse(closesAt))||Date.parse(closesAt)<=Date.now())return fail(res,400,'Provide a title, future closing date, and 1–100 winners.'),true;
    const selectedId=String(data.idolId||'');
-   if(selectedId&&db.users[selectedId]?.role!=='idol')return fail(res,400,'Select a valid idol host.'),true;
-   const d={id:id(),title,description,startsAt:now(),closesAt:new Date(closesAt).toISOString(),winnerCount,idolId:selectedId||null,status:'open',entries:[],winners:[],createdBy:u.id};
+   const selectedIdol=Object.values(db.users).find(x=>x.role==='idol'&&[x.id,x.idolId,String(x.displayName||'').toLowerCase()].includes(selectedId.toLowerCase()));
+   if(selectedId&&!selectedIdol)return fail(res,400,'Select a valid connected idol host.'),true;
+   const d={id:id(),title,description,startsAt:now(),closesAt:new Date(closesAt).toISOString(),winnerCount,idolId:selectedIdol?.id||null,status:'open',entries:[],winners:[],createdBy:u.id};
    state.draws.unshift(d);save();return json(res,201,{ok:true,draw:viewDraw(d,u)}),true;
   }
   const d=state.draws.find(x=>x.id===data.drawId);
