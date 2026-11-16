@@ -173,3 +173,33 @@
 .official-social-block .official-post-body .official-open{
   right:0!important;
 }
+
+/* Six dedicated mobile navigation slots: Home, Collection, Create, Messages, Social, My Page. */
+@media(max-width:899px){
+ .bottom-nav{
+   display:grid!important;
+   grid-template-columns:repeat(6,minmax(0,1fr))!important;
+   align-items:center!important;
+   gap:1px!important;
+   overflow:visible!important;
+ }
+ .bottom-nav .bottom-link{min-width:0!important;padding:7px 0!important;font-size:clamp(9px,2vw,11px)!important}
+ .bottom-nav .bottom-link svg{width:21px!important;height:21px!important}
+ .bottom-nav .usa50-nav-compose{
+   position:relative!important;
+   inset:auto!important;
+   top:auto!important;
+   left:auto!important;
+   bottom:auto!important;
+   transform:none!important;
+   grid-column:3!important;
+   grid-row:1!important;
+   width:clamp(44px,11vw,56px)!important;
+   height:clamp(44px,11vw,56px)!important;
+   min-width:0!important;
+   margin:0 auto!important;
+   border-width:2px!important;
+   box-shadow:0 4px 12px #8561ac36!important;
+ }
+ .bottom-nav .usa50-nav-compose svg{width:24px!important;height:24px!important}
+}
