@@ -36,7 +36,7 @@ function rollRewards({u,count,free,drawCard,save}){
    const idol=IDOLS[crypto.randomInt(IDOLS.length)];
    u.state.idolTickets[idol[0]]=Number(u.state.idolTickets[idol[0]]||0)+1;
    // Legacy total remains a read-only combined total for older UI components.
-   u.state.fancallTickets=Object.values(u.state.idolTickets).reduce((a,b)=>a+(Number(b)||0),0);
+   u.state.fancallTickets=Number(u.state.fancallTickets||0)+1;
    reward={type,idolId:idol[0],idolName:idol[1],amount:1};
   }else{
    const discount=crypto.randomInt(6)===0?20:10;
