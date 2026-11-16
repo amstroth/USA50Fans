@@ -8,7 +8,7 @@
 module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom}){
   if(!db.social)db.social={posts:[],profiles:{},votes:{},follows:{},reports:[],bans:{},ticketMilestones:{},dailyCredits:{}};
   const state=db.social;
-  for(const k of ['posts','profiles','votes','follows','reports','bans','ticketMilestones','dailyCredits']){
+  for(const k of ['posts','profiles','votes','follows','reports','bans','ticketMilestones','dailyCredits','idolHearts','notifications']){
     if(!state[k])state[k]=['posts','reports'].includes(k)?[]:{};
   }
   function account(uid){return db.users[uid]||null;}
@@ -21,7 +21,9 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
       state.profiles[uid]={handle:slug+'_'+uid.slice(0,4),bio:'Sharing my USA50 fan moments ♡',xp:0,createdAt:now()};
       save();
     }
-    return state.profiles[uid];
+    const profile=state.profiles[uid];
+    if(role(user)==='idol'){profile.handle=String(user.displayName||'Idol').replace(/[^A-Za-z0-9_]/g,'').slice(0,22)||'Idol';}
+    return profile;
   }
   function tier(rank){
     if(rank>0&&rank<=3)return 'UltraFan';
@@ -51,7 +53,10 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
     const followers=Object.values(state.follows).filter(ids=>Array.isArray(ids)&&ids.includes(uid)).length;
     const following=(state.follows[uid]||[]).length;
     const stat=ranking.find(x=>x.id===uid);
-    return {id:uid,displayName:u.displayName,handle:p.handle,bio:p.bio,avatarUrl:p.avatarUrl||null,ring:p.ring||'classic',unlockedRings:u.state?.unlockedRings||['classic'],vipLevel:u.state?.vipLevel||'Starter',followers,following,postsCount:state.posts.filter(post=>post.authorId===uid&&!post.hidden).length,fanXP:Math.max(0,p.xp||0),rank:stat?.rank||null,tier:stat?.tier||'Fan',fansite:approvedFansite(uid),isFollowing:Boolean(viewerId&&(state.follows[viewerId]||[]).includes(uid))};
+    const isIdol=role(u)==='idol';
+    const oshiCount=isIdol?Object.values(state.profiles).filter(x=>Array.isArray(x.oshiIds)&&x.oshiIds.includes(String(u.displayName||'').toLowerCase())).length:0;
+    const equippedRing=p.ring||'classic';
+    return {id:uid,displayName:u.displayName,handle:p.handle,verifiedIdol:isIdol,oshiCount,oshiIds:p.oshiIds||[],idolBorderColor:p.idolBorderColor||'#F4A1C8',rankBorder:!isIdol?(stat?.rank===1?'gold':stat?.rank===2?'silver':stat?.rank===3?'bronze':stat?.rank&&stat.rank<=10?'top10':null):null,bio:p.bio,avatarUrl:p.avatarUrl||null,ring:equippedRing,unlockedRings:u.state?.unlockedRings||['classic'],vipLevel:u.state?.vipLevel||'Starter',followers,following,postsCount:state.posts.filter(post=>post.authorId===uid&&!post.hidden).length,fanXP:Math.max(0,p.xp||0),rank:stat?.rank||null,tier:stat?.tier||'Fan',fansite:approvedFansite(uid),isFollowing:Boolean(viewerId&&(state.follows[viewerId]||[]).includes(uid))};
   }
   function info(user){
     const uid=user?.id||null,ranking=ranks();
@@ -60,9 +65,9 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
     const profiles={};for(const target of ids){if(target)profiles[target]=publicProfile(target,uid,ranking);}
     const posts=state.posts.filter(p=>!p.hidden).slice(-250).map(post=>{
       const count=counts(post);
-      return {id:post.id,authorId:post.authorId,category:post.category,caption:post.caption,url:post.url,platform:post.platform,embedId:post.embedId,embedKind:post.embedKind,createdAt:post.createdAt,thumbnailUrl:post.thumbnailUrl||null,repostOf:post.repostOf||null,repostAuthor:post.repostAuthor||null,...count,myVote:uid?(state.votes[post.id]?.[uid]||0):0,isFollowing:Boolean(uid&&(state.follows[uid]||[]).includes(post.authorId))};
+      return {id:post.id,authorId:post.authorId,category:post.category,caption:post.caption,url:post.url,platform:post.platform,embedId:post.embedId,embedKind:post.embedKind,createdAt:post.createdAt,thumbnailUrl:post.thumbnailUrl||null,repostOf:post.repostOf||null,repostAuthor:post.repostAuthor||null,...count,heartedBy:(state.idolHearts[post.id]||[]).filter(x=>role(account(x))==='idol').map(x=>({id:x,name:account(x).displayName})),myHeart:uid?(state.idolHearts[post.id]||[]).includes(uid):false,myVote:uid?(state.votes[post.id]?.[uid]||0):0,isFollowing:Boolean(uid&&(state.follows[uid]||[]).includes(post.authorId))};
     });
-    return {posts,profiles,rankings:ranking,following:uid?(state.follows[uid]||[]):[],myProfile:uid?profiles[uid]:null,savedPostIds:uid?(profileFor(uid).savedPostIds||[]):[],top100Limit:100,earnings:{postPullPoints:50,dailyCreditedPosts:2,upvotesPerTicket:100},policy:'Demo awards, not real fancall entry or confirmed ticketing.',reports:role(user)==='admin'?state.reports.filter(x=>x.status==='pending').slice(-80):[],bans:role(user)==='admin'?state.bans:{}};
+    return {posts,profiles,rankings:ranking,following:uid?(state.follows[uid]||[]):[],myProfile:uid?profiles[uid]:null,savedPostIds:uid?(profileFor(uid).savedPostIds||[]):[],notifications:uid?(state.notifications[uid]||[]).slice(-40).reverse():[],topHashtags:Object.entries(state.posts.filter(p=>!p.hidden).flatMap(p=>(p.caption.match(/#[A-Za-z0-9_]+/g)||[]).map(t=>t.toLowerCase())).reduce((a,h)=>(a[h]=(a[h]||0)+1,a),{})).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([tag,count])=>({tag,count})),top100Limit:100,earnings:{postPullPoints:50,dailyCreditedPosts:2,upvotesPerTicket:100},policy:'Demo awards, not real fancall entry or confirmed ticketing.',reports:role(user)==='admin'?state.reports.filter(x=>x.status==='pending').slice(-80):[],bans:role(user)==='admin'?state.bans:{}};
   }
   // Canonicalize public post links while accepting the short/share links copied on phones.
   // Short links do not include a media ID, so they are link-only previews until
@@ -224,6 +229,25 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
       profileFor(u.id).xp+=15;
       save();return json(res,201,{ok:true,postId:post.id,pullPointsAwarded:pointsAwarded,fanXPAwarded:15}),true;
     }
+    if(ep==='/api/social/heart'){
+      if(role(u)!=='idol')return fail(res,403,'Only verified idol accounts can heart posts.'),true;
+      const post=state.posts.find(p=>p.id===String(data.postId||'')&&!p.hidden);
+      if(!post)return fail(res,404,'Post not found.'),true;
+      if(post.authorId===u.id)return fail(res,400,'You cannot heart your own post.'),true;
+      const likes=state.idolHearts[post.id]||(state.idolHearts[post.id]=[]);
+      if(likes.includes(u.id))return json(res,200,{ok:true,alreadyHearted:true,heartedBy:likes.map(uid=>account(uid)?.displayName).filter(Boolean)}),true;
+      likes.push(u.id);
+      const author=profileFor(post.authorId);
+      if(author)author.xp=Math.max(0,Number(author.xp||0))+150;
+      const notes=state.notifications[post.authorId]||(state.notifications[post.authorId]=[]);
+      notes.push({id:id(),type:'idol-heart',postId:post.id,idolId:u.id,text:String(u.displayName)+' hearted your post! +150 Fan XP',createdAt:now(),read:false});
+      if(notes.length>100)notes.splice(0,notes.length-100);
+      save();return json(res,200,{ok:true,fanXPAwarded:150}),true;
+    }
+    if(ep==='/api/social/notifications-read'){
+      for(const n of state.notifications[u.id]||[])n.read=true;
+      save();return json(res,200,{ok:true}),true;
+    }
     if(ep==='/api/social/vote'){
       const post=state.posts.find(p=>p.id===data.postId&&!p.hidden);
       if(!post)return fail(res,404,'Post not found.'),true;
@@ -250,6 +274,22 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
     if(ep==='/api/social/profile'){
       const p=profileFor(u.id);
       if(Object.hasOwn(data,'bio'))p.bio=bodyText(data.bio,180);
+       if(Object.hasOwn(data,'handle')){
+         if(role(u)==='idol')return fail(res,403,'Idol usernames are assigned from verified stage names.'),true;
+         const handle=String(data.handle||'').replace(/^@/,'').trim();
+         if(!/^[A-Za-z][A-Za-z0-9_]{2,21}$/.test(handle))return fail(res,400,'Username must be 3–22 letters, numbers or underscores, starting with a letter.'),true;
+         if(Object.keys(db.users).some(uid=>uid!==u.id&&profileFor(uid)?.handle.toLowerCase()===handle.toLowerCase()))return fail(res,409,'Username already taken.'),true;
+         p.handle=handle;
+       }
+       if(Object.hasOwn(data,'oshiIds')){
+         if(!Array.isArray(data.oshiIds)||data.oshiIds.length>7||data.oshiIds.some(x=>!['arielle','jaylene','kellie','z','michelle','zoe','miu'].includes(x)))return fail(res,400,'Invalid oshi selections.'),true;
+         p.oshiIds=[...new Set(data.oshiIds)];
+       }
+       if(Object.hasOwn(data,'idolBorderColor')){
+         if(role(u)!=='idol')return fail(res,403,'Idol border colors are reserved for idol accounts.'),true;
+         if(!/^#[0-9a-fA-F]{6}$/.test(String(data.idolBorderColor)))return fail(res,400,'Invalid color.'),true;
+         p.idolBorderColor=data.idolBorderColor;
+       }
       if(Object.hasOwn(data,'avatarUrl')){
         const photo=String(data.avatarUrl||'');
         if(photo && (!/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo)||photo.length>205000))return fail(res,400,'Use a compressed photo smaller than 150 KB.'),true;
@@ -257,7 +297,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
       }
       if(Object.hasOwn(data,'ring')){
         const ring=String(data.ring||'classic');
-        if(!(u.state.unlockedRings||['classic']).includes(ring))return fail(res,403,'This ring has not been unlocked.'),true;
+        if(!['classic','rank-auto'].includes(ring)&&!(u.state.unlockedRings||['classic']).includes(ring))return fail(res,403,'This ring has not been unlocked.'),true;
         p.ring=ring;
       }
       save();return json(res,200,{ok:true}),true;
