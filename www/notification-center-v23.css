@@ -1,0 +1,71 @@
+/* Shared verified star treatment & USA50 Mail. */
+:root{--usa50-idol-pink:#E63A84;--usa50-staff-blue:#004AAD}
+.usa50-verified-badge{
+ color:var(--usa50-idol-pink);
+ display:inline-flex;align-items:center;justify-content:center;
+ width:25px;height:25px;vertical-align:middle;flex-shrink:0;
+ filter:drop-shadow(0 2px 3px rgba(84,32,73,.34));
+}
+.usa50-verified-badge.staff{color:var(--usa50-staff-blue)}
+.usa50-verified-svg{width:100%;height:100%;display:block;overflow:visible}
+.usa50-handle-verified,.usa50-profile-name{
+ display:inline-flex!important;flex-direction:row!important;align-items:center!important;
+ gap:5px!important;white-space:nowrap;min-width:0
+}
+.usa50-handle-verified .social-handle{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.usa50-profile-name{margin-right:auto}
+.usa50-profile-name strong{overflow-wrap:anywhere;white-space:normal}
+.social-post-author>.usa50-handle-verified{max-width:100%}
+.social-post-author>.usa50-handle-verified .usa50-verified-badge{width:19px;height:19px}
+.usa50-profile-title .usa50-verified-badge{width:26px;height:26px}
+.usa50-verified-badge.on-avatar{width:39px;height:39px}
+.usa50-avatar-award.verified{
+ background:transparent!important;border:none!important;border-radius:0!important;
+ box-shadow:none!important;display:flex!important;align-items:center!important;
+ justify-content:center!important;width:42px!important;height:42px!important;
+ bottom:-17px!important;z-index:5;padding:0!important;
+ filter:drop-shadow(0 3px 3px rgba(66,28,59,.35))
+}
+.usa50-avatar-award.verified .usa50-verified-badge{filter:none!important}
+.usa50-idol-avatar{
+ background:transparent!important;
+ border:2px solid var(--idol-border-color,var(--usa50-idol-pink))!important;
+ box-shadow:none!important;padding:2px!important
+}
+.usa50-staff-avatar{
+ background:transparent!important;border:2px solid var(--usa50-staff-blue)!important;
+ box-shadow:none!important;padding:2px!important
+}
+.usa50-mail-button{position:relative;flex-shrink:0!important;display:inline-flex!important}
+.usa50-mail-count{
+ position:absolute;top:-5px;right:-5px;background:var(--usa50-idol-pink);
+ color:#fff;border:2px solid #fff;border-radius:999px;min-width:19px;height:19px;
+ font-size:10px;line-height:15px;font-weight:800;text-align:center;padding:0 3px;
+ pointer-events:none
+}
+.usa50-mail-count[hidden]{display:none!important}
+.usa50-mail-intro{display:flex;justify-content:space-between;align-items:center;gap:9px;margin:4px 0 15px}
+.usa50-mail-intro p{font-size:12px;color:#81668d;line-height:1.45}
+.usa50-mail-intro .btn{font-size:11px;white-space:nowrap;padding:9px!important}
+.usa50-mail-list{display:flex;flex-direction:column;max-height:min(65dvh,650px);overflow:auto;gap:4px}
+.usa50-mail-item{
+ display:flex;align-items:flex-start;gap:12px;width:100%;padding:12px 9px;
+ text-align:left;color:#624479;background:rgba(255,255,255,.3);
+ border:0;border-bottom:1px solid rgba(178,145,201,.25);cursor:pointer;min-width:0
+}
+.usa50-mail-item.unread{background:rgba(255,232,248,.7)}
+.usa50-mail-item-symbol{width:38px;height:38px;flex:0 0 38px;border-radius:13px;
+ display:grid;place-items:center;font-size:20px;color:#c84b9c;background:#fff7fe}
+.usa50-mail-item>span:nth-child(2){flex:1;min-width:0}
+.usa50-mail-item strong{display:block;font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+.usa50-mail-item small{display:block;margin-top:5px;font-size:11px;color:#94799d}
+.usa50-mail-unread-dot{flex:0 0 7px;width:7px;height:7px;margin-top:7px;border-radius:50%;background:var(--usa50-idol-pink)}
+.usa50-mail-empty{font-size:14px;color:#8e749c;text-align:center;line-height:1.6;padding:25px 15px}
+.usa50-idol-heart-action{min-width:35px;min-height:35px;cursor:pointer;touch-action:manipulation}
+.usa50-idol-heart-action.hearted{color:var(--usa50-idol-pink)!important}
+@media(max-width:780px){
+ .top-actions{gap:2px!important}
+ .top-actions .usa50-mail-button{width:29px!important;height:33px!important;padding:4px!important}
+ .top-actions .usa50-mail-button svg{width:18px;height:18px}
+ .usa50-mail-list{max-height:66dvh}
+}
