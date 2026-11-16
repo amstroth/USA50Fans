@@ -57,3 +57,11 @@
  .usa50-idol-messages-active .screen{padding:0!important}
  .usa50-idol-messages-active .screen>.section-heading,.usa50-idol-messages-active .screen>.screen-header{padding:12px 15px}
 }
+
+.usa50-heart-message-list{padding:13px 15px;background:linear-gradient(120deg,#fce8f4,#efe0ff);border-bottom:1px solid #ffffffd0;color:#79528d}
+.usa50-heart-message-list .eyebrow{margin-bottom:8px;font-size:10px;letter-spacing:1.4px}
+.usa50-heart-message{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #e6cae4}
+.usa50-heart-message>span{display:grid;place-items:center;color:#e882b9;font-size:25px;width:35px;height:35px;border-radius:50%;background:#fff}
+.usa50-heart-message strong{font-size:13px;display:block}
+.usa50-heart-message small{font-size:11px;color:#997fa3;display:block;margin-top:3px}
+.usa50-heart-message-list>.btn{margin:10px 0 0}
