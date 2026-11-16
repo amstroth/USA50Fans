@@ -38,7 +38,7 @@ function enhanceProfile(html,person,own){
   const oldGrid=root.querySelector('.usa50-profile-grid,.usa50-profile-empty');
   const all=store?.social?.posts||[];
   const hashtag='#'+String(person.handle||person.displayName).toLowerCase();
-  const posts=all.filter(p=>idolTab==='hearted'?(p.heartedBy||[]).some(h=>h.id===person.id):idolTab==='hashtag'?(p.caption||'').toLowerCase().includes(hashtag):p.authorId===person.id).slice().reverse();
+  const posts=all.filter(p=>idolTab==='hearted'?(p.heartedBy||[]).some(h=>h.id===person.id):idolTab==='hashtag'?((p.caption||'').toLowerCase().match(/#[a-z0-9_]+/g)||[]).includes(hashtag):p.authorId===person.id).slice().reverse();
   const tabs='<div class="usa50-profile-tabs usa50-idol-post-tabs">'+[['hashtag','#','Hashtag'],['hearted','♥','Hearted'],['posts','▦','Posts']].map(([key,ico,label])=>'<button type="button" class="'+(idolTab===key?'selected':'')+'" data-action="usa50-idol-tab" data-value="'+key+'"><span>'+ico+'</span><small>'+label+'</small></button>').join('')+'</div>';
   if(oldTabs)oldTabs.outerHTML=tabs;
   const grid=posts.length?'<div class="usa50-profile-grid">'+posts.map(previewPost).join('')+'</div>':'<div class="usa50-profile-empty">No '+(idolTab==='hashtag'?hashtag+' posts':idolTab==='hearted'?'hearted posts':'posts')+' yet.</div>';
