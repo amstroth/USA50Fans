@@ -36,7 +36,7 @@ module.exports=function makeLiveEvents({db,save,id,now,json,fail,userFrom,member
  function allowedIdol(u,stream){
   return idols(u)&&Boolean(u.idolId)&&expandHosts(stream.hosts).includes(u.idolId);
  }
- function canEdit(u,stream){return managers(u)||allowedIdol(u,stream)||!!(idols(u)&&stream.createdBy===u.id);}
+ function canEdit(u,stream){return managers(u)||allowedIdol(u,stream);}
  function safeUrl(input,stream=false){
   const value=String(input||'').trim();if(!value)return null;
   try{
