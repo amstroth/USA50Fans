@@ -1,0 +1,69 @@
+/* USA50 Shop and Collection polish. */
+.usa50-starpack-art{
+ display:block;width:100%;max-width:132px;aspect-ratio:160/145;
+ margin:0 auto 2px;
+ filter:drop-shadow(0 5px 6px rgba(137,81,167,.16));
+}
+.usa50-starpack-art svg{display:block;width:100%;height:100%;overflow:visible}
+.usa50-starshop-pack{justify-content:flex-start}
+.usa50-starshop-pack strong{margin-top:3px}
+.usa50-starshop-pack .usa50-starshop-spark{display:none}
+.usa50-ten-pull-actions{display:flex;flex-direction:column;align-items:stretch;gap:9px;margin-top:10px;width:100%;max-width:290px}
+.usa50-ten-pull-actions button{width:100%;white-space:normal;text-align:center}
+.usa50-collection-tabs{
+ display:flex;gap:8px;margin:12px 0 14px;align-items:center;
+}
+.usa50-collection-tabs button{
+ flex:1;min-height:44px;border-radius:999px;padding:10px 12px;
+ color:#745488;font-weight:750;font-size:13px;
+ border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.4);
+}
+.usa50-collection-tabs button.active{
+ background:linear-gradient(110deg,rgba(222,177,243,.95),rgba(246,210,237,.95));
+ box-shadow:0 5px 16px rgba(140,91,183,.14);color:#54346f;
+}
+.usa50-album-carousel{
+ display:flex!important;flex-wrap:nowrap!important;
+ gap:10px!important;width:100%!important;max-width:100%!important;
+ overflow-x:auto!important;overflow-y:hidden!important;
+ scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+ padding:3px 0 10px!important;margin:0 0 15px!important;
+ scrollbar-width:none;
+}
+.usa50-album-carousel::-webkit-scrollbar{display:none}
+.usa50-album-carousel>.album-tile{
+ flex:0 0 clamp(156px,43%,275px)!important;
+ min-width:0;max-width:275px;scroll-snap-align:start;
+ align-self:stretch;
+}
+.usa50-album-carousel .album-cover{min-height:115px!important;padding:15px!important}
+.usa50-album-carousel .album-cover h2{font-size:clamp(20px,4vw,27px)!important;line-height:1.08}
+.usa50-album-carousel .album-cover .eyebrow{font-size:9px!important}
+.usa50-album-carousel .album-cover .bubble-graphic{font-size:82px!important}
+.usa50-album-carousel .album-foot{padding:10px!important}
+.usa50-album-carousel .album-foot strong{font-size:12px}
+.usa50-album-carousel .album-progress{font-size:10px;gap:6px}
+.usa50-album-carousel .album-tile.inactive .album-cover:after{font-size:8px;bottom:7px;right:5px;padding:3px}
+.usa50-inventory-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.usa50-inventory-info>div{background:rgba(255,255,255,.55);border:1px solid #fff;border-radius:19px;padding:17px;display:grid;gap:3px;text-align:center}
+.usa50-inventory-info strong{font-size:25px;color:#815ab3}
+.usa50-inventory-info small{color:#887397}
+.usa50-inventory-section{margin:18px 0}
+.usa50-inventory-section>h2{font-size:23px;margin:0 0 8px}
+.usa50-inventory-item{
+ display:grid;grid-template-columns:55px minmax(0,1fr) auto;
+ align-items:center;gap:12px;min-height:73px;padding:9px 11px;
+ margin-top:7px;background:rgba(255,255,255,.44);
+ border:1px solid rgba(255,255,255,.7);border-radius:16px;
+}
+.usa50-inventory-art{width:49px;height:49px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(130deg,#e9c9f6,#f8d8e7);font-size:26px}
+.usa50-inventory-item strong,.usa50-inventory-item small{display:block}
+.usa50-inventory-item strong{font-size:14px;color:#67477c}
+.usa50-inventory-item small{font-size:11px;color:#8b769f;margin-top:3px}
+.usa50-inventory-item b{font-size:17px;color:#8858a9}
+@media(max-width:650px){
+ .usa50-starshop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .usa50-starpack-art{max-width:106px}
+ .usa50-album-carousel>.album-tile{flex:0 0 43%!important}
+ .usa50-album-carousel .album-cover{min-height:119px!important}
+}
