@@ -319,12 +319,11 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     if(free)u.state.pullPoints-=cost;else u.state.stars-=cost;
     const progress=u.state.packProgress||(u.state.packProgress={});
     const counter=progress[packId]||(progress[packId]={paidPulls:0,pityAchieved:false});
-    const pulled=[],guaranteed=[];
+    const guaranteed=[];
     const publicCards=p.cards.map((c,i)=>cardPublic(c,p,i));
-    for(let i=0;i<count;i++){
-      const card=draw(publicCards);pulled.push(card);
-      u.state.owned[card.id]=(u.state.owned[card.id]||0)+1;
-      if(!free){
+    const result=require('./gacha-rewards.js').rollRewards({u,count,free,drawCard:()=>draw(publicCards)});
+    if(!free){
+      for(let i=0;i<count;i++){
         counter.paidPulls++;
         if(counter.paidPulls>=hardPity&&!counter.pityAchieved){
           for(const missing of publicCards)if(!u.state.owned[missing.id]){u.state.owned[missing.id]=1;guaranteed.push(missing.id);}
@@ -332,8 +331,6 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
         }
       }
     }
-    u.state.fancallTickets=(u.state.fancallTickets||0)+2*count;
-    u.state.pullPoints=(u.state.pullPoints||0)+100*count;
     u.state.unlockedRings ||= ['classic'];
     const possibleRings=['starlight','pink-ribbon','moonlight','golden-hour'];
     const ringsUnlocked=[];
@@ -343,10 +340,8 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     }
     save();
     const complete=publicCards.every(c=>u.state.owned[c.id]>0);
-    return json(res,200,{ringsUnlocked,card:pulled[0],cards:pulled,guaranteed,
-      stars:u.state.stars,pullPoints:u.state.pullPoints,fancallTickets:u.state.fancallTickets,
-      fancallTicketsAwarded:2*count,pullPointsAwarded:100*count,paidPulls:counter.paidPulls,
-      albumComplete:complete,pityAchieved:counter.pityAchieved,albumId:packId}),true;
+    return json(res,200,{...result,ringsUnlocked,guaranteed,stars:u.state.stars,
+      paidPulls:counter.paidPulls,albumComplete:complete,pityAchieved:counter.pityAchieved,albumId:packId}),true;
   }
   function saveBorder(data,req,res){
     const old=data.id?studio.borders.find(b=>b.id===data.id):null;
