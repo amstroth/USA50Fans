@@ -164,9 +164,9 @@ document.addEventListener('click',function(event){
    open(id);return;
   }
  }
- if(!selectedStream||!document.getElementById('usa50-live-fullscreen'))return;
+ if(view!=='events'||selectedStream||document.getElementById('usa50-live-fullscreen'))return;
  const card=event.target.closest('.usa50-stream-card');
- if(card&&!event.target.closest('button,a,input,textarea,select,form,label')){
+ if(card&&!event.target.closest('button,a,input,textarea,select,form,label,iframe')){
   const stream=locate(card.dataset.immersiveStreamId);
   if(stream?.status==='live'){
    event.preventDefault();open(stream.id);
