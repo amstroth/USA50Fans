@@ -54,9 +54,14 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
     const following=(state.follows[uid]||[]).length;
     const stat=ranking.find(x=>x.id===uid);
     const isIdol=role(u)==='idol';
+    const newRankAward=!isIdol?(stat?.rank===1?'gold':stat?.rank===2?'silver':stat?.rank===3?'bronze':stat?.rank&&stat.rank<=10?'top10':null):null;
+    if(!isIdol&&p.lastRankAward!==newRankAward){
+      if(newRankAward)p.ring='rank-auto';
+      p.lastRankAward=newRankAward;save();
+    }
     const oshiCount=isIdol?Object.entries(state.profiles).filter(([id,x])=>role(account(id))==='fan'&&Array.isArray(x.oshiIds)&&x.oshiIds.includes(String(u.displayName||'').toLowerCase())).length:0;
     const equippedRing=p.ring||'classic';
-    return {id:uid,displayName:u.displayName,handle:p.handle,verifiedIdol:isIdol,oshiCount,oshiIds:p.oshiIds||[],idolBorderColor:p.idolBorderColor||'#F4A1C8',rankBorder:!isIdol?(stat?.rank===1?'gold':stat?.rank===2?'silver':stat?.rank===3?'bronze':stat?.rank&&stat.rank<=10?'top10':null):null,bio:p.bio,avatarUrl:p.avatarUrl||null,ring:equippedRing,unlockedRings:u.state?.unlockedRings||['classic'],vipLevel:u.state?.vipLevel||'Starter',followers,following,postsCount:state.posts.filter(post=>post.authorId===uid&&!post.hidden).length,fanXP:Math.max(0,p.xp||0),rank:stat?.rank||null,tier:stat?.tier||'Fan',fansite:approvedFansite(uid),isFollowing:Boolean(viewerId&&(state.follows[viewerId]||[]).includes(uid))};
+    return {id:uid,displayName:u.displayName,handle:p.handle,verifiedIdol:isIdol,oshiCount,oshiIds:p.oshiIds||[],idolBorderColor:p.idolBorderColor||'#F4A1C8',rankBorder:newRankAward,bio:p.bio,avatarUrl:p.avatarUrl||null,ring:equippedRing,unlockedRings:u.state?.unlockedRings||['classic'],vipLevel:u.state?.vipLevel||'Starter',followers,following,postsCount:state.posts.filter(post=>post.authorId===uid&&!post.hidden).length,fanXP:Math.max(0,p.xp||0),rank:stat?.rank||null,tier:stat?.tier||'Fan',fansite:approvedFansite(uid),isFollowing:Boolean(viewerId&&(state.follows[viewerId]||[]).includes(uid))};
   }
   function info(user){
     const uid=user?.id||null,ranking=ranks();
