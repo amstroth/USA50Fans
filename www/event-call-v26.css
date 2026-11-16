@@ -1,0 +1,54 @@
+/* New Events, Streaming and Fancall studio */
+.top-actions [data-go="events"],.bottom-nav [data-go="events"],.quick-action[data-go="events"]{position:relative}
+.usa50-events-alert{
+ position:absolute;right:3px;top:1px;width:9px;height:9px;
+ display:block;border-radius:50%;background:#E63A84;
+ border:2px solid #fff;box-shadow:0 0 0 1px #c73c8790;
+ pointer-events:none;z-index:6;
+}
+.usa50-events-alert[hidden]{display:none!important}
+.usa50-events-extended{display:grid;gap:14px;margin:25px 0 40px}
+.usa50-heading-mini{margin:18px 0 4px}
+.usa50-heading-mini h2{font-size:clamp(22px,4vw,30px);color:#674481;margin:3px 0}
+.usa50-event-tile,.usa50-stream-card{
+ display:flex;flex-direction:column;gap:9px;padding:17px;
+ border:1px solid #ffffffbd;background:#ffffff90;border-radius:20px;
+ color:#654779;min-width:0;
+}
+.usa50-event-tile h3,.usa50-stream-card h3{font-size:18px;margin:4px 0}
+.usa50-event-tile p{font-size:13px;line-height:1.5;color:#795c88}
+.usa50-event-tile small,.usa50-stream-card small{font-size:11px;color:#8a7696}
+.usa50-event-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.usa50-event-actions a.btn{display:inline-flex;align-items:center;text-decoration:none}
+.usa50-price-tag{background:#f6e1ef;color:#9b558e;padding:7px 10px;border-radius:12px;font-size:12px;font-weight:750}
+.usa50-broadcast-admin{display:grid;gap:12px}
+.usa50-broadcast-admin form{display:grid;gap:11px}
+.usa50-broadcast-admin .form-grid label{display:grid;gap:5px}
+.usa50-fineprint{font-size:12px;color:#8b7099;line-height:1.5}
+.usa50-stream-embed{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border:1px solid #ead2f3;border-radius:16px;background:#231829}
+.usa50-stream-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.usa50-stream-placeholder{width:100%;min-height:180px;aspect-ratio:16/9;display:grid;place-content:center;gap:7px;text-align:center;
+ background:linear-gradient(120deg,#d6c6e9,#f7dcec);border:1px solid #fff;border-radius:16px;color:#7a5396}
+.usa50-stream-placeholder span{font-size:40px}
+.usa50-stream-secret{white-space:pre-wrap;word-break:break-all;font-size:11px;background:#ece3f2;border-radius:9px;padding:12px}
+.usa50-rtc-panel{margin:20px 0 16px;border-radius:22px;border:1px solid #fff9;padding:15px;background:linear-gradient(130deg,#f4e9fa,#e8d9f3);display:grid;gap:14px}
+.usa50-rtc-panel h3{font-size:20px;margin-top:6px;color:#6c427e}
+.usa50-rtc-video-layout{display:grid;grid-template-columns:3fr 1fr;align-items:start;gap:10px}
+.usa50-rtc-remote{min-height:220px;background:#1a1425;color:#eee0ff;border-radius:18px;overflow:hidden;display:grid;gap:5px;position:relative}
+.usa50-rtc-remote>p{padding:25px;text-align:center;align-self:center;line-height:1.6}
+.usa50-rtc-peer{min-height:220px;position:relative}
+.usa50-rtc-peer video{display:block;width:100%;height:100%;min-height:220px;object-fit:cover;background:#110a19}
+.usa50-rtc-peer small{position:absolute;bottom:7px;left:8px;color:#fff;background:#20152a9e;border-radius:9px;padding:4px 9px}
+.usa50-rtc-peer:has(video[srcObject])~p{display:none}
+.usa50-rtc-self{background:#251a2e;color:#fff;min-height:125px;border-radius:15px;overflow:hidden;position:relative;align-self:start}
+.usa50-rtc-self video{display:block;width:100%;min-height:125px;aspect-ratio:3/4;object-fit:cover}
+.usa50-rtc-self small{position:absolute;bottom:4px;left:4px;background:#21172e80;padding:4px;border-radius:8px;font-size:10px}
+.usa50-rtc-status{color:#76548c;font-size:12px;line-height:1.5}
+.usa50-rtc-controls{gap:7px}
+@media(max-width:650px){
+ .usa50-rtc-panel{padding:10px}
+ .usa50-rtc-video-layout{grid-template-columns:minmax(0,1fr) 110px;gap:6px}
+ .usa50-rtc-remote,.usa50-rtc-peer,.usa50-rtc-peer video{min-height:190px}
+ .usa50-rtc-self,.usa50-rtc-self video{min-height:100px}
+ .usa50-event-tile{padding:13px}
+}
