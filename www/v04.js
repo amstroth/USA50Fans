@@ -8,7 +8,8 @@
   const oldDrops=dropsScreen;
   dropsScreen=function(){
     let page=oldDrops();
-    const button=`<button class="btn ${store.me?.state?.stars>=3000?'':'disabled-state'}" data-action="pull10" ${store.me?.state?.stars>=3000?'':'disabled'}>✦ 3,000 STARS · Open ×10</button>`;
+    const tenCost=Number(store?.economy?.tenPullStars||2700);
+    const button=`<button class="btn ${store.me?.state?.stars>=tenCost?'':'disabled-state'}" data-action="pull10" ${store.me?.state?.stars>=tenCost?'':'disabled'}>✦ ${cash(tenCost)} STARS · Open ×10 (Save 10%)</button>`;
     page=page.replace(/(<button class="btn secondary" data-action="pull-free"[^>]*>.*?<\/button>)/,`$1${button}`);
     return page.replace("Rarity probabilities","Rarity probabilities · Single or 10-pull");
   };
