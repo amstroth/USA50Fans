@@ -212,7 +212,7 @@ function updateDiaryPreview(){
  const form=document.querySelector('#diary-entry-form');if(!form)return;
  const f=new FormData(form);
  const stickers=window.USA50DiaryLayout?.getStickerList()||[...form.querySelectorAll('.diary-sticker-pick.selected')].map(x=>x.dataset.value);
- const item={number:0,author:store.me?.displayName||'USA50 Idol',publishedAt:new Date().toISOString(),text:f.get('text')||'Your diary preview…',layout:f.get('layout'),paper:f.get('paper'),lineColor:f.get('lineColor'),textColor:f.get('textColor'),stickers,photos:[]};
+ const item={number:0,author:store.me?.displayName||'USA50 Idol',publishedAt:new Date().toISOString(),text:f.get('text')||'Your diary preview…',layout:f.get('layout'),paper:f.get('paper'),lineColor:f.get('lineColor'),textColor:f.get('textColor'),stickers:window.USA50DiaryLayout?[]:stickers,photos:[]};
  const area=document.querySelector('#diary-live-preview');if(area)area.innerHTML=diaryMarkup(item);
  window.USA50DiaryLayout?.sync();
 }
