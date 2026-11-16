@@ -211,7 +211,7 @@ function diaryNewModal(){
 function updateDiaryPreview(){
  const form=document.querySelector('#diary-entry-form');if(!form)return;
  const f=new FormData(form);
- const stickers=[...form.querySelectorAll('.diary-sticker-pick.selected')].map(x=>x.dataset.value);
+ const stickers=window.USA50DiaryLayout?.getStickerList()||[...form.querySelectorAll('.diary-sticker-pick.selected')].map(x=>x.dataset.value);
  const item={number:0,author:store.me?.displayName||'USA50 Idol',publishedAt:new Date().toISOString(),text:f.get('text')||'Your diary preview…',layout:f.get('layout'),paper:f.get('paper'),lineColor:f.get('lineColor'),textColor:f.get('textColor'),stickers,photos:[]};
  const area=document.querySelector('#diary-live-preview');if(area)area.innerHTML=diaryMarkup(item);
  window.USA50DiaryLayout?.sync();
@@ -373,7 +373,7 @@ submitForm=async function(form){
  }
  if(form.id!=='diary-entry-form')return previousDiarySubmit(form);
  const fd=new FormData(form);
- const stickers=[...form.querySelectorAll('.diary-sticker-pick.selected')].map(x=>x.dataset.value);
+ const stickers=window.USA50DiaryLayout?.getStickerList()||[...form.querySelectorAll('.diary-sticker-pick.selected')].map(x=>x.dataset.value);
  const data={text:String(fd.get('text')||''),layout:fd.get('layout'),paper:fd.get('paper'),lineColor:fd.get('lineColor'),textColor:fd.get('textColor'),stickers,photos:diaryPhotos,placedItems:window.USA50DiaryLayout?.export()||[]};
  await request('/api/diary/publish',{method:'POST',body:JSON.stringify(data)});
  hideModal();diaryPhotos=[];window.USA50DiaryLayout?.reset();await refresh();toast('Diary Entry published! ♡');
