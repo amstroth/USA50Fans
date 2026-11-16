@@ -174,7 +174,7 @@ async function api(req,res,url){
   const free=source!=='stars',cost=PACK_COST;
   if(free?(u.state.pullPoints||0)<cost:(u.state.stars||0)<cost)return {error:'Insufficient demo '+(free?'Pull Points':'STARS')+'.'};
   if(free)u.state.pullPoints-=cost;else u.state.stars-=cost;
-  const result=gacha.rollRewards({u,count:1,free,drawCard:()=>cardForRarity(drawRarity())});
+  const result=gacha.rollRewards({u,count:1,free,drawCard:()=>cardForRarity(drawRarity()),ticketPool:['arielle']});
   const guaranteed=[];
   if(!free){
    u.state.paidPulls=(u.state.paidPulls||0)+1;
@@ -191,7 +191,7 @@ async function api(req,res,url){
  if(ep==='/api/cards/pull10'){
   if((u.state.stars||0)<TEN_PULL_COST)return fail(res,400,'You need '+TEN_PULL_COST.toLocaleString('en-US')+' demo STARS for ten draws.');
   u.state.stars-=TEN_PULL_COST;
-  const result=gacha.rollRewards({u,count:10,free:false,drawCard:()=>cardForRarity(drawRarity())});
+  const result=gacha.rollRewards({u,count:10,free:false,drawCard:()=>cardForRarity(drawRarity()),ticketPool:['arielle']});
   const guaranteed=[];
   for(let i=0;i<10;i++){
    u.state.paidPulls=(u.state.paidPulls||0)+1;
