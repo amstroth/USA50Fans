@@ -4,6 +4,7 @@ COPY package.json ./
 RUN npm install --omit=dev --ignore-scripts --no-audit --no-fund
 COPY server.js ./
 COPY fancall-lottery.js ./
+COPY economy-pricing.js ./
 COPY role-features.js ./
 COPY social-hub.js ./
 COPY official-diary.js ./
@@ -22,7 +23,7 @@ RUN test -s www/vendor/three.module.js && test -s www/vendor/three.core.js \
  && node --check www/vendor/three.module.js \
  && node --check www/vendor/three.core.js
 # Fail the deployment if Card Studio has a JavaScript parsing error.
-RUN node --check server.js && node --check fancall-lottery.js && node --check social-hub.js && node --check card-studio.js && node --check www/fancall-social-v17.js && node --check www/social-profile-v16.js && node --check official-auto-sync.js && node -e "require('./official-auto-sync.js')" && node --check official-diary.js && node --check www/diary-social.js && node --check www/studio.js && node --check www/idol-studio-v10.js && node --check www/dream.js && node --check role-features.js
+RUN node --check server.js && node --check fancall-lottery.js && node --check economy-pricing.js && node --check social-hub.js && node --check card-studio.js && node --check www/fancall-social-v17.js && node --check www/economy-v19.js && node --check www/social-profile-v16.js && node --check official-auto-sync.js && node -e "require('./official-auto-sync.js')" && node --check official-diary.js && node --check www/diary-social.js && node --check www/studio.js && node --check www/idol-studio-v10.js && node --check www/dream.js && node --check role-features.js
 ENV NODE_ENV=production
 EXPOSE 3000
 CMD ["node", "server.js"]
