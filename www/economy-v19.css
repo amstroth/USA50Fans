@@ -1,0 +1,18 @@
+/* USA50 STAR shop development catalog */
+.usa50-starshop{margin:0 0 25px;padding:18px;border:1px solid rgba(237,211,249,.9);border-radius:23px;background:linear-gradient(140deg,rgba(245,224,251,.65),rgba(255,246,255,.5))}
+.usa50-starshop-heading{margin-bottom:14px}
+.usa50-starshop-heading h2{font-size:29px}
+.usa50-starshop-offer{padding:13px 15px;border-radius:16px;background:rgba(252,243,255,.85);border:1px solid white;margin-bottom:16px;color:#73508e}
+.usa50-starshop-offer p{font-size:12px;margin-top:5px;line-height:1.45}
+.usa50-starshop-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.usa50-starshop-pack{min-width:0;border:1px solid #fff;border-radius:18px;background:linear-gradient(135deg,#f9ecff,#edd2f3);color:#664280;box-shadow:0 4px 12px #7b54a31a;padding:13px 6px;display:flex;align-items:center;flex-direction:column;gap:5px;text-align:center}
+.usa50-starshop-pack>strong{font-size:12px}
+.usa50-starshop-pack>b{font-size:12px}
+.usa50-starshop-pack>small{font-size:10px;line-height:1.3;min-height:26px;color:#935aa8}
+.usa50-starshop-spark{font-size:29px;color:#af71d1}
+.usa50-starshop-price{padding:8px 12px;border-radius:50px;background:#fff9;font-size:13px;font-weight:800;color:#8b50b0;margin-top:auto}
+.usa50-starshop-note{font-size:12px;line-height:1.5;color:#7e6690;margin-top:14px}
+.usa50-pack-quote{text-align:center;display:grid;justify-items:center;gap:5px;margin-bottom:18px}
+.usa50-pack-quote .usa50-starshop-spark{font-size:56px}
+@media(max-width:750px){.usa50-starshop-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.usa50-starshop{padding:14px 10px}}
+@media(max-width:420px){.usa50-starshop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.usa50-starshop-pack{min-height:150px}}
