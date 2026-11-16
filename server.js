@@ -17,7 +17,9 @@ const SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('he
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const IS_PROD = process.env.NODE_ENV === 'production';
 const RARITY_WEIGHTS = { R: 55, SR: 27, SSR: 12, MR: 5, UR: 1 };
-const PACK_COST = 300;
+const economy=require('./economy-pricing.js');
+const PACK_COST = economy.SINGLE_PULL;
+const TEN_PULL_COST = economy.TEN_PULL;
 const HARD_PITY = 30;
 const PHYSICAL_COOLDOWN = 90 * 24 * 60 * 60 * 1000;
 const ALBUM_ID = 'arielle-true-love';
@@ -82,7 +84,7 @@ async function api(req,res,url){
  if(method==='GET'&&url.pathname.startsWith('/api/official/thumbnail/'))
    return officialDiary.photoThumbnail(req,res,url.pathname.slice('/api/official/thumbnail/'.length));
  if(method==='GET'&&url.pathname==='/api/health')return json(res,200,{ok:true,service:'USA50 web-first development preview',persistence:process.env.DATA_DIR?'configured volume/local directory':'local directory (Railway ephemeral unless DATA_DIR points at volume)'});
- if(method==='GET'&&url.pathname==='/api/bootstrap'){const u=userFrom(req);return json(res,200,{...publicState(u),messaging:roleFeatures.info(u),social:socialHub.info(u),officialDiary:officialDiary.info(u),fancalls:fancalls.info(u)});}
+ if(method==='GET'&&url.pathname==='/api/bootstrap'){const u=userFrom(req);return json(res,200,{...publicState(u),messaging:roleFeatures.info(u),social:socialHub.info(u),officialDiary:officialDiary.info(u),fancalls:fancalls.info(u),economy:economy.info(u)});}
  if(method==='GET'&&url.pathname==='/api/social/resolve'){const id=url.searchParams.get('postId')||'';if(id.length>128)return fail(res,400,'Invalid post ID.');const result=await socialHub.resolveEmbed(id);return result?json(res,200,result):fail(res,404,'Post not found.');}
  if(method==='GET'&&url.pathname==='/api/me')return json(res,200,{me:userFrom(req)?cleanUser(userFrom(req)):null});
  if(method==='GET'&&url.pathname==='/api/admin/overview'){
@@ -109,6 +111,7 @@ async function api(req,res,url){
  if(await roleFeatures.handle(req,res,ep,data))return;
  if(await socialHub.handlePost(req,res,ep,data))return;
  if(fancalls.respond(req,res,ep,data))return;
+ if(economy.handlePost(req,res,ep,data,{userFrom,save,json,fail}))return;
  if(ep==='/api/auth/register'){
    if(rateLimit(req))return fail(res,429,'Please try again shortly.');
    let email=bodyText(data.email,160).toLowerCase(),displayName=bodyText(data.displayName,36),password=String(data.password||'');
@@ -168,10 +171,11 @@ async function api(req,res,url){
  }
  function grantPullRewards(u, source='stars'){ if(source==='stars'){ if(u.state.stars<PACK_COST)return {error:'Not enough demo STARS. Refill your test balance in My Page.'}; u.state.stars-=PACK_COST; u.state.paidPulls++; } else { if((u.state.pullPoints||0)<PACK_COST)return {error:'Not enough Pull Points for a free pull.'}; u.state.pullPoints-=PACK_COST; } let rarity=drawRarity(),c=cardForRarity(rarity); u.state.owned[c.id]=(u.state.owned[c.id]||0)+1; u.state.fancallTickets=(u.state.fancallTickets||0)+2; u.state.pullPoints=(u.state.pullPoints||0)+100; let guaranteed=[]; if(source==='stars' && u.state.paidPulls===HARD_PITY && !u.state.pityAchieved){ for(let x of cards)if(!ownCard(u,x.id)){u.state.owned[x.id]=1;guaranteed.push(x.id);} u.state.pityAchieved=true; } const ringsUnlocked=awardProfileRing(u);save(); return {ringsUnlocked,card:c,guaranteed,stars:u.state.stars,pullPoints:u.state.pullPoints,fancallTickets:u.state.fancallTickets,fancallTicketsAwarded:2,pullPointsAwarded:100,paidPulls:u.state.paidPulls,albumComplete:complete(u),pityAchieved:u.state.pityAchieved}; }
  if(ep==='/api/cards/pull10'){
-   if(u.state.stars<PACK_COST*10)return fail(res,400,'You need 3,000 demo STARS for ten pulls.');
+   if(u.state.stars<TEN_PULL_COST)return fail(res,400,'You need '+TEN_PULL_COST.toLocaleString('en-US')+' demo STARS for ten pulls.');
    const pulled=[];let guaranteed=[];
+   u.state.stars-=TEN_PULL_COST;
    for(let i=0;i<10;i++){
-     u.state.stars-=PACK_COST;u.state.paidPulls++;
+     u.state.paidPulls++;
      const card=cardForRarity(drawRarity());u.state.owned[card.id]=(u.state.owned[card.id]||0)+1;pulled.push(card);
      if(u.state.paidPulls===HARD_PITY&&!u.state.pityAchieved){for(const missing of cards){if(!ownCard(u,missing.id)){u.state.owned[missing.id]=1;guaranteed.push(missing.id);}}u.state.pityAchieved=true;}
    }
