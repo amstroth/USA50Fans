@@ -3,14 +3,12 @@ on:
   push:
     branches: [main]
     paths:
-      - server.js
+      - '*.js'
       - Dockerfile
-      - role-features.js
-      - social-hub.js
-      - card-studio.js
-      - www/**
+      - 'www/**'
       - package.json
-      - tests/**
+      - package-lock.json
+      - 'tests/**'
       - .github/workflows/ci.yml
   workflow_dispatch:
 permissions:
