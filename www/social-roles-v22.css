@@ -71,3 +71,45 @@
 .social-feed .usa50-feed-silver-avatar{border:3px solid #b1baca!important}
 .social-feed .usa50-feed-bronze-avatar{border:3px solid #c58a68!important}
 .social-feed .usa50-feed-top-avatar{border:3px solid #a885d6!important}
+
+/* Beta regression: on desktop the idol Messages page MUST retain the left
+   navigation. The prior generic .usa50-idol-messages-active .sidebar rule
+   hid the only way to return to Home/Shop/Collection. Keep edge-to-edge
+   messages within the remaining content panel, not across the sidebar. */
+@media (min-width:781px){
+  .app-shell.usa50-idol-messages-active{
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:stretch!important;
+    max-width:1440px!important;
+  }
+  .app-shell.usa50-idol-messages-active > .sidebar{
+    display:flex!important;
+    width:254px!important;
+    flex:0 0 254px!important;
+    position:sticky!important;
+    top:0!important;
+    height:100dvh!important;
+    visibility:visible!important;
+  }
+  .app-shell.usa50-idol-messages-active > .content-area{
+    display:block!important;
+    flex:1 1 0%!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:none!important;
+    margin:0!important;
+  }
+  .app-shell.usa50-idol-messages-active > .content-area .screen{
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    margin:0!important;
+  }
+}
+@media (min-width:781px) and (max-width:1100px){
+  .app-shell.usa50-idol-messages-active > .sidebar{
+    width:215px!important;
+    flex-basis:215px!important;
+  }
+}
