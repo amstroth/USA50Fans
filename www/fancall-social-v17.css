@@ -203,3 +203,9 @@
  }
  .bottom-nav .usa50-nav-compose svg{width:24px!important;height:24px!important}
 }
+
+/* Use the actual album card art in shop catalog thumbnails. */
+.store-art:has(.photocard){font-size:initial!important;text-shadow:none!important;padding:12px!important}
+.store-art .photocard{width:min(115px,76%)!important;margin:auto!important;max-width:115px!important}
+.store-art .photocard .art{width:94%!important;height:96%!important;max-height:none!important;max-width:none!important;object-fit:cover!important}
+.store-art .photocard .frame{max-height:none!important;max-width:none!important;height:100%!important;width:100%!important}
