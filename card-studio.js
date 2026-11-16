@@ -314,7 +314,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     u.state.fancallTickets = Number(u.state.fancallTickets||0);
     const count=endpoint==='/api/cards/pull10'?10:1;
     const free=endpoint==='/api/cards/pull-points';
-    const cost=count*packCost;
+    const cost=free?count*packCost:(count===10?require('./economy-pricing.js').TEN_PULL:count*packCost);
     if(free?(u.state.pullPoints||0)<cost:(u.state.stars||0)<cost)return fail(res,400,'Insufficient demo '+(free?'Pull Points':'STARS')+'.'),true;
     if(free)u.state.pullPoints-=cost;else u.state.stars-=cost;
     const progress=u.state.packProgress||(u.state.packProgress={});
