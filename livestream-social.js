@@ -6,7 +6,7 @@ const crypto=require('node:crypto');
 module.exports=function makeLiveSocial({db,save,id,now,userFrom,json,fail,expandHosts}){
  db.liveInteraction ||= {messages:{},gifts:{},chatCooldowns:{},giftCooldowns:{},earnings:{},settlements:[],lastSettlementAt:now()};
  const state=db.liveInteraction;
- state.messages ||= {};state.gifts ||= {};state.chatCooldowns ||= {};state.giftCooldowns ||= {};state.earnings ||= [];state.settlements ||= [];
+ state.messages ||= {};state.gifts ||= {};state.chatCooldowns ||= {};state.giftCooldowns ||= {};state.earnings ||= {};state.settlements ||= [];
  const gifts=[
   {id:'spark',name:'Sparkle',emoji:'✨',stars:25,tts:false},
   {id:'ribbon',name:'Ribbon',emoji:'🎀',stars:75,tts:false},
@@ -51,7 +51,8 @@ module.exports=function makeLiveSocial({db,save,id,now,userFrom,json,fail,expand
   if(entry.status!=='pending')return false;
   const user=db.users[entry.authorId];if(user){user.state ||= {};user.state.stars=Number(user.state.stars||0)+entry.stars;}
   entry.status='refunded';entry.refundReason=reason;entry.resolvedAt=now();
-  const list=getMessages(streamById(entry.streamId));
+  const current=streamById(entry.streamId);
+  const list=current?getMessages(current):[];
   const message=list.find(m=>m.id===entry.messageId);
   if(message)message.hidden=true;
   return true;
