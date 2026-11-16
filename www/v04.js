@@ -2,7 +2,7 @@
   "use strict";
   const oldBottomNav=bottomNav;
   bottomNav=function(){
-    const tabs=[["home","Home","home"],["collection","Collection","layers"],["messages","Messages","message"],["community","Social","users"],["events","Events","calendar"],["profile","My Page","user"]];
+    const tabs=[["home","Home","home"],["collection","Collection","layers"],["messages","Messages","message"],["community","Social","users"],["shop","Shop","bag"],["profile","My Page","user"]];
     return `<nav class="bottom-nav">${tabs.map(([key,name,ic])=>`<button class="bottom-link ${view===key?'active':''} ${key==='messages'?'messages-center':''}" data-go="${key}" aria-label="${name}">${icon(ic)}<span>${name}</span></button>`).join("")}</nav>`;
   };
   const oldDrops=dropsScreen;
@@ -10,7 +10,7 @@
     let page=oldDrops();
     const tenCost=Number(store?.economy?.tenPullStars||2700);
     const button=`<button class="btn ${store.me?.state?.stars>=tenCost?'':'disabled-state'}" data-action="pull10" ${store.me?.state?.stars>=tenCost?'':'disabled'}>✦ ${cash(tenCost)} STARS · Open ×10 (Save 10%)</button>`;
-    page=page.replace(/(<button class="btn secondary" data-action="pull-free"[^>]*>.*?<\/button>)/,`$1${button}`);
+    page=page.replace(/(<button class="btn secondary" data-action="pull-free"[^>]*>.*?<\/button>)/,`$1<div class="usa50-ten-pull-actions">${button}<button class="btn secondary" data-go="shop">✦ Top Up STARS</button></div>`);
     return page.replace("Rarity probabilities","Rarity probabilities · Single or 10-pull");
   };
   let pendingRewards=null;
