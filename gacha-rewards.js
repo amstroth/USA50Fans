@@ -14,9 +14,9 @@ function ticketPoolForPack(pack){
  const solo=IDOLS.find(([id,name])=>id===member||name.toLowerCase()===member);
  if(solo)return [solo[0]];
  const group=[pack.subgroup,pack.team,pack.member,pack.title].map(x=>String(x||'').toLowerCase());
- if(group.some(x=>/nyc\\s*50/.test(x)))return NYC50.slice();
- if(group.some(x=>/la\\s*50/.test(x)))return LA50.slice();
- if(group.some(x=>/usa\\s*50/.test(x)))return ALL_IDOLS.slice();
+ if(group.some(x=>/nyc\s*50/.test(x)))return NYC50.slice();
+ if(group.some(x=>/la\s*50/.test(x)))return LA50.slice();
+ if(group.some(x=>/usa\s*50/.test(x)))return ALL_IDOLS.slice();
  return [];
 }
 const VIP_THRESHOLDS=[0,150,400,800,1400,2200,3200,4500,6100,8000];
