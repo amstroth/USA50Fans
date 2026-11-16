@@ -38,7 +38,7 @@
  function socialPost(p,compact=false){
    const author=getPerson(p.authorId),isMine=store.me?.id===p.authorId,isAdmin=store.me?.role==='admin';
    if(!author)return '';
-   const code='<button class="social-handle" data-action="social-profile" data-value="'+e(author.id)+'">@'+e(author.handle)+'</button>'+(author.verifiedIdol?'<span class="usa50-idol-verified" title="Verified USA50 idol" aria-label="Verified USA50 idol">★<i>✓</i></span>':'');
+   const code='<button class="social-handle" data-action="social-profile" data-value="'+e(author.id)+'">@'+e(author.handle)+'</button>'+((author.verifiedIdol||author.verifiedStaff)?(window.USA50VerifiedBadge?window.USA50VerifiedBadge(author):'<span class="usa50-idol-verified">★</span>'):'');
    const mark=author.fansite?'<span class="social-mini-badge">Fansite ✓</span>':'';
    return '<article class="glass social-post" id="socialpost-'+e(p.id)+'">'+
      '<div class="social-post-head"><div class="social-avatar '+(author.verifiedIdol?'usa50-feed-idol-avatar':author.rank===1?'usa50-feed-gold-avatar':author.rank===2?'usa50-feed-silver-avatar':author.rank===3?'usa50-feed-bronze-avatar':author.rank&&author.rank<=10?'usa50-feed-top-avatar':'')+'">'+(author.avatarUrl?'<img src="'+e(author.avatarUrl)+'" alt="">':e(author.displayName.slice(0,1).toUpperCase()))+'</div><div class="social-post-author">'+code+'<small>'+e(labelDate(p.createdAt))+'</small></div>'+mark+'</div>'+
@@ -176,7 +176,16 @@
    if(name==='social-edit-bio'){
      const person=getSocial().myProfile;return showModal('Edit profile bio','<form id="social-bio-form" class="form-grid"><div class="form-field"><label>About you (180 characters)</label><textarea name="bio" maxlength="180">'+e(person?.bio||'')+'</textarea></div><button class="btn" type="submit">Save bio</button></form>');
    }
-   if(name==='social-vote'){
+   if(name==='usa50-idol-heart'){
+      if(store?.me?.role!=='idol')return toast('Only verified idols can heart fan posts.');
+      const postId=String(node.dataset.value||'');
+      if(!postId)return toast('Post unavailable.');
+      const result=await request('/api/social/heart',{method:'POST',body:JSON.stringify({postId})});
+      await refresh();
+      toast(result.alreadyHearted?'You have already hearted this post.':'Heart sent! The poster earned +150 Fan XP.');
+      return;
+    }
+    if(name==='social-vote'){
      if(!store.me)return toast('Sign in to vote on fan posts.');
      const desired=Number(node.dataset.vote),postId=node.dataset.value;
      await request('/api/social/vote',{method:'POST',body:JSON.stringify({postId,vote:desired})});
