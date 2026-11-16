@@ -204,7 +204,7 @@ function diaryNewModal(){
  '<label>Stickers / emoji (choose several)</label><div class="diary-sticker-options">'+['♡','✦','☆','☁️','🌷','🐰','🎀','💌','🫧','🦋','🍒','⭐','🪼','🍀','🦄','✨','💗','🌸'].map(s=>'<button type="button" class="diary-sticker-pick" data-action="diary-sticker" data-value="'+s+'">'+s+'</button>').join('')+'</div>'+
  '<label>Polaroid photos <small>Up to 4 pictures, 700 KB each after resizing</small><input type="file" name="photos" id="diary-photo-picker" accept="image/*" multiple></label>'+
  '<div id="diary-photo-preview" class="diary-upload-preview"></div>'+
- '<div id="diary-live-preview" class="diary-preview"></div>'+
+ '<div id="diary-live-preview" class="diary-preview diary-layout-editor" aria-label="Editable diary page layout"></div>'+
  '<button type="submit" class="btn">Publish Diary Entry ✦</button></form>');
  updateDiaryPreview();
 }
