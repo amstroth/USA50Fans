@@ -5,7 +5,7 @@
  * Uses the existing single-process JSON store; migrate counters/votes to transactional
  * PostgreSQL tables before accepting real-money or contest entries.
  */
-module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom}){
+module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,notify=()=>{},rankNotice=()=>{}}){
   if(!db.social)db.social={posts:[],profiles:{},votes:{},follows:{},reports:[],bans:{},ticketMilestones:{},dailyCredits:{}};
   const state=db.social;
   for(const k of ['posts','profiles','votes','follows','reports','bans','ticketMilestones','dailyCredits','idolHearts','notifications']){
@@ -46,14 +46,16 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
       return {id:uid,xp:Math.max(0,Number(p.xp||0)),posts:published.length,netVotes:votes};
     });
     arr.sort((a,b)=>b.xp-a.xp||b.netVotes-a.netVotes||a.id.localeCompare(b.id));
-    return arr.slice(0,100).map((x,i)=>({...x,rank:i+1,tier:tier(i+1)}));
+    const ranked=arr.slice(0,100).map((x,i)=>({...x,rank:i+1,tier:tier(i+1)}));
+    for(const person of ranked)rankNotice(person.id,person.rank);
+    return ranked;
   }
   function publicProfile(uid,viewerId,ranking){
     const u=account(uid),p=profileFor(uid);if(!u||!p)return null;
     const followers=Object.values(state.follows).filter(ids=>Array.isArray(ids)&&ids.includes(uid)).length;
     const following=(state.follows[uid]||[]).length;
     const stat=ranking.find(x=>x.id===uid);
-    const isIdol=role(u)==='idol';
+    const isIdol=role(u)==='idol';const isStaff=['admin','management','staff'].includes(role(u));
     const newRankAward=!isIdol?(stat?.rank===1?'gold':stat?.rank===2?'silver':stat?.rank===3?'bronze':stat?.rank&&stat.rank<=10?'top10':null):null;
     if(!isIdol&&p.lastRankAward!==newRankAward){
       if(newRankAward)p.ring='rank-auto';
@@ -61,7 +63,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
     }
     const oshiCount=isIdol?Object.entries(state.profiles).filter(([id,x])=>role(account(id))==='fan'&&Array.isArray(x.oshiIds)&&x.oshiIds.includes(String(u.displayName||'').toLowerCase())).length:0;
     const equippedRing=p.ring||'classic';
-    return {id:uid,displayName:u.displayName,handle:p.handle,verifiedIdol:isIdol,oshiCount,oshiIds:p.oshiIds||[],idolBorderColor:p.idolBorderColor||'#F4A1C8',rankBorder:newRankAward,bio:p.bio,avatarUrl:p.avatarUrl||null,ring:equippedRing,unlockedRings:u.state?.unlockedRings||['classic'],vipLevel:u.state?.vipLevel||'Starter',followers,following,postsCount:state.posts.filter(post=>post.authorId===uid&&!post.hidden).length,fanXP:Math.max(0,p.xp||0),rank:stat?.rank||null,tier:stat?.tier||'Fan',fansite:approvedFansite(uid),isFollowing:Boolean(viewerId&&(state.follows[viewerId]||[]).includes(uid))};
+    return {id:uid,displayName:u.displayName,handle:p.handle,verifiedIdol:isIdol,verifiedStaff:isStaff,oshiCount,oshiIds:p.oshiIds||[],idolBorderColor:p.idolBorderColor||'#E63A84',rankBorder:newRankAward,bio:p.bio,avatarUrl:p.avatarUrl||null,ring:equippedRing,unlockedRings:u.state?.unlockedRings||['classic'],vipLevel:u.state?.vipLevel||'Starter',followers,following,postsCount:state.posts.filter(post=>post.authorId===uid&&!post.hidden).length,fanXP:Math.max(0,p.xp||0),rank:stat?.rank||null,tier:stat?.tier||'Fan',fansite:approvedFansite(uid),isFollowing:Boolean(viewerId&&(state.follows[viewerId]||[]).includes(uid))};
   }
   function info(user){
     const uid=user?.id||null,ranking=ranks();
@@ -244,9 +246,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
       likes.push(u.id);
       const author=profileFor(post.authorId);
       if(author)author.xp=Math.max(0,Number(author.xp||0))+150;
-      const notes=state.notifications[post.authorId]||(state.notifications[post.authorId]=[]);
-      notes.push({id:id(),type:'idol-heart',postId:post.id,idolId:u.id,text:String(u.displayName)+' hearted your post! +150 Fan XP',createdAt:now(),read:false});
-      if(notes.length>100)notes.splice(0,notes.length-100);
+      notify(post.authorId,'idol-heart',String(u.displayName)+' hearted your post! +150 Fan XP',{postId:post.id,key:'idol-heart:'+post.id+':'+u.id});
       save();return json(res,200,{ok:true,fanXPAwarded:150}),true;
     }
     if(ep==='/api/social/notifications-read'){
