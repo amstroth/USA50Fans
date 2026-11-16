@@ -27,7 +27,7 @@ function eventCatalog(){
  (streams||'<p class="lead">No livestream is scheduled yet.</p>')+eventForm+streamForm+'</section>';
 }
 const priorEvents=eventsScreen;
-eventsScreen=function(){return priorEvents()+eventCatalog();};
+eventsScreen=function(){const page=priorEvents();const at=page.indexOf('<div class="glass panel"');return at>=0?page.slice(0,at)+eventCatalog()+page.slice(at):page+eventCatalog();};
 function updateEventDots(){
  const count=Number(liveData().newCount||0);
  for(const el of document.querySelectorAll('[data-go="events"]')){
