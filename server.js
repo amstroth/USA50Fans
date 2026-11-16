@@ -18,6 +18,7 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const IS_PROD = process.env.NODE_ENV === 'production';
 const RARITY_WEIGHTS = { R: 55, SR: 27, SSR: 12, MR: 5, UR: 1 };
 const economy=require('./economy-pricing.js');
+const gacha=require('./gacha-rewards.js');
 const PACK_COST = economy.SINGLE_PULL;
 const TEN_PULL_COST = economy.TEN_PULL;
 const HARD_PITY = 30;
@@ -67,7 +68,7 @@ function availableToList(u,cardId){let reserved=db.tradeListings.filter(t=>t.own
 function cardForRarity(r){let pool=cards.filter(c=>c.rarity===r);return pool[crypto.randomInt(pool.length)];}
 function drawRarity(){let n=crypto.randomInt(100),total=0;for(let [r,p] of Object.entries(RARITY_WEIGHTS)){total+=p;if(n<total)return r;}return 'R';}
 function now(){return new Date().toISOString();}
-function getProfileState(){return {stars:9000,pullPoints:300,fancallTickets:0,paidPulls:0,pityAchieved:false,owned:{'tl-01':2,'tl-02':1,'tl-06':1},physicalOrders:[],freePhysicalUsed:false,subscriberPreview:false,likedPosts:[],favoriteMembers:['arielle'],fansiteApplicationId:null,demoClaimCode:'USA50-DEMO-'+crypto.randomBytes(4).toString('hex').toUpperCase(),demoClaimed:false,dailyClaimed:{},recycleCoupons:0,recycleHistory:[],unlockedRings:['classic']};}
+function getProfileState(){return {stars:9000,pullPoints:300,fancallTickets:0,paidPulls:0,pityAchieved:false,owned:{'tl-01':2,'tl-02':1,'tl-06':1},physicalOrders:[],freePhysicalUsed:false,subscriberPreview:false,likedPosts:[],favoriteMembers:['arielle'],fansiteApplicationId:null,demoClaimCode:'USA50-DEMO-'+crypto.randomBytes(4).toString('hex').toUpperCase(),demoClaimed:false,dailyClaimed:{},recycleCoupons:0,recycleHistory:[],unlockedRings:['classic'],idolTickets:{},vipXP:0,vipLevel:'VIP1',merchCoupons:[]};}
 function resolveUser(id){let u=db.users[id];return u?u.displayName:'Fan';}
 function publicState(u){return {me:u?cleanUser(u):null,members,cards,albums:cardStudio.publicAlbums(),packCards:cardStudio.publicCardsByPack(),homeFeaturedCards:cardStudio.homeFeaturedCards(),rarities:RARITY_WEIGHTS,packCost:PACK_COST,hardPity:HARD_PITY,cooldownDays:90,posts:db.posts.slice().reverse().map(p=>({...p,likedCount:p.likedBy.length,likedBy:undefined,liked:u? p.likedBy.includes(u.id):false})),fansites:db.fansites.filter(f=>f.status==='approved').map(f=>({id:f.id,name:f.name,portfolioUrl:f.portfolioUrl,instagram:f.instagram,tiktok:f.tiktok,description:f.description,votes:Object.values(db.fansiteVotes).filter(id=>id===f.id).length})).sort((a,b)=>b.votes-a.votes),tradeListings:[],announcements:db.announcements.slice().reverse(),events:db.events};}
 const fancalls=require('./fancall-lottery.js')({db,save,id,now,json,fail,userFrom});
@@ -84,7 +85,7 @@ async function api(req,res,url){
  if(method==='GET'&&url.pathname.startsWith('/api/official/thumbnail/'))
    return officialDiary.photoThumbnail(req,res,url.pathname.slice('/api/official/thumbnail/'.length));
  if(method==='GET'&&url.pathname==='/api/health')return json(res,200,{ok:true,service:'USA50 web-first development preview',persistence:process.env.DATA_DIR?'configured volume/local directory':'local directory (Railway ephemeral unless DATA_DIR points at volume)'});
- if(method==='GET'&&url.pathname==='/api/bootstrap'){const u=userFrom(req);return json(res,200,{...publicState(u),messaging:roleFeatures.info(u),social:socialHub.info(u),officialDiary:officialDiary.info(u),fancalls:fancalls.info(u),economy:economy.info(u)});}
+ if(method==='GET'&&url.pathname==='/api/bootstrap'){const u=userFrom(req);return json(res,200,{...publicState(u),messaging:roleFeatures.info(u),social:socialHub.info(u),officialDiary:officialDiary.info(u),fancalls:fancalls.info(u),economy:economy.info(u),gacha:gacha.publicInfo(u)});}
  if(method==='GET'&&url.pathname==='/api/social/resolve'){const id=url.searchParams.get('postId')||'';if(id.length>128)return fail(res,400,'Invalid post ID.');const result=await socialHub.resolveEmbed(id);return result?json(res,200,result):fail(res,404,'Post not found.');}
  if(method==='GET'&&url.pathname==='/api/me')return json(res,200,{me:userFrom(req)?cleanUser(userFrom(req)):null});
  if(method==='GET'&&url.pathname==='/api/admin/overview'){
@@ -169,19 +170,39 @@ async function api(req,res,url){
    }
    return unlocked;
  }
- function grantPullRewards(u, source='stars'){ if(source==='stars'){ if(u.state.stars<PACK_COST)return {error:'Not enough demo STARS. Refill your test balance in My Page.'}; u.state.stars-=PACK_COST; u.state.paidPulls++; } else { if((u.state.pullPoints||0)<PACK_COST)return {error:'Not enough Pull Points for a free pull.'}; u.state.pullPoints-=PACK_COST; } let rarity=drawRarity(),c=cardForRarity(rarity); u.state.owned[c.id]=(u.state.owned[c.id]||0)+1; u.state.fancallTickets=(u.state.fancallTickets||0)+2; u.state.pullPoints=(u.state.pullPoints||0)+100; let guaranteed=[]; if(source==='stars' && u.state.paidPulls===HARD_PITY && !u.state.pityAchieved){ for(let x of cards)if(!ownCard(u,x.id)){u.state.owned[x.id]=1;guaranteed.push(x.id);} u.state.pityAchieved=true; } const ringsUnlocked=awardProfileRing(u);save(); return {ringsUnlocked,card:c,guaranteed,stars:u.state.stars,pullPoints:u.state.pullPoints,fancallTickets:u.state.fancallTickets,fancallTicketsAwarded:2,pullPointsAwarded:100,paidPulls:u.state.paidPulls,albumComplete:complete(u),pityAchieved:u.state.pityAchieved}; }
- if(ep==='/api/cards/pull10'){
-   if(u.state.stars<TEN_PULL_COST)return fail(res,400,'You need '+TEN_PULL_COST.toLocaleString('en-US')+' demo STARS for ten pulls.');
-   const pulled=[];let guaranteed=[];
-   u.state.stars-=TEN_PULL_COST;
-   for(let i=0;i<10;i++){
-     u.state.paidPulls++;
-     const card=cardForRarity(drawRarity());u.state.owned[card.id]=(u.state.owned[card.id]||0)+1;pulled.push(card);
-     if(u.state.paidPulls===HARD_PITY&&!u.state.pityAchieved){for(const missing of cards){if(!ownCard(u,missing.id)){u.state.owned[missing.id]=1;guaranteed.push(missing.id);}}u.state.pityAchieved=true;}
+ function grantPullRewards(u,source='stars'){
+  const free=source!=='stars',cost=PACK_COST;
+  if(free?(u.state.pullPoints||0)<cost:(u.state.stars||0)<cost)return {error:'Insufficient demo '+(free?'Pull Points':'STARS')+'.'};
+  if(free)u.state.pullPoints-=cost;else u.state.stars-=cost;
+  const result=gacha.rollRewards({u,count:1,free,drawCard:()=>cardForRarity(drawRarity())});
+  const guaranteed=[];
+  if(!free){
+   u.state.paidPulls=(u.state.paidPulls||0)+1;
+   if(u.state.paidPulls>=HARD_PITY&&!u.state.pityAchieved){
+    for(const missing of cards)if(!ownCard(u,missing.id)){u.state.owned[missing.id]=1;guaranteed.push(missing.id);}
+    u.state.pityAchieved=true;
    }
-   u.state.fancallTickets=(u.state.fancallTickets||0)+20;
-   u.state.pullPoints=(u.state.pullPoints||0)+1000;
-   const ringsUnlocked=awardProfileRing(u,10);save();return json(res,200,{ringsUnlocked,card:pulled[0],cards:pulled,guaranteed,stars:u.state.stars,paidPulls:u.state.paidPulls,fancallTickets:u.state.fancallTickets,pullPoints:u.state.pullPoints,fancallTicketsAwarded:20,pullPointsAwarded:1000,albumComplete:complete(u),pityAchieved:u.state.pityAchieved});
+  }
+  const ringsUnlocked=awardProfileRing(u,1);
+  save();
+  return {...result,stars:u.state.stars,guaranteed,ringsUnlocked,paidPulls:u.state.paidPulls,
+   albumComplete:complete(u),pityAchieved:u.state.pityAchieved};
+ }
+ if(ep==='/api/cards/pull10'){
+  if((u.state.stars||0)<TEN_PULL_COST)return fail(res,400,'You need '+TEN_PULL_COST.toLocaleString('en-US')+' demo STARS for ten draws.');
+  u.state.stars-=TEN_PULL_COST;
+  const result=gacha.rollRewards({u,count:10,free:false,drawCard:()=>cardForRarity(drawRarity())});
+  const guaranteed=[];
+  for(let i=0;i<10;i++){
+   u.state.paidPulls=(u.state.paidPulls||0)+1;
+   if(u.state.paidPulls>=HARD_PITY&&!u.state.pityAchieved){
+    for(const missing of cards)if(!ownCard(u,missing.id)){u.state.owned[missing.id]=1;guaranteed.push(missing.id);}
+    u.state.pityAchieved=true;
+   }
+  }
+  const ringsUnlocked=awardProfileRing(u,10);save();
+  return json(res,200,{...result,stars:u.state.stars,guaranteed,ringsUnlocked,paidPulls:u.state.paidPulls,
+   albumComplete:complete(u),pityAchieved:u.state.pityAchieved});
  }
  if(ep==='/api/cards/pull'){ const result=grantPullRewards(u,'stars'); if(result.error)return fail(res,400,result.error); return json(res,200,result); }
  if(ep==='/api/cards/pull-points'){ const result=grantPullRewards(u,'points'); if(result.error)return fail(res,400,result.error); return json(res,200,result); }
