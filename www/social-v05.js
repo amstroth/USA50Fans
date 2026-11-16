@@ -38,7 +38,7 @@
  function socialPost(p,compact=false){
    const author=getPerson(p.authorId),isMine=store.me?.id===p.authorId,isAdmin=store.me?.role==='admin';
    if(!author)return '';
-   const code='<button class="social-handle" data-action="social-profile" data-value="'+e(author.id)+'">@'+e(author.handle)+'</button>'+((author.verifiedIdol||author.verifiedStaff)?(window.USA50VerifiedBadge?window.USA50VerifiedBadge(author):'<span class="usa50-idol-verified">★</span>'):'');
+   const code='<span class="usa50-handle-verified"><button class="social-handle" data-action="social-profile" data-value="'+e(author.id)+'">@'+e(author.handle)+'</button>'+((author.verifiedIdol||author.verifiedStaff)?(window.USA50VerifiedBadge?window.USA50VerifiedBadge(author):'<span class="usa50-idol-verified">★</span>'):'')+'</span>';
    const mark=author.fansite?'<span class="social-mini-badge">Fansite ✓</span>':'';
    return '<article class="glass social-post" id="socialpost-'+e(p.id)+'">'+
      '<div class="social-post-head"><div class="social-avatar '+(author.verifiedIdol?'usa50-feed-idol-avatar':author.rank===1?'usa50-feed-gold-avatar':author.rank===2?'usa50-feed-silver-avatar':author.rank===3?'usa50-feed-bronze-avatar':author.rank&&author.rank<=10?'usa50-feed-top-avatar':'')+'">'+(author.avatarUrl?'<img src="'+e(author.avatarUrl)+'" alt="">':e(author.displayName.slice(0,1).toUpperCase()))+'</div><div class="social-post-author">'+code+'<small>'+e(labelDate(p.createdAt))+'</small></div>'+mark+'</div>'+
