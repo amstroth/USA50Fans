@@ -3,8 +3,8 @@
    Idol tickets are collectible counters only and never improve free fancall lottery odds. */
 const crypto=require('node:crypto');
 const IDOLS=[['arielle','Arielle'],['jaylene','Jaylene'],['kellie','Kellie'],['z','Z'],['michelle','Michelle'],['zoe','Zoe'],['miu','Miu']];
-const PAID_ODDS=Object.freeze({card:60,vipXP:17,pullPoints:12,idolTicket:8,merchCoupon:3});
-const FREE_ODDS=Object.freeze({card:75,vipXP:19,pullPoints:5,idolTicket:1,merchCoupon:0});
+const PAID_ODDS=Object.freeze({card:65,vipXP:16,pullPoints:10,idolTicket:6,merchCoupon:3});
+const FREE_ODDS=Object.freeze({card:60,vipXP:30,pullPoints:9,idolTicket:1,merchCoupon:0});
 const VIP_THRESHOLDS=[0,150,400,800,1400,2200,3200,4500,6100,8000];
 const VIP_LABELS=VIP_THRESHOLDS.map((_,i)=>'VIP'+(i+1));
 function tier(total){const xp=Math.max(0,Number(total)||0);let i=0;while(i<VIP_THRESHOLDS.length-1&&xp>=VIP_THRESHOLDS[i+1])i++;return {level:i+1,label:VIP_LABELS[i],xp,nextAt:VIP_THRESHOLDS[i+1]??null};}
