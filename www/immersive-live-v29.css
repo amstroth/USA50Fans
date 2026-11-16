@@ -1,0 +1,288 @@
+/* USA50 v29: fullscreen live player, overlaid ten-percent chat and one-line message/gift bar.
+   The video and overlay remain in the same viewport; no app/page gutters. */
+#usa50-live-fullscreen{
+ position:fixed!important;inset:0!important;z-index:99990!important;
+ width:100vw!important;height:100vh!important;height:100dvh!important;
+ margin:0!important;padding:0!important;display:block!important;overflow:hidden!important;
+ background:#110e1d;color:#fff;isolation:isolate;
+}
+#usa50-live-fullscreen .usa50-immersive-player{position:absolute;inset:0;background:#0d0b17;z-index:0;overflow:hidden}
+#usa50-live-fullscreen .usa50-immersive-player>.usa50-stream-embed{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;border:0;border-radius:0;background:#08060d}
+#usa50-live-fullscreen .usa50-immersive-player iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#0c0815}
+#usa50-live-fullscreen .usa50-immersive-gradient{position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,rgba(13,9,24,.44),transparent 18%,transparent 52%,rgba(10,5,20,.2) 78%,rgba(7,5,17,.42));pointer-events:none}
+#usa50-live-fullscreen .usa50-immersive-header{position:absolute;inset:0 0 auto;display:flex;align-items:center;gap:12px;z-index:4;padding:calc(15px + env(safe-area-inset-top,0px)) 17px 16px;color:white;min-width:0}
+#usa50-live-fullscreen .usa50-immersive-header>button:first-child{background:#120f25aa;backdrop-filter:blur(10px);color:#fff;border:1px solid #ffffff49;border-radius:50%;width:41px;height:41px;display:grid;place-items:center;font-size:23px;flex:0 0 41px;cursor:pointer}
+#usa50-live-fullscreen .usa50-immersive-live-tag{font-weight:900;font-size:11px;letter-spacing:1px;border-radius:8px;background:#E63A84;padding:8px 11px;white-space:nowrap}
+#usa50-live-fullscreen .usa50-immersive-header>div{display:grid;gap:2px;flex:1;min-width:0;text-shadow:0 2px 6px #0009}
+#usa50-live-fullscreen .usa50-immersive-header strong{font-size:clamp(14px,1.8vw,20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+#usa50-live-fullscreen .usa50-immersive-header small{color:#fff!important;font-size:11px;opacity:.85;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#usa50-live-fullscreen .usa50-immersive-control{background:#9c245abf;color:#fff;border:1px solid #fff6;border-radius:30px;padding:8px 12px;font-size:11px;font-weight:800;cursor:pointer}
+#usa50-live-fullscreen .usa50-immersive-demo-label{position:absolute;right:13px;top:calc(83px + env(safe-area-inset-top,0px));z-index:4;background:#110b225e;backdrop-filter:blur(4px);padding:5px 8px;border-radius:7px;color:#ffffffb5;font-size:10px;text-align:right}
+#usa50-live-fullscreen .usa50-immersive-chat-slot{position:absolute;inset:0;z-index:5;pointer-events:none}
+#usa50-live-fullscreen .usa50-live-interaction{
+ position:absolute!important;inset:auto 0 0!important;
+ width:100%!important;max-width:none!important;
+ display:flex!important;flex-direction:column!important;
+ gap:9px!important;padding:0 14px calc(15px + env(safe-area-inset-bottom,0px))!important;
+ margin:0!important;border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;pointer-events:none!important;
+}
+#usa50-live-fullscreen .usa50-live-topline{display:none!important}
+#usa50-live-fullscreen .usa50-live-lines{
+ display:flex!important;flex-direction:column!important;gap:10px!important;
+ width:min(570px,78vw)!important;max-width:100%!important;
+ height:clamp(140px,26dvh,315px)!important;min-height:0!important;
+ padding:12px 13px!important;margin:0!important;overflow-y:auto!important;overscroll-behavior:contain!important;
+ border:0!important;border-radius:15px!important;
+ background:rgba(13,8,24,.10)!important;backdrop-filter:none!important;
+ pointer-events:auto!important;scrollbar-width:thin;
+ mask-image:linear-gradient(to bottom,transparent,#000 10%,#000);
+}
+#usa50-live-fullscreen .usa50-live-line{color:#fff!important;gap:8px;align-items:flex-start}
+#usa50-live-fullscreen .usa50-live-line-body{color:white!important}
+#usa50-live-fullscreen .usa50-live-line-body strong,
+#usa50-live-fullscreen .usa50-live-line-body p,
+#usa50-live-fullscreen .usa50-live-line-body>div{color:#fff!important;text-shadow:0 1px 3px rgba(0,0,0,.8)!important}
+#usa50-live-fullscreen .usa50-live-line-body strong{font-weight:900;font-size:13px}
+#usa50-live-fullscreen .usa50-live-line-body p{font-size:13px;line-height:1.35}
+#usa50-live-fullscreen .usa50-live-line.gifted .usa50-live-line-body{background:rgba(230,58,132,.16)!important;padding:7px 10px;border-radius:12px}
+#usa50-live-fullscreen .usa50-live-gift-badge{background:rgba(230,58,132,.45)!important;color:#fff!important;border:1px solid #fff5}
+#usa50-live-fullscreen .usa50-live-avatar.empty{background:#E63A84!important;color:#fff!important}
+#usa50-live-fullscreen .usa50-live-hide{color:#fff!important;opacity:.8;pointer-events:auto}
+#usa50-live-fullscreen .usa50-live-loading{color:#fff!important;background:transparent!important;font-size:12px;text-shadow:0 2px 6px #0007}
+#usa50-live-fullscreen .usa50-live-compose{
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+ width:100%!important;max-width:none!important;gap:9px!important;
+ margin:0!important;padding:7px 8px 7px 17px!important;
+ border:1px solid rgba(255,255,255,.32)!important;border-radius:999px!important;
+ background:rgba(18,10,30,.28)!important;
+ backdrop-filter:blur(11px)!important;box-shadow:none!important;
+ pointer-events:auto!important;
+}
+#usa50-live-fullscreen .usa50-live-compose input{
+ display:block!important;flex:1!important;min-width:0!important;
+ padding:8px 0!important;margin:0!important;background:transparent!important;
+ border:0!important;outline:0!important;color:#fff!important;font-size:14px!important;
+}
+#usa50-live-fullscreen .usa50-live-compose input::placeholder{color:rgba(255,255,255,.75)!important}
+#usa50-live-fullscreen .usa50-live-compose button{
+ display:grid!important;place-items:center!important;flex-shrink:0!important;
+ background:#E63A84!important;color:#fff!important;border:1px solid #fff6!important;
+ width:42px!important;height:42px!important;min-width:42px!important;
+ border-radius:50%!important;padding:0!important;font-size:12px!important;font-weight:900!important;
+ cursor:pointer;line-height:1!important
+}
+#usa50-live-fullscreen .usa50-live-compose .usa50-live-gift-button{background:#ffffff24!important;font-size:23px!important}
+#usa50-live-fullscreen .usa50-live-disclosure{display:none!important}
+#usa50-live-fullscreen .usa50-live-tts-pending{
+ position:absolute!important;bottom:calc(90px + env(safe-area-inset-bottom,0px))!important;right:15px!important;
+ width:min(350px,38vw)!important;max-height:32dvh!important;overflow:auto!important;
+ border:1px solid rgba(255,255,255,.6)!important;border-radius:16px!important;
+ background:rgba(25,10,38,.88)!important;color:#fff!important;
+ backdrop-filter:blur(12px);pointer-events:auto!important;z-index:8;
+}
+#usa50-live-fullscreen .usa50-live-tts-pending *{color:#fff}
+#usa50-live-fullscreen .usa50-live-tts-pending[hidden]{display:none!important}
+#usa50-live-fullscreen .usa50-immersive-gift-drawer{
+ position:absolute!important;bottom:calc(84px + env(safe-area-inset-bottom,0px))!important;right:14px!important;
+ width:min(440px,calc(100vw - 28px))!important;max-height:min(68dvh,560px)!important;overflow-y:auto!important;
+ padding:17px!important;border:1px solid #ffffff50!important;border-radius:19px!important;
+ background:rgba(28,13,43,.96)!important;color:#fff!important;z-index:20!important;
+ backdrop-filter:blur(15px)!important;box-shadow:0 16px 42px #0008!important;
+}
+#usa50-live-fullscreen .usa50-immersive-gift-drawer[hidden]{display:none!important}
+#usa50-live-fullscreen .usa50-immersive-drawer-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+#usa50-live-fullscreen .usa50-immersive-drawer-head div{display:grid;gap:2px}
+#usa50-live-fullscreen .usa50-immersive-drawer-head small{font-size:9px;letter-spacing:1.5px;color:#ee9ed0}
+#usa50-live-fullscreen .usa50-immersive-drawer-head strong{font-size:17px}
+#usa50-live-fullscreen .usa50-immersive-drawer-head button{background:#fff2;border:0;color:white;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:21px}
+#usa50-live-fullscreen .usa50-immersive-gift-options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+#usa50-live-fullscreen .usa50-immersive-gift-choice{position:relative;cursor:pointer;display:grid;place-items:center;gap:5px;text-align:center;padding:9px 2px;min-width:0;border:1px solid #fff3;border-radius:12px;background:#ffffff14}
+#usa50-live-fullscreen .usa50-immersive-gift-choice:has(input:checked){border:2px solid #E63A84;background:#E63A842a}
+#usa50-live-fullscreen .usa50-immersive-gift-choice input{position:absolute;width:1px;height:1px;opacity:0}
+#usa50-live-fullscreen .usa50-immersive-gift-choice span{font-size:27px}
+#usa50-live-fullscreen .usa50-immersive-gift-choice strong{font-size:10px;overflow-wrap:anywhere}
+#usa50-live-fullscreen .usa50-immersive-gift-choice small{font-size:10px;color:#f8c2e1}
+#usa50-live-fullscreen .usa50-immersive-gift-form{margin:12px 0 0;display:grid;gap:9px}
+#usa50-live-fullscreen .usa50-immersive-gift-form>label{font-size:12px;color:#f8e2f3;display:grid;gap:5px}
+#usa50-live-fullscreen .usa50-immersive-gift-form input[name=message]{width:100%;border:1px solid #ffffff61;background:#fff2;color:#fff;padding:10px 12px;border-radius:10px}
+#usa50-live-fullscreen .usa50-immersive-gift-form input::placeholder{color:#fffd}
+#usa50-live-fullscreen .usa50-immersive-gift-form .usa50-immersive-tts-option{display:flex;align-items:center;gap:7px}
+#usa50-live-fullscreen .usa50-immersive-gift-checkout{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#usa50-live-fullscreen .usa50-immersive-gift-checkout button{background:#E63A84;border:1px solid #fff8;border-radius:30px;padding:11px 19px;color:#fff;font-weight:900;cursor:pointer}
+#usa50-live-fullscreen .usa50-immersive-gift-checkout button:disabled{opacity:.5}
+#usa50-live-fullscreen .usa50-immersive-gift-drawer>p{color:#f2cbe5;font-size:11px;line-height:1.5;margin:10px 0 0}
+#usa50-live-fullscreen .usa50-immersive-unavailable{position:absolute;inset:0;display:grid;place-content:center;text-align:center;gap:8px;color:#fff}
+#usa50-live-fullscreen .usa50-immersive-unavailable span{font-size:60px}
+#usa50-live-fullscreen .usa50-immersive-unavailable h2{font-size:23px;color:#fff}
+#usa50-live-fullscreen .usa50-immersive-chat-unavailable{position:absolute;bottom:100px;left:20px;color:#fff}
+
+/* V28 interactive previews now occupy the entire device, not a centered desktop modal. */
+#usa50-preview-overlay{padding:0!important}
+#usa50-preview-overlay .usa50-preview-window{
+ width:100vw!important;max-width:none!important;min-width:0!important;
+ height:100vh!important;height:100dvh!important;max-height:none!important;
+ border:0!important;border-radius:0!important;margin:0!important
+}
+#usa50-preview-overlay .usa50-preview-footer{display:none!important}
+#usa50-preview-overlay:has(.usa50-preview-live-main) .usa50-preview-window{background:#0c0816!important;color:#fff}
+#usa50-preview-overlay:has(.usa50-preview-live-main) .usa50-preview-header,
+#usa50-preview-overlay:has(.usa50-preview-live-main) .usa50-preview-tabs,
+#usa50-preview-overlay:has(.usa50-preview-live-main) .usa50-preview-rolebar{
+ background:#100b21!important;border-color:#ffffff29!important;color:#fff!important;
+}
+#usa50-preview-overlay:has(.usa50-preview-live-main) .usa50-preview-header h2{color:#fff!important}
+#usa50-preview-overlay:has(.usa50-preview-live-main) .usa50-preview-header small{color:#fbbfdf!important}
+#usa50-preview-overlay:has(.usa50-preview-live-main) .usa50-preview-tabs button,
+#usa50-preview-overlay:has(.usa50-preview-live-main) .usa50-preview-rolebar button{background:#ffffff1f!important;border-color:#ffffff44!important;color:#fff!important}
+#usa50-preview-overlay:has(.usa50-preview-live-main) .usa50-preview-tabs button.selected,
+#usa50-preview-overlay:has(.usa50-preview-live-main) .usa50-preview-rolebar button.selected{background:#E63A84!important;color:#fff!important;border-color:#E63A84!important}
+#usa50-preview-overlay:has(.usa50-preview-live-main) .usa50-preview-content{display:flex!important;flex-direction:column!important;overflow:hidden!important;background:#0b0613}
+#usa50-preview-overlay .usa50-preview-main.usa50-preview-live-main{
+ display:flex!important;flex:1!important;min-height:0!important;padding:0!important;margin:0!important;gap:0!important
+}
+#usa50-preview-overlay .usa50-preview-live-layout{position:relative;display:flex;flex:1;min-height:0;width:100%;background:#0b0613}
+#usa50-preview-overlay .usa50-preview-stream-screen{
+ position:relative!important;display:block!important;width:100%!important;height:100%!important;
+ min-height:0!important;max-height:none!important;flex:1!important;
+ aspect-ratio:auto!important;border:0!important;border-radius:0!important;
+ box-shadow:none!important;margin:0!important;background:#080614!important
+}
+#usa50-preview-overlay .usa50-preview-live-persons{height:100%!important;width:100%!important}
+#usa50-preview-overlay .usa50-preview-talent{min-height:0!important}
+#usa50-preview-overlay .usa50-preview-live-bottom{
+ top:52px!important;bottom:auto!important;left:12px!important;right:auto!important;
+ width:min(390px,65%)!important;padding:10px!important;
+ border-radius:12px!important;background:rgba(13,7,27,.15)!important;pointer-events:none!important;
+}
+#usa50-preview-overlay .usa50-preview-live-bottom h3{color:#fff!important}
+#usa50-preview-overlay .usa50-preview-live-bottom p{color:#fff!important}
+#usa50-preview-overlay .usa50-preview-chat-card{
+ position:absolute!important;inset:auto 0 0 0!important;z-index:8!important;
+ padding:0 15px calc(11px + env(safe-area-inset-bottom,0px))!important;
+ display:flex!important;flex-direction:column!important;gap:7px!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ background:transparent!important;pointer-events:none!important;
+}
+#usa50-preview-overlay .usa50-preview-chat-list{
+ background:rgba(13,7,27,.10)!important;
+ backdrop-filter:none!important;
+ border-radius:16px!important;border:0!important;
+ padding:13px!important;margin:0!important;
+ width:min(590px,78vw)!important;max-width:100%!important;
+ height:clamp(160px,29dvh,310px)!important;min-height:0!important;
+ flex:none!important;overflow-y:auto!important;pointer-events:auto!important;
+ mask-image:linear-gradient(to bottom,transparent,#000 12%,#000);
+}
+#usa50-preview-overlay .usa50-preview-chat-line,
+#usa50-preview-overlay .usa50-preview-chat-line p,
+#usa50-preview-overlay .usa50-preview-chat-name{color:#fff!important;text-shadow:0 1px 4px #000a!important}
+#usa50-preview-overlay .usa50-preview-chat-name{font-weight:900!important}
+#usa50-preview-overlay .usa50-preview-chat-avatar{background:#E63A84a8!important;border:1px solid #fff7!important;color:#fff!important}
+#usa50-preview-overlay .usa50-preview-compose{
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+ width:100%!important;gap:8px!important;margin:0!important;
+ padding:6px 8px 6px 17px!important;background:rgba(13,8,29,.28)!important;
+ backdrop-filter:blur(10px)!important;border:1px solid #ffffff7a!important;
+ border-radius:999px!important;pointer-events:auto!important
+}
+#usa50-preview-overlay .usa50-preview-compose input{color:#fff!important;background:none!important;border:0!important;min-width:0!important;flex:1!important;padding:9px 0!important;font-size:14px!important}
+#usa50-preview-overlay .usa50-preview-compose input::placeholder{color:#fffc!important}
+#usa50-preview-overlay .usa50-preview-compose button{
+ flex:0 0 42px!important;min-width:42px!important;width:42px!important;height:42px!important;
+ border:1px solid #fffc!important;border-radius:50%!important;display:grid!important;
+ place-items:center!important;color:#fff!important;background:#E63A84!important;font-size:17px!important;padding:0!important;
+}
+#usa50-preview-overlay .usa50-preview-compose .usa50-preview-gift-toggle{background:#ffffff2b!important;font-size:21px!important}
+#usa50-preview-overlay .usa50-preview-credit-hint{color:#ffffffc9;text-align:right;font-size:10px!important;letter-spacing:.3px;text-shadow:0 1px 3px #000a}
+#usa50-preview-overlay .usa50-preview-gift-popover{
+ pointer-events:auto!important;position:absolute!important;z-index:20!important;
+ right:14px!important;bottom:calc(93px + env(safe-area-inset-bottom,0px))!important;
+ width:min(470px,calc(100vw - 28px))!important;max-height:65dvh!important;
+ overflow-y:auto!important;padding:15px!important;border-radius:19px!important;
+ background:rgba(29,11,44,.97)!important;border:1px solid #ffffff67!important;
+ color:#fff!important;box-shadow:0 15px 44px #07030f90!important;backdrop-filter:blur(12px);
+}
+#usa50-preview-overlay .usa50-preview-gift-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:7px}
+#usa50-preview-overlay .usa50-preview-gift-head strong{font-size:16px;color:#fff}
+#usa50-preview-overlay .usa50-preview-gift-head button{background:#fff2;border:0;color:#fff;border-radius:50%;width:31px;height:31px;font-size:23px;cursor:pointer}
+#usa50-preview-overlay .usa50-preview-gift-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+#usa50-preview-overlay .usa50-preview-gift-grid button{background:#ffffff16!important;color:#fff!important;border-color:#ffffff39!important}
+#usa50-preview-overlay .usa50-preview-gift-grid button.selected{background:#E63A844f!important;border-color:#E63A84!important}
+#usa50-preview-overlay .usa50-preview-gift-grid button small,
+#usa50-preview-overlay .usa50-preview-gift-grid button strong{color:#fff!important}
+#usa50-preview-overlay .usa50-preview-preview-actions>span{color:#fffa!important}
+#usa50-preview-overlay .usa50-preview-requests{max-height:160px;overflow:auto}
+#usa50-preview-overlay .usa50-preview-requests *{color:#fff!important}
+#usa50-preview-overlay .usa50-preview-stream-admin{
+ position:absolute!important;top:118px!important;right:14px!important;z-index:7!important;
+ width:min(345px,36vw)!important;max-height:30dvh!important;overflow:auto!important;
+ background:#180d2cb5!important;backdrop-filter:blur(9px)!important;color:#fff!important;
+ border:1px solid #ffffff55!important;
+}
+#usa50-preview-overlay .usa50-preview-stream-admin *{color:#fff!important}
+#usa50-preview-overlay .usa50-preview-stream-admin p{font-size:11px!important}
+
+/* Real fancall room appears as its own fullscreen interface, not a page inside app margins. */
+.usa50-room{
+ position:fixed!important;inset:0!important;z-index:99980!important;
+ width:100vw!important;height:100vh!important;height:100dvh!important;
+ max-width:none!important;max-height:none!important;min-width:0!important;
+ margin:0!important;padding:calc(18px + env(safe-area-inset-top,0px)) clamp(14px,3.5vw,48px) calc(24px + env(safe-area-inset-bottom,0px))!important;
+ overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;
+ background:radial-gradient(circle at 82% 13%,#fce2ef,transparent 37%),linear-gradient(145deg,#e7d5f2,#f3eaf9)!important;
+ box-sizing:border-box!important
+}
+.usa50-room header{display:flex!important;align-items:center;flex-wrap:wrap;gap:10px!important;margin:0 0 14px!important}
+.usa50-room header>button{border:1px solid #fff;background:#fff8;border-radius:24px;padding:10px 15px}
+.usa50-room header h2{flex:1;font-size:clamp(22px,3vw,35px)}
+.usa50-room .usa50-rtc-panel{width:100%!important;max-width:none!important;margin:0!important;min-height:min(70dvh,800px)!important}
+.usa50-room .usa50-rtc-video-layout{grid-template-columns:minmax(0,1fr) minmax(140px,24%)!important;min-height:55dvh!important}
+.usa50-room .usa50-rtc-remote,.usa50-room .usa50-rtc-peer,.usa50-room .usa50-rtc-peer video{min-height:50dvh!important}
+.usa50-room .usa50-rtc-self,.usa50-room .usa50-rtc-self video{min-height:22dvh!important}
+.usa50-room .usa50-room-queue{margin:15px 0!important;max-width:none!important}
+body:has(.usa50-room){overflow:hidden!important}
+
+/* Call previews keep the whole screen and use remaining space for video/waiting. */
+#usa50-preview-overlay .usa50-preview-main:not(.usa50-preview-live-main){min-height:100%;padding-bottom:18px!important}
+#usa50-preview-overlay .usa50-preview-call-columns{min-height:calc(100dvh - 265px)!important;align-items:stretch!important}
+#usa50-preview-overlay .usa50-preview-call-columns>div:first-child{display:flex;flex-direction:column;gap:10px}
+#usa50-preview-overlay .usa50-preview-call-columns .usa50-preview-waiting,
+#usa50-preview-overlay .usa50-preview-call-columns .usa50-preview-video-stage{flex:1;min-height:50dvh}
+#usa50-preview-overlay .usa50-preview-call-columns .usa50-preview-video-stage{display:flex;flex-direction:column}
+#usa50-preview-overlay .usa50-preview-call-columns .usa50-preview-videos{flex:1;min-height:40dvh!important}
+#usa50-preview-overlay .usa50-preview-call-columns .usa50-preview-video-tile.main,
+#usa50-preview-overlay .usa50-preview-call-columns .usa50-preview-video-tile.main img{height:100%!important;min-height:40dvh!important}
+
+/* Mobile - no outer page gutters, full width input+gift bar and drawers. */
+@media(max-width:650px){
+ #usa50-live-fullscreen .usa50-immersive-header{gap:8px;padding:calc(9px + env(safe-area-inset-top,0px)) 9px 10px}
+ #usa50-live-fullscreen .usa50-immersive-header>button:first-child{width:36px;height:36px;flex-basis:36px}
+ #usa50-live-fullscreen .usa50-immersive-live-tag{padding:7px 8px;font-size:10px}
+ #usa50-live-fullscreen .usa50-immersive-control{padding:6px 8px;font-size:9px}
+ #usa50-live-fullscreen .usa50-immersive-demo-label{top:calc(64px + env(safe-area-inset-top,0px));right:8px;max-width:200px;font-size:9px}
+ #usa50-live-fullscreen .usa50-live-interaction{padding:0 8px calc(8px + env(safe-area-inset-bottom,0px))!important;gap:6px!important}
+ #usa50-live-fullscreen .usa50-live-lines{width:min(92vw,410px)!important;height:clamp(160px,28dvh,260px)!important;padding:9px 7px!important}
+ #usa50-live-fullscreen .usa50-live-compose{padding:4px 6px 4px 14px!important;gap:6px!important}
+ #usa50-live-fullscreen .usa50-live-compose button{width:39px!important;height:39px!important;min-width:39px!important}
+ #usa50-live-fullscreen .usa50-immersive-gift-drawer{right:7px!important;bottom:calc(65px + env(safe-area-inset-bottom,0px))!important;width:calc(100vw - 14px)!important;max-height:65dvh!important;padding:12px!important}
+ #usa50-live-fullscreen .usa50-live-tts-pending{width:min(280px,85vw)!important;right:9px!important;bottom:calc(300px + env(safe-area-inset-bottom,0px))!important;max-height:26dvh!important}
+ #usa50-preview-overlay .usa50-preview-chat-card{padding:0 8px calc(8px + env(safe-area-inset-bottom,0px))!important}
+ #usa50-preview-overlay .usa50-preview-chat-list{width:min(94vw,480px)!important;height:clamp(160px,28dvh,270px)!important;padding:9px!important}
+ #usa50-preview-overlay .usa50-preview-compose{padding:4px 7px 4px 14px!important;gap:5px!important}
+ #usa50-preview-overlay .usa50-preview-compose button{width:40px!important;height:40px!important;min-width:40px!important;flex-basis:40px!important}
+ #usa50-preview-overlay .usa50-preview-gift-popover{right:7px!important;bottom:calc(83px + env(safe-area-inset-bottom,0px))!important;width:calc(100vw - 14px)!important;padding:12px!important}
+ #usa50-preview-overlay .usa50-preview-live-bottom{top:43px!important;width:72%!important;left:7px!important;padding:6px!important}
+ #usa50-preview-overlay .usa50-preview-live-bottom h3{font-size:12px!important}
+ #usa50-preview-overlay .usa50-preview-live-bottom p{display:none!important}
+ #usa50-preview-overlay .usa50-preview-stream-admin{top:95px!important;right:8px!important;max-width:45vw!important;width:45vw!important;max-height:22dvh!important;padding:8px!important}
+ #usa50-preview-overlay .usa50-preview-stream-admin h3{font-size:12px!important}
+ #usa50-preview-overlay .usa50-preview-stream-admin p{display:none!important}
+ .usa50-room{padding:calc(10px + env(safe-area-inset-top,0px)) 9px calc(10px + env(safe-area-inset-bottom,0px))!important}
+ .usa50-room .usa50-rtc-panel{padding:11px!important;min-height:60dvh!important}
+ .usa50-room .usa50-rtc-video-layout{grid-template-columns:minmax(0,1fr) minmax(85px,28%)!important;min-height:45dvh!important}
+ .usa50-room .usa50-rtc-remote,.usa50-room .usa50-rtc-peer,.usa50-room .usa50-rtc-peer video{min-height:43dvh!important}
+ #usa50-preview-overlay .usa50-preview-call-columns{min-height:calc(100dvh - 235px)!important}
+ #usa50-preview-overlay .usa50-preview-call-columns .usa50-preview-waiting,
+ #usa50-preview-overlay .usa50-preview-call-columns .usa50-preview-video-stage{min-height:45dvh!important}
+}
