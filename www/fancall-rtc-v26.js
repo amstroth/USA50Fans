@@ -34,6 +34,7 @@ function attachRemote(){
  const host=document.querySelector('#usa50-rtc-peer-videos');
  if(!host)return;
  const entries=[...remoteStreams];
+ if(entries.length)host.querySelector(':scope > p')?.remove();
  for(const node of [...host.querySelectorAll('[data-peer-id]')])if(!remoteStreams.has(node.dataset.peerId))node.remove();
  for(const [id,stream] of entries){
   let container=[...host.children].find(n=>n.dataset.peerId===id);
