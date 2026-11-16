@@ -285,3 +285,90 @@
  font-size:30px;
  color:#fff;
 }
+
+/* Social feed: preserve media shape, fill available post width without cropping. */
+.social-feed{grid-template-columns:minmax(0,1fr)!important;gap:0!important}
+.social-feed .social-post{width:100%!important;max-width:none!important;min-width:0!important}
+.social-feed .social-embed{
+ display:block!important;
+ position:relative!important;
+ width:100%!important;
+ max-width:none!important;
+ min-width:0!important;
+ height:auto!important;
+ min-height:0!important;
+ margin:0!important;
+ padding:0!important;
+ border:0!important;
+ border-radius:0!important;
+ background:transparent!important;
+ overflow:hidden!important;
+}
+.social-feed .social-tiktok,.social-feed .social-instagram:has([data-instgrm-permalink*="/reel/"]){
+ aspect-ratio:9/16;
+}
+.social-feed .social-tiktok iframe{
+ display:block!important;
+ width:100%!important;
+ max-width:none!important;
+ height:100%!important;
+ aspect-ratio:9/16;
+ border:0!important;
+ border-radius:0!important;
+}
+.social-feed .social-instagram{
+ text-align:initial!important;
+ padding:0!important;
+ overflow:visible!important;
+}
+.social-feed .social-instagram:not(:has([data-instgrm-permalink*="/reel/"])){
+ aspect-ratio:auto!important;
+}
+.social-feed .social-instagram .instagram-media{
+ box-sizing:border-box!important;
+ width:100%!important;
+ max-width:none!important;
+ min-width:0!important;
+ margin:0!important;
+}
+.social-feed .social-instagram iframe{
+ width:100%!important;
+ max-width:none!important;
+ border-radius:0!important;
+}
+/* Public Instagram image posts can be square, portrait or landscape:
+   let the official embed determine its height rather than forcing a crop. */
+.social-feed .social-short-preview{min-height:100px!important;aspect-ratio:auto!important}
+
+/* Full-bleed Instagram-style profile tiles: no image gutters or frame. */
+.usa50-instagram-profile .usa50-profile-grid{
+ display:grid!important;
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:0!important;
+ column-gap:0!important;
+ row-gap:0!important;
+ width:100%!important;
+ max-width:none!important;
+ padding:0!important;
+ margin:0!important;
+}
+.usa50-instagram-profile .usa50-profile-tile{
+ border:0!important;
+ border-radius:0!important;
+ margin:0!important;
+ padding:0!important;
+ aspect-ratio:1!important;
+}
+@media(max-width:780px){
+ .usa50-instagram-profile .usa50-profile-grid{
+   width:calc(100% + 30px)!important;
+   margin-left:-15px!important;
+   margin-right:-15px!important;
+ }
+ .social-feed .social-post .social-embed{
+   width:calc(100% + 30px)!important;
+   max-width:none!important;
+   margin-left:-15px!important;
+   margin-right:-15px!important;
+ }
+}
