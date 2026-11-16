@@ -65,7 +65,7 @@ try{
  assert.equal((await api('/api/daily/claim',{task:'fake-task'},tb)).httpStatus,400);passed++;
 
  for(let i=0;i<29;i++){let p=await api('/api/cards/pull',{},ta);assert.equal(p.httpStatus,200);}
- let last=await api('/api/cards/pull',{},ta);assert.equal(last.paidPulls,30);assert.equal(last.albumComplete,true);assert.equal(last.pityAchieved,true);assert.equal(last.stars,0);passed++;
+ let last=await api('/api/cards/pull',{},ta);assert.equal(last.paidPulls,30);assert.equal(last.albumComplete,true);assert.equal(last.pityAchieved,true);assert.equal(last.stars,recycled.reward.type==='stars'?recycled.reward.amount:0,'Recycling can legitimately award demo STARS');passed++;
  let order=await api('/api/cards/physical-order-preview',{},ta);assert.equal(order.free,true);assert.equal((await api('/api/cards/physical-order-preview',{},ta)).httpStatus,400);passed++;
  const app=await api('/api/fansites/apply',{name:'Camera Fansite',camera:'Sony a7 IV with 70-200mm lens',portfolioUrl:'https://www.instagram.com/example',description:'I photograph USA50 performances and publish high-quality fan edits regularly.'},tb);assert.equal(app.httpStatus,201);passed++;
  const post=await api('/api/posts/create',{text:'A test edit!',url:'https://www.tiktok.com/@example/video/123'},ta);assert.equal(post.httpStatus,201);passed++;
