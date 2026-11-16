@@ -38,7 +38,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
   }
   function ranks(){
     const ids=new Set();
-    for(const p of state.posts){if(!p.hidden&&p.authorId&&account(p.authorId))ids.add(p.authorId);}
+    for(const p of state.posts){if(!p.hidden&&p.authorId&&account(p.authorId)&&role(account(p.authorId))==='fan')ids.add(p.authorId);}
     const arr=[...ids].map(uid=>{
       const p=profileFor(uid);
       const published=state.posts.filter(x=>x.authorId===uid&&!x.hidden);
@@ -54,7 +54,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
     const following=(state.follows[uid]||[]).length;
     const stat=ranking.find(x=>x.id===uid);
     const isIdol=role(u)==='idol';
-    const oshiCount=isIdol?Object.values(state.profiles).filter(x=>Array.isArray(x.oshiIds)&&x.oshiIds.includes(String(u.displayName||'').toLowerCase())).length:0;
+    const oshiCount=isIdol?Object.entries(state.profiles).filter(([id,x])=>role(account(id))==='fan'&&Array.isArray(x.oshiIds)&&x.oshiIds.includes(String(u.displayName||'').toLowerCase())).length:0;
     const equippedRing=p.ring||'classic';
     return {id:uid,displayName:u.displayName,handle:p.handle,verifiedIdol:isIdol,oshiCount,oshiIds:p.oshiIds||[],idolBorderColor:p.idolBorderColor||'#F4A1C8',rankBorder:!isIdol?(stat?.rank===1?'gold':stat?.rank===2?'silver':stat?.rank===3?'bronze':stat?.rank&&stat.rank<=10?'top10':null):null,bio:p.bio,avatarUrl:p.avatarUrl||null,ring:equippedRing,unlockedRings:u.state?.unlockedRings||['classic'],vipLevel:u.state?.vipLevel||'Starter',followers,following,postsCount:state.posts.filter(post=>post.authorId===uid&&!post.hidden).length,fanXP:Math.max(0,p.xp||0),rank:stat?.rank||null,tier:stat?.tier||'Fan',fansite:approvedFansite(uid),isFollowing:Boolean(viewerId&&(state.follows[viewerId]||[]).includes(uid))};
   }
@@ -278,7 +278,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom})
          if(role(u)==='idol')return fail(res,403,'Idol usernames are assigned from verified stage names.'),true;
          const handle=String(data.handle||'').replace(/^@/,'').trim();
          if(!/^[A-Za-z][A-Za-z0-9_]{2,21}$/.test(handle))return fail(res,400,'Username must be 3–22 letters, numbers or underscores, starting with a letter.'),true;
-         if(Object.keys(db.users).some(uid=>uid!==u.id&&profileFor(uid)?.handle.toLowerCase()===handle.toLowerCase()))return fail(res,409,'Username already taken.'),true;
+         if(['arielle','jaylene','kellie','z','michelle','zoe','miu','usa50','nyc50','la50','admin','management'].includes(handle.toLowerCase())||Object.keys(db.users).some(uid=>uid!==u.id&&profileFor(uid)?.handle.toLowerCase()===handle.toLowerCase()))return fail(res,409,'Username already taken.'),true;
          p.handle=handle;
        }
        if(Object.hasOwn(data,'oshiIds')){
