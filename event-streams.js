@@ -55,7 +55,7 @@ module.exports=function makeLiveEvents({db,save,id,now,json,fail,userFrom,member
   return {id:item.id,title:item.title,description:item.description,startsAt:item.startsAt,postedAt:item.postedAt,
     status:item.status,playerUrl:item.status==='live'?item.playerUrl:null,hasPlayer:!!item.playerUrl,
     eventId:item.eventId||null,hosts:item.hosts||[],hostNames:hostNames(item.hosts),recipientIds:expandHosts(item.hosts),
-    liveHeadline:liveHeadline(item.hosts),canEdit:canEdit(u,item),canManage:managers(u)};
+    liveHeadline:liveHeadline(item.hosts),editPlayerUrl:canEdit(u,item)?item.playerUrl:null,canEdit:canEdit(u,item),canManage:managers(u)};
  }
  function eligibleDraws(){return (db.fancallLottery?.draws||[]).filter(d=>d.status==='open'&&Date.parse(d.closesAt)>Date.now());}
  function notificationCount(user){
