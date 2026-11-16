@@ -1,0 +1,25 @@
+/* Multi-reward batch results: a pull is one reward, not always a card. */
+.usa50-gacha-reward-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;width:100%;max-width:750px;margin:auto}
+.usa50-gacha-reward-grid.batch{grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+.usa50-gacha-reward{min-width:0;min-height:140px;border:1px solid rgba(202,172,220,.7);background:linear-gradient(135deg,#f8eafc,#ece0fa);border-radius:17px;padding:8px 5px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;text-align:center;animation:rise .3s both;color:#76528b}
+.usa50-gacha-reward strong{font-size:12px;line-height:1.3;overflow-wrap:anywhere}
+.usa50-gacha-reward small{font-size:10px;line-height:1.25;color:#9078a5}
+.usa50-gacha-reward-grid.single .usa50-gacha-reward{max-width:220px;margin:auto;width:100%;min-height:200px}
+.usa50-gacha-icon{font-size:35px;line-height:1.3}
+.usa50-gacha-card-art{max-width:102px;width:100%;margin:auto}
+.usa50-gacha-card-art .photocard{width:100%!important}
+.usa50-gacha-summary{width:100%;text-align:center;padding:12px}
+.usa50-gacha-tickets,.usa50-idol-wallet{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.usa50-gacha-odds{margin-top:12px;border-top:1px solid #ddc9e9;padding-top:15px}
+.usa50-gacha-odds table{border-collapse:collapse;width:100%;font-size:12px}
+.usa50-gacha-odds td,.usa50-gacha-odds th{padding:8px 4px;border-bottom:1px solid #e7daee;text-align:right}
+.usa50-gacha-odds td:first-child,.usa50-gacha-odds th:first-child{text-align:left}
+.usa50-vip-wallet{margin-top:18px}
+.usa50-vip-wallet .progress{margin:10px 0}
+.usa50-vip-badge.vip-vip1{background:#eee5f5!important;color:#775987!important}
+.usa50-vip-badge.vip-vip2,.usa50-vip-badge.vip-vip3{background:#e3d4ee!important;color:#7549a3!important}
+.usa50-vip-badge.vip-vip4,.usa50-vip-badge.vip-vip5{background:#f1d4ec!important;color:#9c487e!important}
+.usa50-vip-badge.vip-vip6,.usa50-vip-badge.vip-vip7{background:#d8d3ff!important;color:#5740a7!important}
+.usa50-vip-badge.vip-vip8,.usa50-vip-badge.vip-vip9{background:#fbdf9c!important;color:#845b12!important}
+.usa50-vip-badge.vip-vip10{background:linear-gradient(100deg,#c6eefa,#ddd2ff,#ffdbeb)!important;color:#4f4b95!important}
+@media(max-width:650px){.usa50-gacha-reward-grid.batch{grid-template-columns:repeat(2,minmax(0,1fr))}.usa50-gacha-reward{min-height:126px}.usa50-gacha-card-art{max-width:85px}}
