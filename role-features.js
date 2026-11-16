@@ -1,4 +1,4 @@
-module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,adminFrom,bodyText,now,json,fail}){
+module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,adminFrom,bodyText,now,json,fail,notify=()=>{}}){
   db.idolPosts ||= [{id:"arielle-welcome",idolId:"arielle",body:"Hi USA50! ♡ Welcome to my little corner of the fan club. I can't wait to share more with you!",createdAt:now()}];
   db.fanReplies ||= [];
   db.idolReplies ||= []; // Public idol-to-idol responses; never mix with private fan replies.
@@ -150,6 +150,7 @@ module.exports = function makeRoles({db,save,id,hashPass,checkPass,userFrom,admi
       const text=bodyText(data.text,600);
       if(text.length<1)return fail(res,400,"Reply cannot be empty."),true;
       reply.idolResponse={text,createdAt:now()};
+      notify(reply.fanId,'idol-reply',String(u.displayName||'An idol')+' replied to your message!',{key:'idol-reply:'+reply.id});
       save();return json(res,200,{ok:true,reply}),true;
     }
     if(endpoint==="/api/messages/report"){
