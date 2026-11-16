@@ -1,0 +1,59 @@
+/* USA50 social verification, idol hearts, award borders and immersive idol messages */
+:root{--usa50-idol-pink:#F4A1C8}
+.usa50-idol-verified{
+ display:inline-grid;place-items:center;position:relative;
+ width:23px;height:23px;min-width:23px;
+ color:var(--usa50-idol-pink);font-size:25px;line-height:1;
+ filter:drop-shadow(0 2px 3px rgba(153,78,137,.17));
+ vertical-align:middle;margin:0 3px;
+}
+.usa50-idol-verified i{
+ position:absolute;left:8px;top:8px;font-size:9px;font-weight:1000;
+ color:#fff;font-family:Arial,sans-serif;line-height:1;font-style:normal;
+}
+.social-post-author .usa50-idol-verified{width:19px;height:19px;min-width:19px;font-size:20px}
+.social-post-author .usa50-idol-verified i{left:7px;top:7px;font-size:7px}
+.usa50-heart-group{display:inline-flex;align-items:center;flex-wrap:wrap;gap:5px;min-width:0}
+.usa50-idol-heart-action{border:0;background:none;color:#bdb0ca;font-size:22px;line-height:1.1;padding:4px;cursor:pointer}
+.usa50-idol-heart-action.hearted{color:#f287c0;filter:drop-shadow(0 2px 3px #b8659f30)}
+.usa50-hearted-by{font-size:11px;color:#a66b9c;font-weight:700;line-height:1.35}
+.usa50-social-search-form{display:flex;gap:8px;align-items:center;padding:3px 1px 8px}
+.usa50-social-search-form input{flex:1;min-width:0;background:#ffffff9e;border:1px solid #fff;border-radius:22px;padding:10px 13px;font-size:14px;color:#614573}
+.usa50-popular-tags{display:flex;align-items:center;gap:6px;overflow-x:auto;padding:0 1px 10px;scrollbar-width:none}
+.usa50-popular-tags small{color:#9278a2;white-space:nowrap;font-size:10px}
+.usa50-popular-tags button{border:1px solid #fff8;border-radius:24px;background:#fff8;padding:6px 9px;color:#845c97;font-size:11px;white-space:nowrap}
+.usa50-avatar-frame{position:relative}
+.usa50-idol-avatar{background:transparent!important;box-shadow:0 0 0 2px var(--idol-border-color,#F4A1C8)!important;padding:3px!important}
+.usa50-ranked-avatar.usa50-ranked-gold{background:linear-gradient(120deg,#f6d56b,#b78320,#fff3b4)!important}
+.usa50-ranked-avatar.usa50-ranked-silver{background:linear-gradient(120deg,#edf4ff,#9babba,#fff)!important}
+.usa50-ranked-avatar.usa50-ranked-bronze{background:linear-gradient(120deg,#ffd5a8,#b16c46,#f8e1c8)!important}
+.usa50-ranked-avatar.usa50-ranked-top10{background:linear-gradient(120deg,#c4b3fe,#a172d7,#f3dbfc)!important}
+.usa50-avatar-award{position:absolute;z-index:3;bottom:-13px;left:50%;transform:translateX(-50%);border:2px solid #fff;background:#fff4ec;border-radius:50%;width:35px;height:35px;display:grid;place-items:center;font-size:21px;box-shadow:0 4px 8px #74518236}
+.usa50-avatar-award.star{background:rgba(255,255,255,.93);color:var(--idol-border-color,#F4A1C8);font-size:37px;line-height:1}
+.usa50-avatar-award.star i{position:absolute;color:#fff;font:900 12px Arial,sans-serif;left:13px;top:12px}
+.usa50-oshi-badges{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.usa50-oshi-badges span{padding:5px 9px;border:1px solid #fff;border-radius:20px;background:#fff8;color:#9a5899;font-size:11px;font-weight:750}
+.usa50-oshi-options,.usa50-custom-rings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:7px 0}
+.usa50-oshi-option,.usa50-custom-ring{display:flex;align-items:center;gap:6px;font-size:12px;background:#fffb;border-radius:12px;padding:9px;color:#77578b}
+.usa50-heart-notifications{padding:12px 14px;margin:6px 0 14px;background:#fff9;border:1px solid #fff;border-radius:16px;color:#8b5088}
+.usa50-heart-notifications p{font-size:12px;margin:6px 0}
+.usa50-idol-post-tabs{margin-top:18px}
+.usa50-profile-grid .usa50-profile-tile img,.usa50-profile-grid .usa50-profile-tile iframe{width:100%;height:100%;object-fit:cover;border:0;pointer-events:none}
+.usa50-no-image{display:grid;place-items:center;width:100%;height:100%;font-size:32px;color:#fff}
+/* Idol Messages: full-width, flush to viewport edges, with immersive scroll surface. */
+.usa50-idol-messages-active .top-bar,.usa50-idol-messages-active .dev-banner{display:none!important}
+.usa50-idol-messages-active .sidebar{display:none!important}
+.usa50-idol-messages-active .app-shell{display:block!important;max-width:none!important}
+.usa50-idol-messages-active .content-area{
+ width:100%!important;max-width:none!important;margin:0!important;
+ padding:0 0 calc(95px + env(safe-area-inset-bottom,0px))!important;
+ overflow-x:visible!important;min-height:100dvh!important
+}
+.usa50-idol-messages-active .screen{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;overflow-x:visible!important}
+.usa50-idol-messages-active .screen>.grid,.usa50-idol-messages-active .screen>.glass,.usa50-idol-messages-active .screen>.panel{width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important;border-radius:0!important}
+.usa50-idol-messages-active .screen .message-row{border-radius:0!important}
+@media(max-width:780px){
+ .usa50-idol-messages-active .content-area{padding:0 0 calc(95px + env(safe-area-inset-bottom,0px))!important}
+ .usa50-idol-messages-active .screen{padding:0!important}
+ .usa50-idol-messages-active .screen>.section-heading,.usa50-idol-messages-active .screen>.screen-header{padding:12px 15px}
+}
