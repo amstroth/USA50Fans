@@ -21,7 +21,8 @@ function diaryMarkup(d){
  const serial=String(d.number||1).padStart(4,'0');
  const photos=(d.photos||[]).map(p=>'<figure class="diary-polaroid"><img src="'+textEscape(p.url)+'" alt="Polaroid photo"><figcaption>'+textEscape(p.caption||'A little moment')+'</figcaption></figure>').join('');
  const words=textEscape(d.text||'').replace(/\n/g,'<br>');
- return '<article class="diary-sheet" style="'+paperStyle(d)+'"><div class="diary-sheet-heading"><div><small>USA50 PRIVATE DIARY · '+textEscape(d.author)+'</small><h3>Entry No. '+serial+'</h3></div><time>'+diaryDate(d.publishedAt)+'</time></div><div class="diary-handwriting">'+words+'</div>'+(photos?'<div class="diary-polaroids">'+photos+'</div>':'')+(d.stickers?.length?'<div class="diary-stickers">'+d.stickers.map(textEscape).join(' ')+'</div>':'')+'<div class="diary-signature">with love, '+textEscape(d.author)+' ♡</div></article>';
+ const positioned=d.placedItems?.length?window.USA50DiaryLayout?.renderSaved(d)||'':'';
+ return '<article class="diary-sheet" style="'+paperStyle(d)+'"><div class="diary-sheet-heading"><div><small>USA50 PRIVATE DIARY · '+textEscape(d.author)+'</small><h3>Entry No. '+serial+'</h3></div><time>'+diaryDate(d.publishedAt)+'</time></div><div class="diary-handwriting">'+words+'</div>'+(!positioned&&photos?'<div class="diary-polaroids">'+photos+'</div>':'')+(!positioned&&d.stickers?.length?'<div class="diary-stickers">'+d.stickers.map(textEscape).join(' ')+'</div>':'')+positioned+'<div class="diary-signature">with love, '+textEscape(d.author)+' ♡</div></article>';
 }
 function officialCard(p){
  const symbol=p.platform==='YouTube'?'▶':p.platform==='TikTok'?'♪':'◎';
@@ -213,6 +214,7 @@ function updateDiaryPreview(){
  const stickers=[...form.querySelectorAll('.diary-sticker-pick.selected')].map(x=>x.dataset.value);
  const item={number:0,author:store.me?.displayName||'USA50 Idol',publishedAt:new Date().toISOString(),text:f.get('text')||'Your diary preview…',layout:f.get('layout'),paper:f.get('paper'),lineColor:f.get('lineColor'),textColor:f.get('textColor'),stickers,photos:[]};
  const area=document.querySelector('#diary-live-preview');if(area)area.innerHTML=diaryMarkup(item);
+ window.USA50DiaryLayout?.sync();
 }
 function resizeDiaryPhoto(file){
  return new Promise((resolve,reject)=>{
@@ -317,7 +319,7 @@ document.addEventListener('change',async event=>{
  if(event.target?.id!=='diary-photo-picker')return;
  const files=Array.from(event.target.files||[]);
  if(files.length>4){toast('Choose up to 4 photos');event.target.value='';return;}
- try{diaryPhotos=await Promise.all(files.map(resizeDiaryPhoto));const area=document.querySelector('#diary-photo-preview');if(area)area.innerHTML=diaryPhotos.map(x=>'<span>📸 '+textEscape(x.caption)+'</span>').join(' ');}catch(err){diaryPhotos=[];toast(err.message);}
+ try{diaryPhotos=await Promise.all(files.map(resizeDiaryPhoto));window.USA50DiaryLayout?.photosChanged(diaryPhotos);const area=document.querySelector('#diary-photo-preview');if(area)area.innerHTML=diaryPhotos.map(x=>'<span>📸 '+textEscape(x.caption)+'</span>').join(' ');}catch(err){diaryPhotos=[];toast(err.message);}
 });
 const previousDiaryAdmin=showAdmin;
 showAdmin=async function(){
@@ -372,8 +374,8 @@ submitForm=async function(form){
  if(form.id!=='diary-entry-form')return previousDiarySubmit(form);
  const fd=new FormData(form);
  const stickers=[...form.querySelectorAll('.diary-sticker-pick.selected')].map(x=>x.dataset.value);
- const data={text:String(fd.get('text')||''),layout:fd.get('layout'),paper:fd.get('paper'),lineColor:fd.get('lineColor'),textColor:fd.get('textColor'),stickers,photos:diaryPhotos};
+ const data={text:String(fd.get('text')||''),layout:fd.get('layout'),paper:fd.get('paper'),lineColor:fd.get('lineColor'),textColor:fd.get('textColor'),stickers,photos:diaryPhotos,placedItems:window.USA50DiaryLayout?.export()||[]};
  await request('/api/diary/publish',{method:'POST',body:JSON.stringify(data)});
- hideModal();diaryPhotos=[];await refresh();toast('Diary Entry published! ♡');
+ hideModal();diaryPhotos=[];window.USA50DiaryLayout?.reset();await refresh();toast('Diary Entry published! ♡');
 };
 })();
