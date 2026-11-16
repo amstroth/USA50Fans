@@ -173,3 +173,7 @@
 @media(prefers-reduced-motion:reduce){
  .usa50-preview-gift-float{animation:none}
 }
+
+.usa50-preview-wait-camera{position:relative;width:min(160px,55%);margin:12px auto 0;overflow:hidden;border-radius:14px;border:2px solid #fff;background:#4b3064}
+.usa50-preview-wait-camera video{width:100%;height:140px;object-fit:cover;display:block;transform:scaleX(-1)}
+.usa50-preview-wait-camera small{position:absolute;bottom:0;left:0;right:0;padding:6px;color:#fff;background:#301b4490;font-size:9px}
