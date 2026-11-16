@@ -15,8 +15,8 @@ function hydrateProfileThumbnails(){
      if(!result?.thumbnailUrl)return;
      post.thumbnailUrl=result.thumbnailUrl;
      if(!tile.isConnected||tile.querySelector('img'))return;
-     const image=document.createElement('img');image.src=result.thumbnailUrl;image.alt='Post thumbnail';image.className='usa50-profile-thumb';
-     image.loading='lazy';image.onerror=()=>image.remove();tile.prepend(image);
+     const image=document.createElement('img');image.src=result.thumbnailUrl;image.alt='Shared post thumbnail';image.className='usa50-profile-thumb';
+     image.loading='lazy';image.referrerPolicy='no-referrer';image.onerror=()=>image.remove();tile.querySelector('.usa50-profile-embed')?.remove();tile.prepend(image);
    }).catch(()=>{}).finally(()=>thumbnailLookupInProgress.delete(post.id));
  }
 }
