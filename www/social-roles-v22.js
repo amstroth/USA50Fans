@@ -5,7 +5,7 @@ const idolNames=()=>store?.members||[];
 const profileInfo=()=>store?.social?.myProfile||null;
 let idolTab='hashtag';
 function verified(){
- return '<span class="usa50-idol-verified" title="Verified USA50 idol" aria-label="Verified USA50 idol">★<i>✓</i></span>';
+ return window.USA50VerifiedBadge?.({verifiedIdol:true})||'★';
 }
 function previewPost(p){
  const image=p.thumbnailUrl&&/^https:\/\//.test(p.thumbnailUrl)?'<img loading="lazy" alt="Shared social post" src="'+e(p.thumbnailUrl)+'">':
@@ -17,15 +17,15 @@ function enhanceProfile(html,person,own){
  if(!person)return html;
  const root=document.createElement('div');root.innerHTML=html;
  const title=root.querySelector('.usa50-profile-title strong');
- if(title&&person.verifiedIdol)title.insertAdjacentHTML('afterend',verified());
+ if(title&&(person.verifiedIdol||person.verifiedStaff))title.insertAdjacentHTML('afterend',window.USA50VerifiedBadge?.(person)||verified());
  const avatar=root.querySelector('.usa50-avatar-frame');
  if(avatar){
   const ring=person.ring||'classic';
   const auto=person.rankBorder&&(ring==='classic'||ring==='rank-auto');
-  if(person.verifiedIdol){
-   avatar.classList.add('usa50-idol-avatar');
-   avatar.style.setProperty('--idol-border-color',person.idolBorderColor||'#F4A1C8');
-   avatar.insertAdjacentHTML('beforeend','<span class="usa50-avatar-award star">★<i>✓</i></span>');
+  if(person.verifiedIdol||person.verifiedStaff){
+   avatar.classList.add(person.verifiedStaff?'usa50-staff-avatar':'usa50-idol-avatar');
+   avatar.style.setProperty('--idol-border-color',person.verifiedStaff?'#004AAD':(person.idolBorderColor||'#E63A84'));
+   avatar.insertAdjacentHTML('beforeend','<span class="usa50-avatar-award verified">'+(window.USA50VerifiedBadge?.(person,true)||verified())+'</span>');
   }else if(auto){
    avatar.classList.add('usa50-ranked-avatar','usa50-ranked-'+person.rankBorder);
    avatar.insertAdjacentHTML('beforeend','<span class="usa50-avatar-award">'+(person.rankBorder==='gold'?'🏆':person.rankBorder==='silver'?'🥈':person.rankBorder==='bronze'?'🥉':'✦')+'</span>');
@@ -68,7 +68,7 @@ function editProfileExtended(){
  const unlocked=p.unlockedRings||['classic'];
  const rings=[['rank-auto','Rank award (automatic)'],['classic','Classic'],['starlight','Starlight'],['pink-ribbon','Pink Ribbon'],['moonlight','Moonlight'],['golden-hour','Golden Hour']];
  const ringChoices=rings.map(([r,label])=>'<label class="usa50-custom-ring"><input type="radio" name="ring" value="'+r+'" '+((p.ring||'classic')===r?'checked':'')+' '+((r!=='rank-auto'&&!unlocked.includes(r))?'disabled':'')+'> '+e(label)+'</label>').join('');
- const identity=p.verifiedIdol?'<p class="lead">Verified username: @'+e(p.handle)+'</p><label>Official star border color <input name="idolBorderColor" type="color" value="'+e(p.idolBorderColor||'#F4A1C8')+'"></label>':
+ const identity=p.verifiedIdol?'<p class="lead">Verified username: @'+e(p.handle)+'</p><label>Official star border color <input name="idolBorderColor" type="color" value="'+e(p.idolBorderColor||'#E63A84')+'"></label>':
  '<label>Username <input name="handle" value="'+e(p.handle)+'" required minlength="3" maxlength="22" pattern="[A-Za-z][A-Za-z0-9_]{2,21}"></label><label>Profile picture border <div class="usa50-custom-rings">'+ringChoices+'</div></label>';
  showModal('Edit your profile','<form id="usa50-extended-profile" class="form-grid"><label>Profile picture<input type="file" name="avatar" accept="image/jpeg,image/png,image/webp"></label>'+identity+
  '<label>Bio<textarea name="bio" maxlength="180" rows="3">'+e(p.bio||'')+'</textarea></label>'+
