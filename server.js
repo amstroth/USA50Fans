@@ -73,6 +73,8 @@ function resolveUser(id){let u=db.users[id];return u?u.displayName:'Fan';}
 function publicState(u){return {me:u?cleanUser(u):null,members,cards,albums:cardStudio.publicAlbums(),packCards:cardStudio.publicCardsByPack(),homeFeaturedCards:cardStudio.homeFeaturedCards(),rarities:RARITY_WEIGHTS,packCost:PACK_COST,hardPity:HARD_PITY,cooldownDays:90,posts:db.posts.slice().reverse().map(p=>({...p,likedCount:p.likedBy.length,likedBy:undefined,liked:u? p.likedBy.includes(u.id):false})),fansites:db.fansites.filter(f=>f.status==='approved').map(f=>({id:f.id,name:f.name,portfolioUrl:f.portfolioUrl,instagram:f.instagram,tiktok:f.tiktok,description:f.description,votes:Object.values(db.fansiteVotes).filter(id=>id===f.id).length})).sort((a,b)=>b.votes-a.votes),tradeListings:[],announcements:db.announcements.slice().reverse(),events:db.events};}
 const notifier=require('./notification-center.js')({db,save,id,now,userFrom,json,fail});
 const fancalls=require('./fancall-lottery.js')({db,save,id,now,json,fail,userFrom,notify:notifier.push});
+const eventStreams=require('./event-streams.js')({db,save,id,now,json,fail,userFrom});
+const rtc=require('./fancall-rtc.js')({db,userFrom,json,fail});
 const roleFeatures=require('./role-features.js')({db,save,id,hashPass,checkPass,userFrom,adminFrom,bodyText,now,json,fail,notify:notifier.push});
 const socialHub=require('./social-hub.js')({db,save,id,bodyText,now,json,fail,userFrom,notify:notifier.push,rankNotice:notifier.rank});
 const officialDiary=require('./official-diary.js')({db,save,id,now,json,fail,userFrom,dataDir:DATA_DIR});
@@ -86,8 +88,10 @@ async function api(req,res,url){
  if(method==='GET'&&url.pathname.startsWith('/api/official/thumbnail/'))
    return officialDiary.photoThumbnail(req,res,url.pathname.slice('/api/official/thumbnail/'.length));
  if(method==='GET'&&url.pathname==='/api/health')return json(res,200,{ok:true,service:'USA50 web-first development preview',persistence:process.env.DATA_DIR?'configured volume/local directory':'local directory (Railway ephemeral unless DATA_DIR points at volume)'});
- if(method==='GET'&&url.pathname==='/api/bootstrap'){const u=userFrom(req);return json(res,200,{...publicState(u),messaging:roleFeatures.info(u),social:socialHub.info(u),officialDiary:officialDiary.info(u),fancalls:fancalls.info(u),economy:economy.info(u),gacha:gacha.publicInfo(u),mailbox:notifier.info(u)});}
+ if(method==='GET'&&url.pathname==='/api/bootstrap'){const u=userFrom(req);return json(res,200,{...publicState(u),messaging:roleFeatures.info(u),social:socialHub.info(u),officialDiary:officialDiary.info(u),fancalls:fancalls.info(u),economy:economy.info(u),gacha:gacha.publicInfo(u),mailbox:notifier.info(u),liveEvents:eventStreams.info(u)});}
  if(method==='GET'&&url.pathname==='/api/social/resolve'){const id=url.searchParams.get('postId')||'';if(id.length>128)return fail(res,400,'Invalid post ID.');const result=await socialHub.resolveEmbed(id);return result?json(res,200,result):fail(res,404,'Post not found.');}
+ if(method==='GET'&&url.pathname==='/api/fancalls/rtc/poll')return rtc.endpoint(req,res,url.pathname,{},url);
+ if(method==='GET'&&url.pathname==='/api/livestreams/host-config')return eventStreams.hostConfig(req,res);
  if(method==='GET'&&url.pathname==='/api/notifications/list'){const u=userFrom(req);return u?json(res,200,notifier.info(u)):fail(res,401,'Sign in to see notifications.');}
  if(method==='GET'&&url.pathname==='/api/me')return json(res,200,{me:userFrom(req)?cleanUser(userFrom(req)):null});
  if(method==='GET'&&url.pathname==='/api/admin/overview'){
@@ -114,6 +118,8 @@ async function api(req,res,url){
  if(await roleFeatures.handle(req,res,ep,data))return;
  if(await socialHub.handlePost(req,res,ep,data))return;
  if(fancalls.respond(req,res,ep,data))return;
+ if(rtc.endpoint(req,res,ep,data,url))return;
+ if(eventStreams.handle(req,res,ep,data))return;
  if(notifier.handle(req,res,ep,data))return;
  if(economy.handlePost(req,res,ep,data,{userFrom,save,json,fail}))return;
  if(ep==='/api/auth/register'){
@@ -325,7 +331,7 @@ function serve(req,res,url){
     });return;
   }
 
- fs.readFile(full,(err,bytes)=>{if(err)return fail(res,404,'Not found');res.writeHead(200,{'Content-Type':mime[path.extname(full)]||'application/octet-stream','Cache-Control':full.endsWith('index.html')?'no-cache':'public, max-age=3600','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'strict-origin-when-cross-origin','Content-Security-Policy':"default-src 'self'; connect-src 'self' https:; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self' https://www.instagram.com; frame-src https://www.tiktok.com https://www.instagram.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"});res.end(bytes);});
+ fs.readFile(full,(err,bytes)=>{if(err)return fail(res,404,'Not found');res.writeHead(200,{'Content-Type':mime[path.extname(full)]||'application/octet-stream','Cache-Control':full.endsWith('index.html')?'no-cache':'public, max-age=3600','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'strict-origin-when-cross-origin','Content-Security-Policy':"default-src 'self'; connect-src 'self' https:; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self' https://www.instagram.com; frame-src https://www.tiktok.com https://www.instagram.com https://iframe.videodelivery.net https://*.cloudflarestream.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"});res.end(bytes);});
 }
 const server=http.createServer((req,res)=>{
  const origin=req.headers.origin;
