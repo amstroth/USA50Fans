@@ -108,6 +108,17 @@ submitForm=async function(form){
  await request('/api/social/profile',{method:'POST',body:JSON.stringify(payload)});
  hideModal();await refresh();toast('Profile updated.');return;
 };
+const originalMessagesScreen=messagesScreen;
+messagesScreen=function(){
+ const page=originalMessagesScreen();
+ if(!store?.me||store.me.role==='idol')return page;
+ const notes=(store?.social?.notifications||[]).filter(n=>n.type==='idol-heart');
+ if(!notes.length)return page;
+ const notice='<section class="usa50-heart-message-list"><div class="eyebrow">OFFICIAL IDOL HEARTS</div>'+
+ notes.slice(0,8).map(n=>'<div class="usa50-heart-message"><span>♥</span><div><strong>'+e(n.text)+'</strong><small>'+e(new Date(n.createdAt).toLocaleDateString())+'</small></div></div>').join('')+
+ '<button type="button" class="btn tiny secondary" data-action="usa50-notifications-read">Mark all as read</button></section>';
+ return notice+page;
+};
 const priorRender=render;
 render=function(){
  priorRender();
