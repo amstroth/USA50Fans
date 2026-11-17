@@ -348,6 +348,7 @@ const server=http.createServer((req,res)=>{
  if(origin&&(allowed.includes(origin)||['capacitor://localhost','http://localhost'].includes(origin))){res.setHeader('Access-Control-Allow-Origin',origin);res.setHeader('Access-Control-Allow-Credentials','true');res.setHeader('Access-Control-Allow-Headers','Content-Type, Authorization');res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');res.setHeader('Vary','Origin');}
  if(req.method==='OPTIONS'){res.writeHead(204);res.end();return;}
  let url;try{url=new URL(req.url,'http://localhost');}catch{return fail(res,400,'Invalid URL');}
+ if(url.pathname==='/'&&(req.method==='GET'||req.method==='HEAD')&&!url.searchParams.has('classic')){res.writeHead(302,{'Location':'/react/','Cache-Control':'no-store'});res.end();return;}
  if(url.pathname.startsWith('/api/'))api(req,res,url).catch(err=>{console.error('API error',err);if(!res.headersSent)fail(res,500,'Server error');});
  else if(req.method==='GET'||req.method==='HEAD')serve(req,res,url);
  else fail(res,405,'Method not allowed');
