@@ -1,0 +1,18 @@
+/* Only active inside React iframe. Legacy standalone interface is unchanged. */
+html.usa50-react-embedded,body.usa50-react-embedded{min-height:100%;overflow-x:hidden}
+body.usa50-react-embedded .sidebar,
+body.usa50-react-embedded .bottom-nav,
+body.usa50-react-embedded .top-bar,
+body.usa50-react-embedded .dev-banner,
+body.usa50-react-embedded .usa50-top-shortcuts{display:none!important}
+body.usa50-react-embedded .app-shell{display:block!important;max-width:none!important;width:100%!important;margin:0!important;min-height:100%!important}
+body.usa50-react-embedded .content-area{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;overflow-x:visible!important;min-height:100%!important}
+body.usa50-react-embedded .screen{width:100%!important;max-width:none!important;padding:12px 12px 32px!important;margin:0!important;min-height:calc(100dvh - 35px)}
+body.usa50-react-embedded .screen-header{margin:2px 0 13px!important}
+body.usa50-react-embedded .screen-header h1{font-size:clamp(25px,4vw,34px)!important}
+body.usa50-react-embedded .modal-backdrop{z-index:999!important}
+body.usa50-react-embedded .usa50-room{max-width:none!important;width:100%!important}
+@media(max-width:650px){
+ body.usa50-react-embedded .screen{padding:8px 10px 30px!important}
+ body.usa50-react-embedded .content-area{padding-bottom:0!important}
+}
