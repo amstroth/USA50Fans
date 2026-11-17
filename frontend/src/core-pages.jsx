@@ -44,6 +44,6 @@ export function ShopPage(){
 }
 export function LegacyPage({route}){
  const titles={drops:'Card Drops',messages:'Messages',live:'Livestream Studio',fansites:'Fansites',recycle:'Recycle Duplicates',studio:'Creator Studio',admin:'Management'};
- const target=route==='studio'?'messages':route,src='/index.html?embed=1&screen='+encodeURIComponent(target);
+ const target=route==='studio'?'messages':route==='live'?'events':route,src='/index.html?embed=1&screen='+encodeURIComponent(target);
  return <section className="legacy-view"><div className="legacy-view-head"><div><span className="eyebrow">USA50 · COMPATIBILITY FEATURE</span><h1>{titles[route]||'USA50'}</h1></div><a className="action secondary" href={'/index.html?screen='+encodeURIComponent(target)} target="_blank" rel="noopener noreferrer">Full view <Icon name="external" size={16}/></a></div><iframe key={route} className="legacy-frame" src={src} title={titles[route]||'USA50'} allow="camera; microphone; fullscreen; clipboard-read; clipboard-write" loading="eager"/></section>;
 }
