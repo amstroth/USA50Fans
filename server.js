@@ -313,7 +313,8 @@ async function api(req,res,url){
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2','.mp4':'video/mp4','.ico':'image/x-icon','.json':'application/json','.webmanifest':'application/manifest+json'};
 function serve(req,res,url){
  let requestPath;try{requestPath=decodeURIComponent(url.pathname);}catch{return fail(res,400,'Invalid request path');}
- if(requestPath==='/'||!path.extname(requestPath))requestPath='/index.html';
+ if(requestPath==='/react'||requestPath==='/react/')requestPath='/react/index.html';
+  else if(requestPath==='/'||!path.extname(requestPath))requestPath='/index.html';
  const full=path.resolve(ROOT,'.'+requestPath);
  if(!full.startsWith(ROOT+path.sep))return fail(res,403,'Forbidden');
  if(path.extname(full)==='.mp4'){
