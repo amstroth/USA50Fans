@@ -44,10 +44,28 @@ export function Avatar({member,profile,size='md',withAward=false}){
 export function Heading({eyebrow='USA50 FAN UNIVERSE',title,subtitle,action}){return <div className="page-heading"><div><span className="eyebrow">{eyebrow}</span><h1>{title}</h1>{subtitle&&<p>{subtitle}</p>}</div>{action&&<div className="heading-action">{action}</div>}</div>;}
 export function Empty({icon='✧',title='Nothing here yet',detail,action}){return <div className="empty-state"><span>{icon}</span><strong>{title}</strong>{detail&&<p>{detail}</p>}{action}</div>;}
 export function Badge({children,tone='neutral'}){return <span className={'mini-badge '+tone}>{children}</span>;}
+const FACE_FONTS=['Georgia','Great Vibes','Arial','Times New Roman','Trebuchet MS','Verdana','Courier New'];
+function clampFace(value,min,max,fallback){return value!==null&&value!==''&&Number.isFinite(Number(value))?Math.max(min,Math.min(max,Number(value))):fallback;}
+export function CardFaceText({overlayText}){
+ if(!overlayText||typeof overlayText!=='object'||Array.isArray(overlayText))return null;
+ const value=typeof overlayText.value==='string'?overlayText.value.slice(0,60):'';
+ if(!value)return null;
+ const fontFamily=FACE_FONTS.includes(overlayText.fontFamily)?overlayText.fontFamily:'Georgia';
+ const align=['left','center','right'].includes(overlayText.align)?overlayText.align:'center';
+ const shift=align==='left'?'0':align==='right'?'-100%':'-50%';
+ const color=/^#[0-9a-fA-F]{6}$/.test(String(overlayText.color||''))?overlayText.color:'#68577D';
+ const weight=['400','500','600','700'].includes(String(overlayText.weight))?String(overlayText.weight):'400';
+ return <span className="react-card-face-lettering" data-card-text="1" style={{
+  left:clampFace(overlayText.x,0,100,50)+'%',top:clampFace(overlayText.y,0,100,88)+'%',
+  fontFamily:fontFamily==='Great Vibes'?'"Great Vibes", cursive':fontFamily,
+  fontSize:(clampFace(overlayText.fontSize,14,160,58)/660*100).toFixed(4)+'cqw',
+  color,fontWeight:weight,fontStyle:overlayText.italic===true?'italic':'normal',
+  textAlign:align,transform:'translate('+shift+', -50%)'}}>{value}</span>;
+}
 export function CardPreview({card,owned=0,onClick,locked=false}){
  const hasArt=Boolean(card.artUrl),art=card.artUrl||'/assets/portraits/arielle_real.webp';
  return <button className={'card-collectible rarity-'+(card.rarity||'R').toLowerCase()+(locked?' locked':'')} type="button" onClick={onClick}>
-  <div className="card-collectible-art"><img src={art} loading="lazy" alt={card.title||'USA50 photocard'}/>{card.borderUrl&&<img className="card-overlay" src={card.borderUrl} alt=""/>}{locked&&<span className="card-lock">✧</span>}</div>
+  <div className="card-collectible-art"><img src={art} loading="lazy" alt={card.title||'USA50 photocard'}/>{card.borderUrl&&<img className="card-overlay" src={card.borderUrl} alt=""/>}<CardFaceText overlayText={card.overlayText}/>{card.overlayText==null&&card.borderUrl&&<span className="react-card-name-fallback">{card.member||'Arielle'}</span>}{locked&&<span className="card-lock">✧</span>}</div>
   <span className="card-collectible-label">{card.title||'Photocard'}</span><span className="card-collectible-meta">{card.rarity||'R'} · {owned?'Owned ×'+number(owned):'Uncollected'}</span>
  </button>;
 }
