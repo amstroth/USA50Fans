@@ -38,7 +38,7 @@ export function Avatar({member,profile,size='md',withAward=false}){
  const rank=profile?.rankBorder&&['classic','rank-auto'].includes(profile?.ring)?profile.rankBorder:null;
  return <span className={'member-pic '+size+(profile?.verifiedIdol?' idol':'')+(profile?.verifiedStaff?' staff':'')+(rank?' rank-'+rank:'')} style={{'--avatar-color':color}}>
   {src?<img src={src} alt={profile?.displayName||member?.name||'Profile picture'} loading="lazy"/>:<span aria-hidden="true">{letter}</span>}
-  {withAward&&(profile?.verifiedIdol||profile?.verifiedStaff)?<VerifiedStar profile={profile} avatar/>:withAward&&rank?<span className="avatar-rank-mark">{rank==='gold'?'🏆':rank==='silver'?'🥈':rank==='bronze'?'🥉':'✦'}</span>:null}
+  {withAward&&(profile?.verifiedIdol||profile?.verifiedStaff)?<VerifiedStar profile={profile} avatar/>:withAward&&rank?<span className="avatar-rank-mark">{rank==='diamond'?'💎':rank==='gold'?'🥇':rank==='rose-gold'?'🌹':rank==='silver'?'🥈':rank==='top50'?'✦':'♡'}</span>:null}
  </span>;
 }
 export function Heading({eyebrow='USA50 FAN UNIVERSE',title,subtitle,action}){return <div className="page-heading"><div><span className="eyebrow">{eyebrow}</span><h1>{title}</h1>{subtitle&&<p>{subtitle}</p>}</div>{action&&<div className="heading-action">{action}</div>}</div>;}
@@ -47,12 +47,18 @@ export function Empty({icon='✧',title='Nothing here yet',detail,action}){retur
 export function rankTone(rank){
  const n=Number(rank);
  if(!Number.isInteger(n)||n<1||n>100)return 'unranked';
- if(n===1)return 'gold';
- if(n===2)return 'silver';
- if(n===3)return 'bronze';
- return n<=10?'top10':'top100';
+ if(n===1)return 'diamond';
+ if(n===2)return 'gold';
+ if(n===3)return 'rose-gold';
+ if(n<=10)return 'silver';
+ return n<=50?'top50':'top100';
 }
 export function Badge({children,tone='neutral'}){return <span className={'mini-badge '+tone}>{children}</span>;}
+export function VipBadge({level,size='normal'}){
+ const rank=Math.max(0,Math.min(10,Number(level)||0));
+ if(!rank)return null;
+ return <span className={'vip-badge vip-rank-'+rank+(size==='large'?' large':'')} title={'VIP '+rank} aria-label={'VIP '+rank}>✦ VIP {rank}</span>;
+}
 const FACE_FONTS=['Georgia','Great Vibes','Arial','Times New Roman','Trebuchet MS','Verdana','Courier New'];
 function clampFace(value,min,max,fallback){return value!==null&&value!==''&&Number.isFinite(Number(value))?Math.max(min,Math.min(max,Number(value))):fallback;}
 export function CardFaceText({overlayText}){

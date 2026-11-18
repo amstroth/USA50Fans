@@ -3,7 +3,7 @@ import {useApp} from './state';
 import {Avatar,Badge,Empty,Heading,Icon,SectionTitle,rankTone} from './ui';
 import {number} from './api';
 
-const award=rank=>rank===1?'🏆':rank===2?'🥈':rank===3?'🥉':rank<=10?'✦':'♡';
+const award=rank=>rank===1?'💎':rank===2?'🥇':rank===3?'🌹':rank<=10?'🥈':rank<=50?'✦':'♡';
 const descriptor=rank=>rank<=3?'UltraFan':rank<=10?'SuperFan':rank<=50?'BigFan':'Fan';
 
 export function RankingsPage(){

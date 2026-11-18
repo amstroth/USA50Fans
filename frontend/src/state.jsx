@@ -9,6 +9,7 @@ export const NAV=[
  {id:'rankings',name:'Fan Rankings',icon:'trophy'},
  {id:'messages',name:'Messages',icon:'messages',legacy:true},
  {id:'shop',name:'Shop',icon:'shop'},
+ {id:'vip',name:'VIP Rewards',icon:'trophy'},
  {id:'events',name:'Events',icon:'events'},
  {id:'live',name:'Livestreams',icon:'live'},
  {id:'profile',name:'My Page',icon:'profile'},

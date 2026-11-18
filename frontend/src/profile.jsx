@@ -1,6 +1,6 @@
 import React,{useEffect,useState} from 'react';
 import {useApp} from './state';
-import {Avatar,Badge,Empty,Heading,Icon,VerifiedStar,rankTone} from './ui';
+import {Avatar,Badge,Empty,Heading,Icon,VerifiedStar,rankTone,VipBadge} from './ui';
 import {api,dateLabel,number} from './api';
 function resizeAvatar(file){
  return new Promise((resolve,reject)=>{
@@ -97,25 +97,30 @@ export function ProfilePage(){
  const [editing,setEditing]=useState(false),[tab,setTab]=useState('posts');
  const me=data?.me;
  if(!me)return <AccountAccess/>;
- const profile=selectedProfile?data?.social?.profiles?.[selectedProfile]:data?.social?.myProfile;
+ const idolMember=selectedProfile?.startsWith('idol:')?data?.members?.find(x=>x.id===selectedProfile.slice(5)):null;
+ const virtualIdol=idolMember?{id:selectedProfile,verifiedIdol:true,displayName:idolMember.name,handle:idolMember.name.replace(/[^a-z0-9]/gi,''),idolId:idolMember.id,oshiCount:0,bio:'Official '+idolMember.team+' idol'}:null;
+ const profile=selectedProfile?(data?.social?.profiles?.[selectedProfile]||virtualIdol):data?.social?.myProfile;
  if(!profile)return <Empty title="Profile unavailable" action={<button className="action secondary" onClick={()=>setSelectedProfile(null)}>My profile</button>}/>;
  const own=me.id===profile.id,isIdol=profile.verifiedIdol;
  const posts=data?.social?.posts||[];
  const items=posts.filter(p=>tab==='posts'?p.authorId===profile.id:tab==='hearted'?p.heartedBy?.some(x=>x.id===profile.id):tab==='hashtag'?((p.caption||'').match(/#[A-Za-z0-9_]+/g)||[]).some(x=>x.toLowerCase()==='#'+profile.handle?.toLowerCase()):(data?.social?.savedPostIds||[]).includes(p.id)).slice().reverse();
- async function follow(){try{await run('/api/social/follow',{userId:profile.id});}catch(err){message(err.message);}}
+ async function follow(){if(virtualIdol){message('This idol has not activated their profile yet.');return;}try{await run('/api/social/follow',{userId:profile.id});}catch(err){message(err.message);}}
+ function openOshi(id){const idol=Object.values(data?.social?.profiles||{}).find(p=>p?.verifiedIdol&&p.idolId===id);
+  const target=idol?.id||'idol:'+id;setSelectedProfile(target);navigate('profile');setSelectedProfile(target);
+ }
  return <main className="view profile-view">
   {!own&&<button className="text-link profile-back" onClick={()=>setSelectedProfile(null)}><Icon name="back" size={16}/> My profile</button>}
   <div className="profile-head">
    <div className="profile-name"><h1>@{profile.handle}</h1><VerifiedStar profile={profile}/></div>
    {own&&<button className="icon-round" aria-label="Edit settings" onClick={()=>setEditing(true)}><Icon name="settings"/></button>}
   </div>
-  <div className="profile-top"><Avatar profile={profile} size="xl" withAward/>
+  <div className="profile-top"><Avatar member={idolMember} profile={profile} size="xl" withAward/>
    <div className={'profile-stats'+(isIdol?' idol-stats':'')}>
     {isIdol?<div><strong>{number(profile.oshiCount||0)}</strong><small>Oshi fans ♡</small></div>:<><div><strong>{profile.postsCount||0}</strong><small>Posts</small></div><div><strong>{number(profile.followers||0)}</strong><small>Followers</small></div><div><strong>{number(profile.following||0)}</strong><small>Following</small></div></>}
    </div>
   </div>
   <div className="profile-bio"><strong>{profile.displayName}</strong><p>{profile.bio||'Part of the USA50 universe ♡'}</p>
-   {!isIdol&&<div className="profile-badges"><Badge tone="pink">✦ VIP {profile.vipLevel||'Starter'}</Badge><button type="button" className={'rank-badge-link rank-tone-'+rankTone(profile.rank)} onClick={()=>navigate('rankings')} title="View the top 100 fan rankings"><Badge>♛ {profile.rank?'Rank #'+profile.rank:'Unranked'} <Icon name="chevron" size={12}/></Badge></button><Badge>{number(profile.fanXP)} Fan XP</Badge>{(profile.oshiIds||[]).map(id=><Badge key={id} tone="pink">♡ {data?.members?.find(m=>m.id===id)?.name||id} Oshi</Badge>)}</div>}
+   {!isIdol&&<div className="profile-badges">{Number(profile.vipRank)>0&&<button type="button" className="vip-badge-button" onClick={()=>navigate('vip')} title="View VIP benefits and progress"><VipBadge level={profile.vipRank}/></button>}<button type="button" className={'rank-badge-link rank-tone-'+rankTone(profile.rank)} onClick={()=>navigate('rankings')} title="View the top 100 fan rankings"><Badge>♛ {profile.rank?'Rank #'+profile.rank:'Unranked'} <Icon name="chevron" size={12}/></Badge></button><Badge>{number(profile.fanXP)} Fan XP</Badge>{(profile.oshiIds||[]).map(id=><button key={id} className="oshi-profile-link" type="button" onClick={()=>openOshi(id)} title="Open oshi profile"><Badge tone="pink">♡ {data?.members?.find(m=>m.id===id)?.name||id} Oshi <Icon name="chevron" size={12}/></Badge></button>)}</div>}
   </div>
   <div className="row-actions profile-buttons">{own?<><button className="action secondary" onClick={()=>setEditing(true)}>Edit profile / Oshi settings</button><button className="action soft" onClick={signOut}>Sign out</button></>:<button className="action primary" onClick={follow}>{profile.isFollowing?'Following':'Follow +'}</button>}</div>
   <div className="segmented-tabs">{(isIdol?[['hashtag','Hashtag'],['hearted','Hearted'],['posts','Posts']]:[['posts','Posts'],['saved','Saved']]).map(([key,name])=><button key={key} className={tab===key?'selected':''} onClick={()=>setTab(key)}>{name}</button>)}</div>

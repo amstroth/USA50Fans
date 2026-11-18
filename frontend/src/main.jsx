@@ -8,6 +8,8 @@ import {ProfilePage} from './profile';
 import {EventsPage} from './events';
 import {RankingsPage} from './rankings';
 import {LivePage} from './live';
+import {VIPPage} from './vip';
+import {MessagesPage} from './messages';
 import {dateTime,number} from './api';
 import './app.css';
 function Mailbox(){
@@ -52,7 +54,7 @@ function AppShell(){
    <div className="sidebar-foot"><span className="eyebrow">DEVELOPMENT PREVIEW</span><p>Closer to your stars ♡</p><a href="/index.html" className="classic-link">Use original interface <Icon name="external" size={13}/></a></div>
   </aside>
   <div className="react-main">
-   <header className="react-topbar">
+   {route!=='messages'&&<header className="react-topbar">
     <button className="react-menu-toggle" onClick={()=>setMenuOpen(x=>!x)} aria-label="Toggle menu"><Icon name={menuOpen?'x':'menu'}/></button>
     <div className="react-brand"><strong>USA50</strong><small>FAN CLUB</small></div>
     <span className="breadcrumb">✧ Fan Universe / {titles[route]}</span>
@@ -61,9 +63,9 @@ function AppShell(){
      <button className="round-icon events-button" onClick={()=>switchTo('events')} aria-label="Events and fancall lotteries"><Icon name="events" size={20}/>{eventCount>0&&<span className="top-dot" title={eventCount+' new events'}/>}</button>
      <button className="round-icon mail-button" onClick={()=>setMailOpen(true)} aria-label={'Open mail, '+mailCount+' unread'}><Icon name="mail" size={20}/>{mailCount>0&&<span className="mail-number">{mailCount>99?'99+':mailCount}</span>}</button>
     </div>
-   </header>
-   <div className={'react-content '+(route==='community'?'social-content ':'')+(['drops','messages','fansites','recycle','studio','admin'].includes(route)?'compat-content':'')}>
-    {route==='home'?<HomePage/>:route==='collection'?<CollectionPage/>:route==='shop'?<ShopPage/>:route==='community'?<SocialPage/>:route==='rankings'?<RankingsPage/>:route==='events'?<EventsPage/>:route==='live'?<LivePage/>:route==='profile'?<ProfilePage/>:<LegacyPage route={route}/>}
+   </header>}
+   <div className={'react-content '+(route==='community'?'social-content ':'')+(route==='messages'?'message-content ':'')+(['drops','fansites','recycle','studio','admin'].includes(route)?'compat-content':'')}>
+    {route==='home'?<HomePage/>:route==='collection'?<CollectionPage/>:route==='shop'?<ShopPage/>:route==='community'?<SocialPage/>:route==='rankings'?<RankingsPage/>:route==='events'?<EventsPage/>:route==='live'?<LivePage/>:route==='profile'?<ProfilePage/>:route==='vip'?<VIPPage/>:route==='messages'?<MessagesPage/>:<LegacyPage route={route}/>}
    </div>
   </div>
   <nav className="react-bottom-nav" aria-label="Bottom navigation">{BOTTOM.map(id=>{const entry=NAV.find(x=>x.id===id);return <button key={id} className={route===id?'active':''} onClick={()=>switchTo(id)} aria-current={route===id?'page':undefined}><Icon name={entry.icon} size={21}/><small>{entry.name==='Collection'?'Collection':entry.name==='My Page'?'My Page':entry.name}</small></button>;})}</nav>
