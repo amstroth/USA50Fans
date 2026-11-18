@@ -21,7 +21,7 @@ function ticketPoolForPack(pack){
 }
 const VIP_THRESHOLDS=require('./vip-program.js').TIERS.map(t=>t.thresholdCents/100);
 const VIP_LABELS=VIP_THRESHOLDS.map((_,i)=>'VIP '+i);
-function tier(total){const xp=Math.max(0,Number(total)||0);let i=0;while(i<VIP_THRESHOLDS.length-1&&xp>=VIP_THRESHOLDS[i+1])i++;return {level:i+1,label:VIP_LABELS[i],xp,nextAt:VIP_THRESHOLDS[i+1]??null};}
+function tier(total){const xp=Math.max(0,Number(total)||0);let i=0;while(i<VIP_THRESHOLDS.length-1&&xp>=VIP_THRESHOLDS[i+1])i++;return {level:i,label:VIP_LABELS[i],xp,nextAt:VIP_THRESHOLDS[i+1]??null};}
 function choose(weights){
  let n=crypto.randomInt(100);
  for(const [key,p] of Object.entries(weights)){n-=p;if(n<0)return key;}
