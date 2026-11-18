@@ -15,6 +15,7 @@ import {DropsPage} from './drops';
 import {DiaryPage} from './diary';
 import {dateTime,number} from './api';
 import './app.css';
+import './experience.css';
 function Mailbox(){
  const {data,markMail,setMailOpen,navigate,message}=useApp();
  const items=data?.mailbox?.items||[];
