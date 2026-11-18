@@ -34,6 +34,16 @@ try{
  const bundle=await fetch(base+jsPath);
  assert.equal(bundle.status,200,'Bundled React JS must be served');
  assert.match(bundle.headers.get('content-type')||'',/javascript/);
+ const bundledSource=await bundle.text();
+ for(const marker of ['data-card-text','The Fan Rankings','PRIVATE FANCALL','Chat with your idols']){
+  assert.ok(bundledSource.includes(marker),'React bundle must include '+marker);
+ }
+ const stylePath=html.match(/\/react\/assets\/[^"]+\.css/)?.[0];
+ assert.ok(stylePath,'React stylesheet must be linked');
+ const stylesheet=await fetch(base+stylePath);
+ assert.equal(stylesheet.status,200);
+ const stylesheetText=await stylesheet.text();
+ assert.ok(stylesheetText.includes('.react-card-face-lettering'),'Card face text must have visible positioning styles');
  const legacy=await fetch(base+'/index.html');
  assert.equal(legacy.status,200,'Classic standalone page remains usable');
  assert.equal(legacy.headers.get('x-frame-options'),'DENY','Classic page is not normally embeddable');
