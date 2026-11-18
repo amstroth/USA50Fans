@@ -22,6 +22,7 @@ COPY livestream-social.js ./
 COPY web-push-service.js ./
 COPY tests/live-streams.mjs ./tests/live-streams.mjs
 COPY tests/social-images.mjs ./tests/social-images.mjs
+COPY tests/official-channels.mjs ./tests/official-channels.mjs
 COPY tests/react-smoke.mjs ./tests/react-smoke.mjs
 COPY tests/react-media-rooms.mjs ./tests/react-media-rooms.mjs
 COPY fancall-rtc.js ./
@@ -48,6 +49,7 @@ RUN node --check server.js && node --check fancall-lottery.js && node --check ec
 RUN test -s www/react/index.html && test -d www/react/assets && node --check www/react-bridge.js
 RUN node tests/live-streams.mjs
 RUN node tests/social-images.mjs
+RUN node tests/official-channels.mjs
 RUN node tests/react-smoke.mjs
 RUN node tests/react-media-rooms.mjs
 ENV NODE_ENV=production
