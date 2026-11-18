@@ -27,13 +27,13 @@ try{
  assert.equal(root.headers.get('location'),'/react/');
  const react=await fetch(base+'/react/');
  assert.equal(react.status,200,'Built React page is served');
- assert.match(react.headers.get('content-type'),'text/html');
+ assert.match(react.headers.get('content-type')||'',/text\/html/);
  const html=await react.text();
  assert.match(html,/\/react\/assets\/[^"]+\.js/,'Vite React entrypoint must be present');
  const jsPath=html.match(/\/react\/assets\/[^"]+\.js/)?.[0];
  const bundle=await fetch(base+jsPath);
  assert.equal(bundle.status,200,'Bundled React JS must be served');
- assert.match(bundle.headers.get('content-type'),'text/javascript');
+ assert.match(bundle.headers.get('content-type')||'',/javascript/);
  const legacy=await fetch(base+'/index.html');
  assert.equal(legacy.status,200,'Classic standalone page remains usable');
  assert.equal(legacy.headers.get('x-frame-options'),'DENY','Classic page is not normally embeddable');
