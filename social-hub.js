@@ -12,7 +12,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
   const state=db.social;
   const mediaDir=dataDir?path.join(dataDir,'social-thumbnails'):null;
   if(mediaDir)fs.mkdirSync(mediaDir,{recursive:true});
-  for(const k of ['posts','profiles','votes','follows','reports','bans','ticketMilestones','dailyCredits','idolHearts','notifications']){
+  for(const k of ['posts','profiles','votes','follows','reports','bans','ticketMilestones','dailyCredits','idolHearts','notifications','comments']){
     if(!state[k])state[k]=['posts','reports'].includes(k)?[]:{};
   }
   // Repair legacy hidden previews: removing an uploaded cover must never blank
@@ -181,7 +181,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
     const profiles={};for(const target of ids){if(target)profiles[target]=publicProfile(target,uid,ranking);}
     const posts=state.posts.filter(p=>!p.hidden).slice(-250).map(post=>{
       const count=counts(post);
-      return {id:post.id,authorId:post.authorId,category:post.category,caption:post.caption,url:post.url,platform:post.platform,embedId:post.embedId,embedKind:post.embedKind,createdAt:post.createdAt,updatedAt:post.updatedAt||null,thumbnailUrl:pictureUrl(post),hasCustomThumbnail:!!post.thumbnailManual,repostOf:post.repostOf||null,repostAuthor:post.repostAuthor||null,...count,heartedBy:(state.idolHearts[post.id]||[]).filter(x=>role(account(x))==='idol').map(x=>({id:x,name:account(x).displayName})),myHeart:uid?(state.idolHearts[post.id]||[]).includes(uid):false,myVote:uid?(state.votes[post.id]?.[uid]||0):0,isFollowing:Boolean(uid&&(state.follows[uid]||[]).includes(post.authorId))};
+      return {id:post.id,authorId:post.authorId,category:post.category,caption:post.caption,url:post.url,platform:post.platform,embedId:post.embedId,embedKind:post.embedKind,createdAt:post.createdAt,updatedAt:post.updatedAt||null,commentCount:(state.comments[post.id]||[]).length,thumbnailUrl:pictureUrl(post),hasCustomThumbnail:!!post.thumbnailManual,repostOf:post.repostOf||null,repostAuthor:post.repostAuthor||null,...count,heartedBy:(state.idolHearts[post.id]||[]).filter(x=>role(account(x))==='idol').map(x=>({id:x,name:account(x).displayName})),myHeart:uid?(state.idolHearts[post.id]||[]).includes(uid):false,myVote:uid?(state.votes[post.id]?.[uid]||0):0,isFollowing:Boolean(uid&&(state.follows[uid]||[]).includes(post.authorId))};
     });
     return {posts,profiles,rankings:ranking,following:uid?(state.follows[uid]||[]):[],myProfile:uid?profiles[uid]:null,savedPostIds:uid?(profileFor(uid).savedPostIds||[]):[],notifications:uid?(state.notifications[uid]||[]).slice(-40).reverse():[],topHashtags:Object.entries(state.posts.filter(p=>!p.hidden).flatMap(p=>(p.caption.match(/#[A-Za-z0-9_]+/g)||[]).map(t=>t.toLowerCase())).reduce((a,h)=>(a[h]=(a[h]||0)+1,a),{})).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([tag,count])=>({tag,count})),top100Limit:100,earnings:{postPullPoints:50,dailyCreditedPosts:2,upvotesPerTicket:100},policy:'Demo awards, not real fancall entry or confirmed ticketing.',reports:role(user)==='admin'?state.reports.filter(x=>x.status==='pending').slice(-80):[],bans:role(user)==='admin'?state.bans:{}};
   }
@@ -309,6 +309,73 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
     }
     state.importedLegacy=true;save();
   }
+
+  function commentsFor(postId,viewer){
+    const post=state.posts.find(p=>p.id===postId&&!p.hidden);
+    if(!post)return null;
+    const all=state.comments[postId]||[];
+    return {postId,total:all.length,comments:all.slice(-150).map(comment=>{
+      const user=account(comment.authorId),p=user?profileFor(user.id):null;
+      return {id:comment.id,text:comment.text,createdAt:comment.createdAt,authorId:comment.authorId,
+        author:{id:comment.authorId,displayName:user?.displayName||'Former member',
+          handle:p?.handle||'fan',avatarUrl:p?.avatarUrl||null,
+          verifiedIdol:role(user)==='idol',verifiedStaff:role(user)==='admin'},
+        canDelete:Boolean(viewer&&(viewer.id===comment.authorId||viewer.id===post.authorId||role(viewer)==='admin'))};
+    })};
+  }
+  function earnedPostXP(post){
+    const base=Number.isFinite(Number(post.baseXP))?Number(post.baseXP):post.repostOf?5:15;
+    const votes=Object.values(state.votes[post.id]||{}).reduce((sum,x)=>sum+(x===1?2:x===-1?-1:0),0);
+    const hearts=(state.idolHearts[post.id]||[]).length;
+    return {base,votes,hearts,heartXP:150*hearts,total:base+votes+150*hearts};
+  }
+  function deletePostAndRewards(post){
+    // Original posts may have reposts; remove those too rather than leave
+    // broken copied media and rewards attached to a deleted source.
+    const toDelete=new Set([post.id]);
+    let changed=true;
+    while(changed){
+      changed=false;
+      for(const item of state.posts)if(item.repostOf&&toDelete.has(item.repostOf)&&!toDelete.has(item.id)){
+        toDelete.add(item.id);changed=true;
+      }
+    }
+    const deleted=state.posts.filter(x=>toDelete.has(x.id));
+    const xpReversal=new Map();
+    const main=earnedPostXP(post);
+    for(const item of deleted){
+      const award=earnedPostXP(item);
+      xpReversal.set(item.authorId,(xpReversal.get(item.authorId)||0)+award.total);
+      delete state.votes[item.id];
+      delete state.idolHearts[item.id];
+      delete state.comments[item.id];
+      if(item.thumbnailFile&&mediaDir)try{fs.unlinkSync(path.join(mediaDir,item.thumbnailFile));}catch{}
+    }
+    for(const [uid,amount] of xpReversal){
+      const profile=state.profiles[uid];
+      if(profile)profile.xp=Math.max(0,Number(profile.xp||0)-amount);
+    }
+    state.posts=state.posts.filter(x=>!toDelete.has(x.id));
+    state.reports=state.reports.filter(x=>!toDelete.has(x.postId));
+    for(const profile of Object.values(state.profiles)){
+      if(Array.isArray(profile.savedPostIds))profile.savedPostIds=profile.savedPostIds.filter(x=>!toDelete.has(x));
+    }
+    for(const user of Object.values(db.users)){
+      if(Array.isArray(user.state?.likedPosts))user.state.likedPosts=user.state.likedPosts.filter(x=>!toDelete.has(x));
+    }
+    // Remove heart notifications for the deleted post. They are no longer earned.
+    for(const inbox of [state.notifications,db.userNotifications||{}]){
+      for(const [uid,items] of Object.entries(inbox)){
+        if(Array.isArray(items))inbox[uid]=items.filter(n=>!toDelete.has(n.postId)&&
+          ![...toDelete].some(postId=>typeof n.key==='string'&&n.key.startsWith('idol-heart:'+postId+':')));
+      }
+    }
+    if(deleted.some(x=>x.id.startsWith('legacy-')))db.posts=(db.posts||[]).filter(x=>!toDelete.has('legacy-'+x.id));
+    save();
+    return {deletedCount:deleted.length,removedHearts:main.hearts,
+      removedPostXP:main.base,removedVoteXP:main.votes,removedHeartXP:main.heartXP,
+      removedFanXP:Math.max(0,main.total),postId:post.id};
+  }
   async function handlePost(req,res,ep,data){
     if(!ep.startsWith('/api/social/'))return false;
     const u=requireFan(req,res);if(!u)return true;
@@ -325,7 +392,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
       if(state.posts.filter(p=>p.authorId===u.id&&p.createdAt.slice(0,10)===day).length>=5)return fail(res,429,'Limit 5 submissions per day in this development preview.'),true;
       if(data.hideThumbnail===true&&Object.hasOwn(data,'thumbnailDataUrl'))return fail(res,400,'Choose either a thumbnail or its removal.'),true;
       // Omitting a custom cover always leaves the original embedded preview visible.
-      const post={id:id(),authorId:u.id,category,caption,url:source.url,platform:source.platform,embedKind:source.embedKind,embedId:source.embedId,thumbnailUrl:null,createdAt:now(),hidden:false};
+      const post={id:id(),authorId:u.id,category,caption,url:source.url,platform:source.platform,embedKind:source.embedKind,embedId:source.embedId,thumbnailUrl:null,baseXP:15,createdAt:now(),hidden:false};
       // Resolve only provider-approved thumbnail metadata for a verified post URL.
       // Failure never blocks publishing; Instagram may require provider credentials.
       if(source.platform==='TikTok' && source.embedId){
@@ -383,6 +450,35 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
       if(post.authorId!==u.id&&role(u)!=='admin')return fail(res,403,'Only the post author or management can update its image.'),true;
       try{saveImageFromData(post,data.thumbnailDataUrl);post.thumbnailManual=true;delete post.thumbnailHidden;}catch(err){return fail(res,400,err.message),true;}
       save();return json(res,200,{ok:true,postId:post.id,thumbnailUrl:pictureUrl(post)}),true;
+    }
+    if(ep==='/api/social/delete'){
+      const post=state.posts.find(p=>p.id===String(data.postId||'')&&!p.hidden);
+      if(!post)return fail(res,404,'Post not found.'),true;
+      if(post.authorId!==u.id&&role(u)!=='admin')return fail(res,403,'Only the post author or management can delete this post.'),true;
+      if(data.confirm!==true)return fail(res,400,'Confirm permanent deletion of this post, its idol hearts, and earned Fan XP.'),true;
+      return json(res,200,{ok:true,...deletePostAndRewards(post)}),true;
+    }
+    if(ep==='/api/social/comment'){
+      const post=state.posts.find(p=>p.id===String(data.postId||'')&&!p.hidden);
+      if(!post)return fail(res,404,'Post not found.'),true;
+      if(state.bans[u.id])return fail(res,403,'Commenting is suspended on this account.'),true;
+      const raw=data.text;
+      if(typeof raw!=='string'||!raw.trim()||raw.trim().length>500)return fail(res,400,'Write a comment between 1 and 500 characters.'),true;
+      const list=state.comments[post.id]||(state.comments[post.id]=[]);
+      if(list.length>=1000)return fail(res,429,'This post has reached the comment limit.'),true;
+      // Do not award XP for comments; deleting a post cannot leave phantom rewards.
+      const comment={id:id(),authorId:u.id,text:raw.trim(),createdAt:now()};
+      list.push(comment);save();
+      return json(res,201,{ok:true,commentId:comment.id,commentCount:list.length}),true;
+    }
+    if(ep==='/api/social/comment-delete'){
+      const post=state.posts.find(p=>p.id===String(data.postId||'')&&!p.hidden);
+      if(!post)return fail(res,404,'Post not found.'),true;
+      const list=state.comments[post.id]||[],comment=list.find(x=>x.id===String(data.commentId||''));
+      if(!comment)return fail(res,404,'Comment not found.'),true;
+      if(comment.authorId!==u.id&&post.authorId!==u.id&&role(u)!=='admin')return fail(res,403,'You cannot remove this comment.'),true;
+      state.comments[post.id]=list.filter(x=>x.id!==comment.id);save();
+      return json(res,200,{ok:true,commentCount:state.comments[post.id].length}),true;
     }
     if(ep==='/api/social/heart'){
       if(role(u)!=='idol')return fail(res,403,'Only verified idol accounts can heart posts.'),true;
@@ -470,7 +566,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
       if(state.posts.some(p=>p.authorId===u.id&&p.repostOf===original.id&&!p.hidden))return fail(res,409,'Already reposted.'),true;
       const day=now().slice(0,10);
       if(state.posts.filter(p=>p.authorId===u.id&&p.createdAt.slice(0,10)===day).length>=5)return fail(res,429,'Daily posting limit reached.'),true;
-      const post={id:id(),authorId:u.id,category:'fan',caption:original.caption,url:original.url,platform:original.platform,embedKind:original.embedKind,embedId:original.embedId,repostOf:original.id,repostAuthor:profileFor(original.authorId)?.handle||'USA50 fan',thumbnailUrl:original.thumbnailUrl||null,createdAt:now(),hidden:false};
+      const post={id:id(),authorId:u.id,category:'fan',caption:original.caption,url:original.url,platform:original.platform,embedKind:original.embedKind,embedId:original.embedId,repostOf:original.id,repostAuthor:profileFor(original.authorId)?.handle||'USA50 fan',thumbnailUrl:original.thumbnailUrl||null,baseXP:5,createdAt:now(),hidden:false};
       state.posts.push(post);profileFor(u.id).xp+=5;save();
       return json(res,201,{ok:true,postId:post.id}),true;
     }
@@ -512,5 +608,5 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
     }
     return fail(res,404,'Unknown social endpoint.'),true;
   }
-  return {info,handlePost,resolveEmbed,serveThumbnail};
+  return {info,handlePost,resolveEmbed,serveThumbnail,commentsFor};
 };
