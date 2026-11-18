@@ -772,3 +772,10 @@
 }
 
 .social-compose-cover-overlay.react-modal-cover{z-index:9500}
+
+/* Distinguish intentional removal from restoring an automatic embedded preview. */
+.social-compose-cover-controls .social-remove-cover{color:#ad4867;font-weight:800;text-decoration:underline;text-underline-offset:3px}
+.social-compose-cover-preview .social-cover-no-image{display:grid;place-items:center;width:100%;height:100%;background:#f6f2f7;color:#a08ca6}
+.social-compose-cover-preview .social-cover-no-image small{color:#916f97;font-size:12px}
+.profile-post-no-thumbnail{display:block;position:absolute;inset:0;width:100%;height:100%;background:#f7f4f7}
+

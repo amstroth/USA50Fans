@@ -92,5 +92,37 @@ try{
  assert.equal(edited.url,sourceFirst.url);
  assert.ok(edited.thumbnailUrl.startsWith('/api/social/thumbnail/'));
  assert.equal((await post('fan','/api/social/post-edit',{postId:id,caption:'Too short',url:'https://not-trusted.example/post',category:'fan'})).status,400);
+ // Intentional removal is distinct from the default auto/embed preview.
+ const lastVersion=social.info(fans.fan).posts.find(x=>x.id===id);
+ const noThumb=await post('fan','/api/social/post-edit',{postId:id,caption:lastVersion.caption,url:lastVersion.url,category:'fan',hideThumbnail:true});
+ assert.equal(noThumb.status,200);
+ let invisible=social.info(fans.fan).posts.find(x=>x.id===id);
+ assert.equal(invisible.thumbnailHidden,true);
+ assert.equal(invisible.thumbnailUrl,null);
+ assert.equal(invisible.hasCustomThumbnail,false);
+ assert.equal(db.social.posts.find(x=>x.id===id).thumbnailFile,null);
+ assert.equal((await getCover(id)).status,404);
+ // The post is still embedded on Social, even while its grid tile has no image.
+ assert.equal(invisible.embedId,sourceFirst.embedId);
+ assert.equal((await social.resolveEmbed(id)).thumbnailUrl,null);
+ assert.equal((await social.resolveEmbed(id)).thumbnailHidden,true);
+ assert.equal((await post('another','/api/social/post-edit',{postId:id,caption:'Unauthorized edit',url:sourceFirst.url,category:'fan',hideThumbnail:true})).status,403);
+ // Explicitly restoring automatic preview re-enables the normal embed display.
+ assert.equal((await post('fan','/api/social/post-edit',{postId:id,caption:lastVersion.caption,url:lastVersion.url,category:'fan',clearThumbnail:true})).status,200);
+ invisible=social.info(fans.fan).posts.find(x=>x.id===id);
+ assert.equal(invisible.thumbnailHidden,false);
+ assert.equal(invisible.hasCustomThumbnail,false);
+ // Uploading a custom cover after removing it automatically disables no-thumbnail mode.
+ assert.equal((await post('fan','/api/social/post-edit',{postId:id,caption:lastVersion.caption,url:lastVersion.url,category:'fan',hideThumbnail:true,thumbnailDataUrl:image})).status,400);
+ assert.equal((await post('fan','/api/social/post-edit',{postId:id,caption:lastVersion.caption,url:lastVersion.url,category:'fan',thumbnailDataUrl:image})).status,200);
+ assert.equal(social.info(fans.fan).posts.find(x=>x.id===id).thumbnailHidden,false);
+ // Newly-created posts can also opt out of both custom and provider thumbnails.
+ const hiddenNew=await post('another','/api/social/post',{caption:'A post with no profile image',url:'https://www.instagram.com/p/AbcDef12345/',hideThumbnail:true});
+ assert.equal(hiddenNew.status,201);
+ const hiddenInfo=social.info(fans.another).posts.find(x=>x.id===hiddenNew.data.postId);
+ assert.equal(hiddenInfo.thumbnailHidden,true);
+ assert.equal(hiddenInfo.thumbnailUrl,null);
+ assert.equal((await social.resolveEmbed(hiddenInfo.id)).thumbnailUrl,null);
+
  console.log('Social image tests passed: stored previews, reposts, embedded defaults, owner permissions, post edits and optional grid covers.');
 }finally{globalThis.fetch=originalFetch;fs.rmSync(folder,{recursive:true,force:true});}

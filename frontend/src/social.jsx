@@ -144,24 +144,24 @@ async function gridCoverData(file){
 export function Compose({close,post=null}){
  const {run,message}=useApp(),editing=!!post;
  const [caption,setCaption]=useState(post?.caption||''),[url,setUrl]=useState(post?.url||''),[category,setCategory]=useState(post?.category||'fan');
- const [cover,setCover]=useState(null),[clearCover,setClearCover]=useState(false),[uploading,setUploading]=useState(false),[busy,setBusy]=useState(false);
+ const [cover,setCover]=useState(null),[thumbnailMode,setThumbnailMode]=useState(post?.thumbnailHidden?'none':post?.hasCustomThumbnail?'custom':'auto'),[uploading,setUploading]=useState(false),[busy,setBusy]=useState(false);
  async function pickCover(e){
   const file=e.target.files?.[0];e.target.value='';if(!file)return;
   setUploading(true);
-  try{setCover(await gridCoverData(file));setClearCover(false);}catch(err){message(err.message);}
+  try{setCover(await gridCoverData(file));setThumbnailMode('custom');}catch(err){message(err.message);}
   finally{setUploading(false);}
  }
  async function submit(e){
   e.preventDefault();setBusy(true);
   try{
    const payload={caption,url,category,...(editing?{postId:post.id}:{}),
-    ...(cover?{thumbnailDataUrl:cover}:clearCover?{clearThumbnail:true}:{})};
+    ...(thumbnailMode==='custom'&&cover?{thumbnailDataUrl:cover}:thumbnailMode==='none'?{hideThumbnail:true}:thumbnailMode==='auto'&&editing?{clearThumbnail:true}:{})};
    const result=await run(editing?'/api/social/post-edit':'/api/social/post',payload);
    message(editing?'Post updated ♡':'Post published. +'+result.fanXPAwarded+' Fan XP');
    close();
   }catch(err){message(err.message);}finally{setBusy(false);}
  }
- const preview=cover||(!clearCover?post?.thumbnailUrl:null);
+ const preview=thumbnailMode==='custom'?(cover||post?.thumbnailUrl):thumbnailMode==='auto'?(!post?.hasCustomThumbnail?post?.thumbnailUrl:null):null;
  return createPortal(<div className="react-modal-cover social-compose-cover-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}>
   <div role="dialog" aria-modal="true" aria-label={editing?'Edit Social post':'Share Social post'} className="react-modal social-compose-modal">
    <header><h2>{editing?'Edit post':'Share a USA50 edit ♡'}</h2><button type="button" aria-label="Close post editor" onClick={close}><Icon name="x"/></button></header>
@@ -173,11 +173,12 @@ export function Compose({close,post=null}){
      <strong>Profile-grid thumbnail <span>optional</span></strong>
      <p>Choose a photo from your camera roll for the square on your profile grid. Your post in Social will continue to display the original Instagram or TikTok embed.</p>
      <div className="social-compose-cover-row">
-      <div className="social-compose-cover-preview">{preview?<img src={preview} alt="Thumbnail preview"/>:<span>◎<small>Embedded preview</small></span>}</div>
+      <div className="social-compose-cover-preview">{thumbnailMode==='none'?<span className="social-cover-no-image"><small>No thumbnail</small></span>:preview?<img src={preview} alt="Thumbnail preview"/>:<span>◎<small>Embedded preview</small></span>}</div>
       <div className="social-compose-cover-controls">
        <label className="action secondary">Choose thumbnail<input type="file" accept="image/png,image/jpeg,image/webp" onChange={pickCover} disabled={uploading||busy}/></label>
-       {(cover||post?.hasCustomThumbnail)&&<button type="button" className="text-link" onClick={()=>{setCover(null);setClearCover(editing);}}>Use original embed preview</button>}
-       <small>{uploading?'Preparing photo…':'If you do not choose an image, the profile grid uses the embedded/automatic preview when available.'}</small>
+       {thumbnailMode!=='auto'&&<button type="button" className="text-link" onClick={()=>{setCover(null);setThumbnailMode('auto');}}>Use original embed preview</button>}
+       {thumbnailMode!=='none'&&<button type="button" className="text-link social-remove-cover" onClick={()=>{setCover(null);setThumbnailMode('none');}}>Remove thumbnail completely</button>}
+       <small>{uploading?'Preparing photo…':thumbnailMode==='none'?'No image or embed preview will appear in the profile-grid tile. The post itself remains available.':thumbnailMode==='auto'?'The profile grid uses the original embedded/automatic preview when available.':'Your custom thumbnail will appear in the profile grid only.'}</small>
       </div>
      </div>
     </div>
