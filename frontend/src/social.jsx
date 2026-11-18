@@ -1,7 +1,27 @@
 import React,{useMemo,useState} from 'react';
 import {useApp} from './state';
-import {Avatar,Badge,Empty,Heading,Icon,VerifiedStar} from './ui';
+import {Avatar,Badge,Empty,Heading,Icon,SectionTitle,VerifiedStar} from './ui';
 import {api,dateLabel,safeUrl} from './api';
+function OfficialAndDiary(){
+ const {data,navigate}=useApp();
+ const diary=data?.officialDiary?.diaries||[],official=data?.officialDiary?.officialPosts||[];
+ const groups=[...new Map(diary.map(item=>[item.authorId,item.author])).entries()];
+ if(!diary.length&&!official.length&&!data?.officialDiary?.canPost)return null;
+ return <div className="react-social-features">
+  <section className="react-section diary-entry-teasers">
+   <SectionTitle title="Diary Entries ♡" action={<button className="text-link" onClick={()=>navigate('diary')}>Explore diaries →</button>}/>
+   <div className="diary-story-row">
+    {data?.officialDiary?.canPost&&<button onClick={()=>navigate('diary')} className="diary-story"><span className="diary-story-ring create"><span>＋</span></span><small>Create entry</small></button>}
+    {groups.map(([id,name])=><button className="diary-story" key={id} onClick={()=>navigate('diary')}><span className="diary-story-ring">{(diary.find(item=>item.authorId===id)?.photos||[])[0]?.url?<img loading="lazy" src={diary.find(item=>item.authorId===id).photos[0].url} alt={name+' diary'}/>:<span>✧</span>}</span><small>{name}</small></button>)}
+   </div>
+  </section>
+  <section className="react-section official-links">
+   <SectionTitle title="Official Channels" action={<button className="text-link" onClick={()=>navigate('diary')}>View full feed →</button>}/>
+   <div className="official-post-strip">{official.slice(0,12).map(post=><a key={post.id} className="official-post-teaser" href={safeUrl(post.url)||'#'} target="_blank" rel="noopener noreferrer"><div>{post.thumbnailUrl?<img src={post.thumbnailUrl} loading="lazy" alt={post.title||'Official USA50 video thumbnail'}/>:<span>{post.platform==='YouTube'?'▶':post.platform==='TikTok'?'♪':'◎'}</span>}</div><strong>{post.title||'USA50 Official'}</strong><small>{post.platform||'Official'}</small></a>)}</div>
+   {!official.length&&<p className="muted">Official posts from connected USA50 channels will appear here.</p>}
+  </section>
+ </div>;
+}
 function Media({post}){
  const link=safeUrl(post.url);
  if(post.embedKind==='tiktok'&&/^\d{12,25}$/.test(post.embedId||''))return <div className="post-media tiktok"><iframe src={'https://www.tiktok.com/player/v1/'+post.embedId+'?controls=1'} title="TikTok shared video" loading="lazy" allow="fullscreen; encrypted-media; picture-in-picture"/></div>;
@@ -73,6 +93,7 @@ export function SocialPage(){
  },[allPosts,tab,query,profiles,following]);
  return <main className="view social-page">
   <Heading eyebrow="USA50 FAN COMMUNITY" title="The Social Feed" subtitle="See your fandom, share your edits, and collect hearts from idols." action={<button className="action primary" onClick={()=>data?.me?setCompose(true):navigate('profile')}><Icon name="plus" size={17}/> New Post</button>}/>
+  <OfficialAndDiary/>
   <div className="social-search"><Icon name="community"/><input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search hashtags or usernames" aria-label="Search Social posts"/>{query&&<button onClick={()=>setQuery('')} aria-label="Clear search"><Icon name="x" size={16}/></button>}</div>
   <div className="tag-strip"><small>Top hashtags</small>{(social.topHashtags?.length?social.topHashtags.slice(0,8):[{tag:'#truelove'},{tag:'#arielle'},{tag:'#nyc50'}]).map(h=><button key={h.tag} onClick={()=>setQuery(h.tag)}>{({'#truelove':'#TrueLove','#arielle':'#Arielle','#nyc50':'#NYC50'})[h.tag]||h.tag}</button>)}</div>
   <div className="segmented-tabs social-tabs">{[['recent','Recent'],['top','Top'],['following','Following'],['fansites','Fansites']].map(([key,label])=><button key={key} className={tab===key?'selected':''} onClick={()=>setTab(key)}>{label}</button>)}</div>
