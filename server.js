@@ -93,6 +93,11 @@ async function api(req,res,url){
  if(method==='GET'&&url.pathname==='/api/health')return json(res,200,{ok:true,service:'USA50 web-first development preview',persistence:process.env.DATA_DIR?'configured volume/local directory':'local directory (Railway ephemeral unless DATA_DIR points at volume)'});
  if(method==='GET'&&url.pathname==='/api/bootstrap'){const u=userFrom(req);return json(res,200,{...publicState(u),messaging:roleFeatures.info(u),social:socialHub.info(u),officialDiary:officialDiary.info(u),fancalls:fancalls.info(u),economy:economy.info(u),gacha:gacha.publicInfo(u),mailbox:notifier.info(u),liveEvents:eventStreams.info(u)});}
  if(method==='GET'&&url.pathname==='/api/social/resolve'){const id=url.searchParams.get('postId')||'';if(id.length>128)return fail(res,400,'Invalid post ID.');const result=await socialHub.resolveEmbed(id);return result?json(res,200,result):fail(res,404,'Post not found.');}
+ if(method==='GET'&&url.pathname==='/api/fancalls/session-state'){
+   const user=userFrom(req);if(!user)return fail(res,401,'Sign in to view your fancall room.');
+   const session=fancalls.info(user).sessions.find(s=>s.id===url.searchParams.get('sessionId'));
+   return session?json(res,200,{session}):fail(res,403,'This fancall is not assigned to you.');
+ }
  if(method==='GET'&&url.pathname==='/api/fancalls/rtc/poll')return rtc.endpoint(req,res,url.pathname,{},url);
  if(method==='GET'&&webPush.handleGet(req,res,url.pathname))return;
  if(method==='GET'&&liveSocial.handleGet(req,res,url.pathname,url.searchParams))return;
