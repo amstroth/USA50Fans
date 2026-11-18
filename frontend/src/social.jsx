@@ -1,4 +1,4 @@
-import React,{useEffect,useMemo,useState} from 'react';
+import React,{useMemo,useState} from 'react';
 import {createPortal} from 'react-dom';
 import {useApp} from './state';
 import {Avatar,Badge,Empty,Heading,Icon,SectionTitle,VerifiedStar,rankTone} from './ui';
@@ -76,59 +76,17 @@ function OfficialAndDiary(){
   </section>
  </div>;
 }
-
-async function fanPostImage(file){
- if(!file||!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>12_000_000)throw Error('Choose a JPG, PNG or WebP photo under 12 MB.');
- const objectUrl=URL.createObjectURL(file);
- try{
-  const img=new Image();img.src=objectUrl;
-  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('Could not read the selected image.'));});
-  const factor=Math.min(1,1280/img.width,1600/img.height);
-  const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*factor));canvas.height=Math.max(1,Math.round(img.height*factor));
-  canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-  const output=canvas.toDataURL('image/jpeg',.76);
-  if(output.length>1550000)throw Error('The photo is too large after compression. Try a smaller image.');
-  return output;
- }finally{URL.revokeObjectURL(objectUrl);}
-}
 function Media({post}){
- const [thumbnail,setThumbnail]=useState(post.thumbnailUrl||null),[details,setDetails]=useState({embedKind:post.embedKind,embedId:post.embedId,url:post.url}),[playing,setPlaying]=useState(false);
- useEffect(()=>{
-  let active=true;
-  setThumbnail(post.thumbnailUrl||null);setDetails({embedKind:post.embedKind,embedId:post.embedId,url:post.url});setPlaying(false);
-  // TikTok images can expire, and old Instagram posts never had cached covers.
-  // Ask our server to retrieve and cache provider preview media on the app volume.
-  if(String(post.thumbnailUrl||'').startsWith('/api/social/thumbnail/'))return()=>{active=false;};
-  api('/api/social/resolve?postId='+encodeURIComponent(post.id))
-   .then(result=>{if(!active)return;setThumbnail(result.thumbnailUrl||null);setDetails(result);})
-   .catch(()=>{});
-  return ()=>{active=false;};
- },[post.id,post.thumbnailUrl,post.embedId,post.embedKind,post.url]);
- const original=safeUrl(details.url)||safeUrl(post.url);
- const tiktok=details.embedKind==='tiktok'&&/^\d{12,25}$/.test(details.embedId||'');
- const instagram=['p','reel','tv'].includes(details.embedKind)&&/^[a-zA-Z0-9_-]{5,32}$/.test(details.embedId||'');
- const video=tiktok||(instagram&&details.embedKind!=='p');
- if(playing){
-  if(tiktok)return <div className="post-media playing tiktok"><button className="post-stop-video" onClick={()=>setPlaying(false)}>Back to photo</button><iframe src={'https://www.tiktok.com/player/v1/'+details.embedId+'?controls=1'} title="TikTok video" loading="lazy" allow="fullscreen; encrypted-media; picture-in-picture"/></div>;
-  if(instagram)return <div className="post-media playing instagram"><button className="post-stop-video" onClick={()=>setPlaying(false)}>Back to photo</button><iframe src={'https://www.instagram.com/'+details.embedKind+'/'+details.embedId+'/embed/'} title="Instagram reel" loading="lazy"/></div>;
- }
- if(thumbnail)return <div className="post-media image-preview">
-  {original?<a href={original} target="_blank" rel="noopener noreferrer" className="post-image-link" aria-label="Open original post"><img src={thumbnail} loading="lazy" referrerPolicy="no-referrer" alt={post.caption?'Photo preview: '+post.caption.slice(0,90):'Post image'} onError={()=>setThumbnail(null)}/></a>:
-   <img src={thumbnail} loading="lazy" alt="Shared post image" onError={()=>setThumbnail(null)}/>}
-  {video&&<button className="post-play-overlay" onClick={()=>setPlaying(true)} aria-label="Play shared video">▶ <span>Play</span></button>}
- </div>;
- return <div className="post-media unavailable-preview">
-  <span className="preview-unavailable-text">Image preview unavailable from {post.platform}. The original post is still accessible.</span>
-  {original&&<a href={original} target="_blank" rel="noopener noreferrer">Open on {post.platform} <Icon name="external" size={16}/></a>}
- </div>;
+ const link=safeUrl(post.url);
+ if(post.embedKind==='tiktok'&&/^\d{12,25}$/.test(post.embedId||''))return <div className="post-media tiktok"><iframe src={'https://www.tiktok.com/player/v1/'+post.embedId+'?controls=1'} title="TikTok shared video" loading="lazy" allow="fullscreen; encrypted-media; picture-in-picture"/></div>;
+ if(['p','reel','tv'].includes(post.embedKind)&&/^[a-zA-Z0-9_-]{5,32}$/.test(post.embedId||''))return <div className="post-media instagram"><iframe src={'https://www.instagram.com/'+post.embedKind+'/'+post.embedId+'/embed/'} title="Instagram shared content" loading="lazy"/></div>;
+ return link?<a href={link} target="_blank" rel="noopener noreferrer" className="post-link-preview"><span>{post.platform==='TikTok'?'♪':'◎'}</span><div><strong>Open shared {post.platform} post</strong><small>View original content</small></div><Icon name="external" size={18}/></a>:null;
 }
 function PostCard({post,author}){
  const {data,run,message,navigate,setSelectedProfile}=useApp();
  const [busy,setBusy]=useState('');
  const me=data?.me,own=me?.id===post.authorId,saved=(data?.social?.savedPostIds||[]).includes(post.id);
  const canHeart=me?.role==='idol'&&!own;
- const canEditImage=Boolean(me&&(own||me.role==='admin'));
- async function uploadImage(e){const file=e.target.files?.[0];if(!file)return;setBusy('image');try{const thumbnailDataUrl=await fanPostImage(file);await run('/api/social/thumbnail',{postId:post.id,thumbnailDataUrl});message('Feed photo updated ♡');}catch(err){message(err.message);}finally{e.target.value='';setBusy('');}}
  async function interact(action,endpoint,payload){
   if(!me){navigate('profile');message('Sign in to interact with posts.');return;}
   setBusy(action);
@@ -157,7 +115,6 @@ function PostCard({post,author}){
    </div>
    {post.heartedBy?.length>0&&<p className="hearted-label">♥ Hearted by {post.heartedBy.map(x=>x.name).join(post.heartedBy.length===2?' and ':', ')}</p>}
    <div className="post-links">
-    {canEditImage&&<label className="post-image-upload"><Icon name="camera" size={14}/>{post.thumbnailUrl?'Change photo':'Add post photo'}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={Boolean(busy)} onChange={uploadImage}/></label>}
     {safeUrl(post.url)&&<a href={safeUrl(post.url)} target="_blank" rel="noopener noreferrer">Open original <Icon name="external" size={13}/></a>}
     {!own&&<button className="quiet-button" onClick={()=>{const reason=window.prompt('Reason for reporting this post (optional):');if(reason===null)return;interact('report','/api/social/report',{postId:post.id,reason});}}>Report</button>}
    </div>
@@ -165,16 +122,14 @@ function PostCard({post,author}){
  </article>;
 }
 function Compose({close}){
- const {run,message}=useApp(),[caption,setCaption]=useState(''),[url,setUrl]=useState(''),[category,setCategory]=useState('fan'),[photo,setPhoto]=useState(null),[busy,setBusy]=useState(false);
- async function publish(e){e.preventDefault();setBusy(true);try{const result=await run('/api/social/post',{caption,url,category,...(photo?{thumbnailDataUrl:photo}:{})});message('Post published. +'+result.fanXPAwarded+' Fan XP');close();}catch(err){message(err.message);}finally{setBusy(false);}}
+ const {run,message}=useApp(),[caption,setCaption]=useState(''),[url,setUrl]=useState(''),[category,setCategory]=useState('fan'),[busy,setBusy]=useState(false);
+ async function publish(e){e.preventDefault();setBusy(true);try{const result=await run('/api/social/post',{caption,url,category});message('Post published. +'+result.fanXPAwarded+' Fan XP');close();}catch(err){message(err.message);}finally{setBusy(false);}}
  return <div className="react-modal-cover" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}><div role="dialog" aria-modal="true" aria-label="Share social post" className="react-modal">
   <header><h2>Share a USA50 edit ♡</h2><button aria-label="Close" onClick={close}><Icon name="x"/></button></header>
   <form className="react-form" onSubmit={publish}><label>Caption<textarea value={caption} minLength={6} maxLength={650} required placeholder="What did you love about this moment? #Arielle #NYC50" onChange={e=>setCaption(e.target.value)}/></label>
    <label>Instagram or TikTok post link<input type="url" required value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://www.instagram.com/reel/..."/></label>
-   <label>Upload a photo preview (recommended, especially for Instagram)<input type="file" accept="image/jpeg,image/png,image/webp" onChange={async e=>{if(!e.target.files?.[0])return;try{setPhoto(await fanPostImage(e.target.files[0]));}catch(err){message(err.message);}}}/></label>
-   {photo&&<img src={photo} alt="Preview of selected post image" className="compose-photo-preview"/>}
    <label>Publish to<select value={category} onChange={e=>setCategory(e.target.value)}><option value="fan">Fan community</option><option value="fansite">Fansites (approved only)</option></select></label>
-   <p className="fineprint">Share your own public post. Uploaded preview photos are stored in the USA50 app and stay visible even when a platform blocks embeds. Links open the original post.</p><button className="action primary full" disabled={busy}>{busy?'Publishing…':'Publish post'}</button>
+   <p className="fineprint">Share your own public post. Links stay on the original platform. Demo XP and Pull Points may apply.</p><button className="action primary full" disabled={busy}>{busy?'Publishing…':'Publish post'}</button>
   </form></div></div>;
 }
 export function SocialPage(){

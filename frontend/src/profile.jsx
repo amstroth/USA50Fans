@@ -77,18 +77,30 @@ function EditProfile({profile,close}){
 }
 function PostThumbnail({post}){
  const [thumbnail,setThumbnail]=useState(post.thumbnailUrl||null);
+ const [retry,setRetry]=useState(0);
  useEffect(()=>{
-  setThumbnail(post.thumbnailUrl||null);
-  if(String(post.thumbnailUrl||'').startsWith('/api/social/thumbnail/'))return;
   let active=true;
-  // Reuse the original post's thumbnail, including for older short-link TikToks.
-  api('/api/social/resolve?postId='+encodeURIComponent(post.id))
-   .then(result=>{if(active)setThumbnail(result?.thumbnailUrl||null);})
-   .catch(()=>{});
+  setThumbnail(post.thumbnailUrl||null);
+  setRetry(0);
+  // The profile grid uses the exact saved thumbnail for the same Social post.
+  // Older posts without a saved cover are resolved through their source URL.
+  if(!String(post.thumbnailUrl||'').startsWith('/api/social/thumbnail/')){
+   api('/api/social/resolve?postId='+encodeURIComponent(post.id))
+    .then(result=>{if(active&&result?.thumbnailUrl)setThumbnail(result.thumbnailUrl);})
+    .catch(()=>{});
+  }
   return ()=>{active=false;};
- },[post.id,post.thumbnailUrl,post.platform]);
+ },[post.id,post.thumbnailUrl]);
+ async function retryThumbnail(){
+  if(retry>0){setThumbnail(null);return;}
+  setRetry(1);
+  try{
+   const fresh=await api('/api/social/resolve?postId='+encodeURIComponent(post.id));
+   setThumbnail(fresh?.thumbnailUrl&&fresh.thumbnailUrl!==thumbnail?fresh.thumbnailUrl:null);
+  }catch{setThumbnail(null);}
+ }
  return <span className="profile-post-image">
-  {thumbnail?<img src={thumbnail} alt={post.caption?'Thumbnail for '+post.caption.slice(0,80):'Post thumbnail'} loading="lazy" onError={()=>setThumbnail(null)}/>:
+  {thumbnail?<img src={thumbnail} alt={post.caption?'Thumbnail for '+post.caption.slice(0,80):'Post thumbnail'} loading="lazy" onError={retryThumbnail}/>:
    <span className="profile-post-fallback" aria-hidden="true">{post.platform==='TikTok'?'♪':'◎'}</span>}
  </span>;
 }
