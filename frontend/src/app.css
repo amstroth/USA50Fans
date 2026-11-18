@@ -796,3 +796,38 @@
  .react-msg-fan-bar input{padding:10px 9px;font-size:12px}
 }
 
+/* Social comments: compact expandable section under each original post. */
+.social-comments{border-top:1px solid #eadbea;background:#fffbff;padding:15px clamp(12px,2.4vw,23px);display:grid;gap:13px}
+.social-comments>header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.social-comments>header strong{font-size:15px;font-weight:850;color:#62457a}
+.social-comments>header span{font-size:11px;font-weight:750;color:#a68bad}
+.social-comments-empty{font-size:13px;color:#a68dae;margin:0;padding:10px 0}
+.social-comment-list{display:grid;gap:5px;max-height:430px;overflow-y:auto;overscroll-behavior:contain}
+.social-comment{display:flex;align-items:flex-start;gap:10px;padding:11px 2px;border-bottom:1px solid #f4e7f2}
+.social-comment>.avatar{flex:0 0 auto}
+.social-comment-body{min-width:0;flex:1;display:grid;gap:4px}
+.social-comment-author{display:flex;align-items:center;flex-wrap:wrap;gap:5px 8px}
+.social-comment-author strong{font-size:12px;color:#674a83;overflow-wrap:anywhere}
+.social-comment-author time{font-size:10px;color:#ab95b1;margin-left:auto}
+.social-comment-body p{font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;color:#604b68}
+.social-comment-delete{align-self:start;background:#f7ebf5;border:0;border-radius:50%;display:grid;place-items:center;width:27px;height:27px;flex:0 0 27px;font-size:19px;color:#a05e83}
+.social-comment-composer{display:flex;align-items:center;gap:9px;min-width:0;padding-top:6px}
+.social-comment-composer input{flex:1;min-width:0;border-radius:999px;background:#fff;border:1px solid #e5cfe6;padding:11px 15px;font-size:13px;color:#654a77}
+.social-comment-composer button,.social-comment-signin{border:0;border-radius:99px;background:#bd83be;color:#fff;padding:11px 17px;font-size:12px;font-weight:850;white-space:nowrap}
+.social-comment-composer button:disabled{opacity:.43}
+.social-comment-signin{justify-self:start}
+.social-show-comments{white-space:nowrap}
+/* High-friction irreversible deletion: visible only in an authenticated post editor. */
+.social-delete-post-button{border:1px solid #e6afc0;color:#aa3454;background:#fff0f3;padding:12px 16px;border-radius:11px;font-size:13px;font-weight:850;width:100%;margin-top:16px}
+.social-delete-post-button:hover{background:#ffe1e9}
+.social-delete-confirm-backdrop{position:fixed;inset:0;z-index:9601;display:grid;place-items:center;background:#191126bb;backdrop-filter:blur(6px);padding:18px}
+.social-delete-confirm-dialog{width:min(100%,470px);max-height:calc(100dvh - 40px);overflow-y:auto;background:#fffafa;border-radius:23px;box-shadow:0 30px 100px #1b102f66;padding:27px clamp(18px,3vw,30px);text-align:center;display:grid;gap:15px}
+.social-delete-confirm-dialog h2{font-size:clamp(22px,3vw,29px);line-height:1.28;color:#7a3150;margin:0}
+.social-delete-confirm-dialog p{font-size:14px;color:#74596b;line-height:1.7;margin:0}
+.social-delete-confirm-dialog p strong{color:#803a56}
+.social-delete-warning-icon{width:58px;height:58px;display:grid;place-items:center;background:#ffdae4;border:1px solid #f5b1c3;color:#b64666;border-radius:50%;margin:0 auto}
+.social-delete-confirm-actions{display:flex;flex-direction:column;gap:9px;margin-top:6px}
+.social-delete-confirm-actions>*{width:100%;min-height:46px;font-weight:850}
+.social-delete-final-button{background:#b43e5e;color:white;border:0;border-radius:11px;padding:12px 16px;font-size:13px}
+.social-delete-final-button:hover{background:#902e4c}
+@media(max-width:560px){.social-comments{padding:13px 12px}.social-comment-author time{flex-basis:100%;margin-left:0}.social-comment-composer{gap:6px}.social-comment-composer input{padding:9px 11px}.social-delete-confirm-dialog{padding:24px 17px}}
