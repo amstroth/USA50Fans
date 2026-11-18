@@ -27,6 +27,7 @@ export function AppProvider({children}){
  const [loading,setLoading]=useState(true),[error,setError]=useState('');
  const [toast,setToast]=useState(''),[mailOpen,setMailOpen]=useState(false);
  const [selectedProfile,setSelectedProfile]=useState(null);
+ const [selectedStreamId,setSelectedStreamId]=useState(null);
  const lastToast=useRef(null),mounted=useRef(true);
  const message=useCallback(text=>{setToast(String(text));window.clearTimeout(lastToast.current);lastToast.current=window.setTimeout(()=>setToast(''),4000);},[]);
  const refresh=useCallback(async()=>{
@@ -75,7 +76,7 @@ export function AppProvider({children}){
   return()=>window.clearInterval(timer);
  },[]);
  const value=useMemo(()=>({data,route,navigate,refresh,run,message,signIn,signOut,markMail,mailOpen,setMailOpen,
-  selectedProfile,setSelectedProfile,loading,error,setError}),[data,route,navigate,refresh,run,message,signIn,signOut,markMail,mailOpen,selectedProfile,loading,error]);
+  selectedProfile,setSelectedProfile,selectedStreamId,setSelectedStreamId,loading,error,setError}),[data,route,navigate,refresh,run,message,signIn,signOut,markMail,mailOpen,selectedProfile,selectedStreamId,loading,error]);
  return <Ctx.Provider value={value}>{children}{toast&&<div className="react-toast" role="status">{toast}</div>}</Ctx.Provider>;
 }
 export function useApp(){const context=useContext(Ctx);if(!context)throw Error('USA50 AppProvider missing');return context;}
