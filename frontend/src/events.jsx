@@ -57,7 +57,7 @@ function AdminCreate({type,onSubmit}){
  </form>;
 }
 export function EventsPage(){
- const {data,run,message,navigate,refresh}=useApp(),[adminTab,setAdminTab]=useState('lottery'),[room,setRoom]=useState(null);
+ const {data,run,message,navigate,refresh,setSelectedStreamId}=useApp(),[adminTab,setAdminTab]=useState('lottery'),[room,setRoom]=useState(null);
  const events=data?.liveEvents?.events||[],streams=data?.liveEvents?.streams||[],draws=data?.fancalls?.draws||[],sessions=data?.fancalls?.sessions||[];
  const staff=['admin','management'].includes(data?.me?.role);
  async function change(action,id){try{await run('/api/fancalls/'+action,{drawId:id});message(action==='join'?'Free lottery entry received.':action==='withdraw'?'Entry withdrawn.':'Lottery finalized.');}catch(err){message(err.message);}}
@@ -71,7 +71,7 @@ export function EventsPage(){
   <SectionTitle title="Free fancall lotteries"/>{draws.length?draws.map(d=><FancallLottery key={d.id} draw={d} onChange={change} onRoom={setRoom} admin={staff}/>):<Empty icon="💌" title="No lotteries open yet" detail="Management can publish a free-entry fancall lottery."/>}
   {sessions.filter(s=>s.status!=='complete'&&!room).length>0&&<div className="room-queue-list"><SectionTitle title="Your call waiting rooms"/>{sessions.filter(s=>s.status!=='complete').map(s=><button className="inventory-row room-shortcut" key={s.id} onClick={()=>setRoom(s)}><span className="ticket-icon">📹</span><div><strong>{s.title}</strong><small>{s.status} · {s.queue.length} winners</small></div><Icon name="chevron"/></button>)}</div>}
   <SectionTitle title="Livestreams" action={<button className="text-link" onClick={()=>navigate('live')}>Watch or manage broadcasts →</button>}/>
-   {streams.length?<div className="event-stream-shortlist">{streams.slice(0,5).map(stream=><button type="button" className="inventory-row" key={stream.id} onClick={()=>navigate('live')}><span className="ticket-icon">{stream.status==='live'?'🔴':'📹'}</span><div><strong>{stream.title}</strong><small>{stream.hostNames?.join(', ')||'USA50'} · {stream.status}</small></div><Icon name="chevron" size={17}/></button>)}</div>:<Empty icon="📹" title="No livestreams scheduled" detail="Future broadcasts will appear in the Livestreams tab."/>}
+   {streams.length?<div className="event-stream-shortlist">{streams.slice(0,5).map(stream=><button type="button" className="inventory-row" key={stream.id} onClick={()=>{setSelectedStreamId(stream.id);navigate('live');}}><span className="ticket-icon">{stream.status==='live'?'🔴':'📹'}</span><div><strong>{stream.title}</strong><small>{stream.hostNames?.join(', ')||'USA50'} · {stream.status}</small></div><Icon name="chevron" size={17}/></button>)}</div>:<Empty icon="📹" title="No livestreams scheduled" detail="Future broadcasts will appear in the Livestreams tab."/>}
     {staff&&<section className="management-panel"><span className="eyebrow">USA50 MANAGEMENT</span><h2>Publish and manage experiences</h2><div className="segmented-tabs">{[['lottery','Lottery'],['event','Admission']].map(([key,label])=><button key={key} className={adminTab===key?'selected':''} onClick={()=>setAdminTab(key)}>{label}</button>)}</div><AdminCreate key={adminTab} type={adminTab} onSubmit={submit}/><button className="text-link" onClick={()=>navigate('live')}>Open the full OBS broadcasting controls →</button></section>}
   {room&&<CallRoom sessionId={room.id} onClose={()=>{setRoom(null);refresh().catch(()=>{});}}/>}
  </main>;
