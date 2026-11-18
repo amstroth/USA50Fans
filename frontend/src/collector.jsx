@@ -31,11 +31,11 @@ async function getThreeViewer(){
 export function CollectorViewer({card,owned,onClose}){
  const target=useRef(null),engine=useRef(null),[side,setSide]=useState('FRONT');
  const [loading,setLoading]=useState(true),[error,setError]=useState(''),[warning,setWarning]=useState('');
+ useEffect(()=>activateImmersiveBackground(),[]);
  useEffect(()=>{
-  const cleanup=activateImmersiveBackground();
   const key=e=>{if(e.key==='Escape')onClose();};
   document.addEventListener('keydown',key);
-  return()=>{cleanup();document.removeEventListener('keydown',key);};
+  return()=>document.removeEventListener('keydown',key);
  },[onClose]);
  useEffect(()=>{
   let alive=true;

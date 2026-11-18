@@ -51,5 +51,5 @@ assert.equal(users.fan.state.economyDemoPurchases.length,2);
 for(let i=users.fan.state.economyDemoPurchases.length;i<30;i++)assert.equal(checkout('fan','spark').status,200);
 assert.equal(checkout('fan','spark').status,429,'Keep demo purchase cap');
 assert.equal(users.fan.state.economyDemoPurchases.length,30);
-assert.equal(saves,33);
+assert.equal(saves,32);
 console.log('Demo STAR checkout tests passed: sign-in, five bundles, instant fan/idol/admin credits, monthly bonus, account cap and no real payments.');

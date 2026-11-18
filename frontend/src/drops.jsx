@@ -24,11 +24,11 @@ function RewardCard({reward,index,onCard}){
 function FullscreenPull({results,onClose}){
  const [phase,setPhase]=useState('opening'),[focused,setFocused]=useState(null);
  const rewards=Array.isArray(results?.rewards)?results.rewards:results?.card?[{type:'card',card:results.card}]:[];
+ useEffect(()=>activateImmersiveBackground(),[]);
  useEffect(()=>{
-  const cleanup=activateImmersiveBackground();
   const escape=e=>{if(e.key==='Escape'&&phase==='results')onClose();};
   window.addEventListener('keydown',escape);
-  return()=>{cleanup();window.removeEventListener('keydown',escape);};
+  return()=>window.removeEventListener('keydown',escape);
  },[phase,onClose]);
  useEffect(()=>{
   if(phase!=='opening')return;

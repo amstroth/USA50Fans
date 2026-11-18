@@ -207,3 +207,20 @@
 @media(prefers-reduced-motion:reduce){
  .pull-aura,.pull-pack-visual,.pull-pack-glint,.pull-pack-light,.pull-reward-reveal{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* Fullscreen mobile/PWA safe-area under the device camera island.
+   This class is active only while the pull or card viewer is open. */
+html.usa50-immersive,html.usa50-immersive body,
+html.usa50-immersive #root{background:#000!important;background-image:none!important}
+html.usa50-immersive body{overscroll-behavior:none}
+html.usa50-immersive .react-topbar{visibility:hidden!important}
+html.usa50-immersive .pull-fullscreen,
+html.usa50-immersive .react-collector-fullscreen{background:#000!important}
+.pull-fullscreen::before,.react-collector-fullscreen::before{
+ content:'';position:fixed;top:0;left:0;right:0;
+ height:env(safe-area-inset-top,0px);
+ background:#000;pointer-events:none;z-index:1;
+}
+.pull-animation-scene,.pull-result-screen,.react-collector-header,.react-collector-main,
+.react-collector-footer{position:relative;z-index:2}
+
