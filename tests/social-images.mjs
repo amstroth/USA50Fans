@@ -68,5 +68,29 @@ try{
  // Attempting to upload an invalid/malformed image must not replace the saved original.
  assert.equal((await post('another','/api/social/thumbnail',{postId:existing.data.postId,thumbnailDataUrl:'data:image/png;base64,'+jpeg.toString('base64')})).status,400);
  assert.deepEqual((await getCover(existing.data.postId)).bytes,jpeg);
- console.log('Social image tests passed: stored previews, reposts, owner permissions, Instagram OG caching and invalid-file rejection.');
+ // A manually selected grid cover must not alter the source embed on Social.
+ const sourceFirst=social.info(fans.fan).posts.find(x=>x.id===id);
+ assert.equal(sourceFirst.hasCustomThumbnail,true);
+ assert.equal((await post('another','/api/social/post-edit',{postId:id,caption:'Not permitted to edit this',url:sourceFirst.url,category:'fan'})).status,403);
+ assert.equal((await post('fan','/api/social/post-edit',{postId:id,caption:'Edited fan reel caption',url:sourceFirst.url,category:'fan'})).status,200);
+ let edited=social.info(fans.fan).posts.find(x=>x.id===id);
+ assert.equal(edited.caption,'Edited fan reel caption');
+ assert.equal(edited.embedId,sourceFirst.embedId);
+ assert.ok(edited.thumbnailUrl.startsWith('/api/social/thumbnail/'));
+ assert.equal(edited.hasCustomThumbnail,true);
+ // The user may intentionally return to the original embed/automatic preview.
+ assert.equal((await post('fan','/api/social/post-edit',{postId:id,caption:'Edited fan reel caption',url:sourceFirst.url,category:'fan',clearThumbnail:true})).status,200);
+ edited=social.info(fans.fan).posts.find(x=>x.id===id);
+ assert.equal(edited.hasCustomThumbnail,false);
+ assert.equal(edited.thumbnailUrl,null);
+ assert.equal(db.social.posts.find(x=>x.id===id).thumbnailFile,null);
+ // Management may attach another cover without changing URL, platform or votes.
+ assert.equal((await post('management','/api/social/post-edit',{postId:id,caption:'Edited by management',url:sourceFirst.url,category:'fan',thumbnailDataUrl:image})).status,200);
+ edited=social.info(fans.fan).posts.find(x=>x.id===id);
+ assert.equal(edited.caption,'Edited by management');
+ assert.equal(edited.hasCustomThumbnail,true);
+ assert.equal(edited.url,sourceFirst.url);
+ assert.ok(edited.thumbnailUrl.startsWith('/api/social/thumbnail/'));
+ assert.equal((await post('fan','/api/social/post-edit',{postId:id,caption:'Too short',url:'https://not-trusted.example/post',category:'fan'})).status,400);
+ console.log('Social image tests passed: stored previews, reposts, embedded defaults, owner permissions, post edits and optional grid covers.');
 }finally{globalThis.fetch=originalFetch;fs.rmSync(folder,{recursive:true,force:true});}
