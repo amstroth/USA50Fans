@@ -234,3 +234,189 @@
 .collection-set-filters button.on{color:#fff;background:linear-gradient(115deg,#a976cc,#df7cbd);border-color:#c889cd;box-shadow:0 4px 12px #9b65b32a}
 .collection-set-filters button:focus-visible{outline:2px solid #8b5fb4;outline-offset:2px}
 @media(max-width:800px){.social-page{--social-inset:15px}}
+
+/* Rank awards — diamond #1, gold #2, rose gold #3, silver top 10,
+   red gradient top 50, blue gradient top 100. */
+.rank-badge-link.rank-tone-diamond .mini-badge,.social-rank-link.rank-tone-diamond .mini-badge,.rank-current .rank-tone-diamond{
+ background:linear-gradient(115deg,#d4f5ff,#ffffff 26%,#bce5f9 51%,#8da7ff 77%,#f3edff);color:#273756;border-color:#91bbd9;box-shadow:0 0 13px #a1dcff66;
+}
+.rank-badge-link.rank-tone-gold .mini-badge,.social-rank-link.rank-tone-gold .mini-badge,.rank-current .rank-tone-gold{
+ background:linear-gradient(115deg,#fff2ad,#efcb69,#b88a20);color:#4d3913;border-color:#dbb65d;
+}
+.rank-badge-link.rank-tone-rose-gold .mini-badge,.social-rank-link.rank-tone-rose-gold .mini-badge,.rank-current .rank-tone-rose-gold{
+ background:linear-gradient(110deg,#fff0e6,#edb4a0,#b96968);color:#673441;border-color:#d99b91;
+}
+.rank-badge-link.rank-tone-silver .mini-badge,.social-rank-link.rank-tone-silver .mini-badge,.rank-current .rank-tone-silver{
+ background:linear-gradient(120deg,#f6f9fe,#c5d1d9,#8ea0b7);color:#344454;border-color:#c2cbd7;
+}
+.rank-badge-link.rank-tone-top50 .mini-badge,.social-rank-link.rank-tone-top50 .mini-badge,.rank-current .rank-tone-top50{
+ background:linear-gradient(110deg,#9a1c43,#e93455,#fb8a8f);color:white;border-color:#e75a73;
+}
+.rank-badge-link.rank-tone-top100 .mini-badge,.social-rank-link.rank-tone-top100 .mini-badge,.rank-current .rank-tone-top100{
+ background:linear-gradient(110deg,#24509e,#3d83dd,#8ddcfb);color:white;border-color:#6cbbe6;
+}
+.rank-current .rank-tone-button{padding:8px 13px;border-radius:12px}
+.rank-current .rank-tone-button strong,.rank-current .rank-tone-button span,.rank-current .rank-tone-button svg{color:inherit}
+.member-pic.rank-diamond{border-color:#b4def6;box-shadow:0 0 0 2px #eafaff,0 0 17px #9ac9ee55}
+.member-pic.rank-gold{border-color:#e3b445}
+.member-pic.rank-rose-gold{border-color:#d89b90}
+.member-pic.rank-silver{border-color:#bdc7d5}
+.member-pic.rank-top50{border-color:#de4665}
+.member-pic.rank-top100{border-color:#438aca}
+
+/* One badge per fan. A VIP 0 account has no badge. */
+.vip-badge-button,.oshi-profile-link{border:0;background:transparent;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.vip-badge-button:focus-visible,.oshi-profile-link:focus-visible{outline:2px solid #9874c2;outline-offset:3px;border-radius:999px}
+.oshi-profile-link .mini-badge{display:inline-flex;gap:5px;align-items:center;cursor:pointer}
+.oshi-profile-link:hover .mini-badge{background:#f1c7e2}
+.vip-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:900;letter-spacing:.2px;border-radius:99px;padding:7px 12px;border:1px solid #fffa;box-shadow:inset 0 1px 1px #fff6,0 3px 11px #50355a22;white-space:nowrap}
+.vip-badge.large{font-size:16px;padding:12px 19px}
+.vip-rank-1{background:linear-gradient(115deg,#8754cd,#c39fea);color:white}
+.vip-rank-2{background:linear-gradient(115deg,#ee80b1,#f8bad5);color:#70334e}
+.vip-rank-3{background:linear-gradient(115deg,#c99164,#edc4a4,#a66b48);color:#4e2f1c}
+.vip-rank-4{background:linear-gradient(115deg,#f3f6fa,#b1c0ca,#8496a8);color:#344658}
+.vip-rank-5{background:linear-gradient(115deg,#fff2b2,#edc469,#b68e29);color:#5a4518}
+.vip-rank-6{background:linear-gradient(115deg,#890f2f,#db2547,#f56f82);color:#fff}
+.vip-rank-7{background:linear-gradient(105deg,#f58da0,#f6cd74,#8bcf9e,#84bfff,#cfa0ef);color:#42305b}
+.vip-rank-8{background:linear-gradient(115deg,#034a39,#13a276,#9be5bd);color:#fff}
+.vip-rank-9{background:linear-gradient(115deg,#4b7360,#93bca0,#d0e0cf);color:#243e35}
+.vip-rank-10{background:linear-gradient(110deg,#e9f4ff,#c8d4fb,#f4bce0,#d4fff1,#fcf0c5);color:#4c3f6b;border-color:#f7f7ff;box-shadow:0 0 17px #bbd9fa8a}
+.vip-unranked,.vip-tier-none{font-size:12px;font-weight:800;color:#947d9d;background:#f3eaf5;border-radius:999px;padding:7px 12px}
+.vip-overview{background:linear-gradient(115deg,#fffafd,#f4e5f5);border:1px solid #fff;border-radius:24px;padding:clamp(18px,3vw,30px);box-shadow:var(--shadow);margin:20px 0}
+.vip-overview-row{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:15px 0}
+.vip-overview-row h2{font-size:clamp(30px,4.5vw,46px);margin:0 0 5px}
+.vip-overview-row p{font-size:13px;color:#9c85a3;margin:0}
+.vip-amounts{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:25px 0 15px}
+.vip-amounts>div{display:grid;gap:5px}
+.vip-amounts>div:last-child{text-align:right}
+.vip-amounts small{font-size:11px;color:#937ba6}
+.vip-amounts strong{font-size:21px;color:#624478}
+.vip-amounts strong span{font-size:12px;color:#987ea4}
+.vip-progress-track{width:100%;height:15px;border-radius:99px;overflow:hidden;background:#e7d6ea;border:1px solid #fff}
+.vip-progress-track>div{height:100%;background:linear-gradient(90deg,#a16ac7,#de79bd,#f5a4c8);border-radius:inherit;transition:width .25s}
+.vip-progress-labels{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:9px 0;font-size:10px;font-weight:750;color:#86689b}
+.vip-progress-labels strong{color:#a34b95}
+.vip-next-note{font-size:12px;margin:15px 0 0;color:#8a719f}
+.vip-example{background:#fff9;border:1px solid #fff;border-radius:17px;padding:16px 19px;color:#76518e}
+.vip-example p{font-size:12px;margin:7px 0 0}
+.vip-tier-list{display:grid;gap:8px}
+.vip-tier-row{display:flex;align-items:center;gap:14px;background:#fffc;border:1px solid white;border-radius:17px;padding:15px;min-width:0}
+.vip-tier-row.current{border-color:#ce8acb;box-shadow:0 0 0 2px #edd6ef}
+.vip-tier-icon{min-width:110px}
+.vip-tier-copy{flex:1;min-width:0}
+.vip-tier-copy strong{font-size:13px;color:#644579}
+.vip-tier-copy p{margin:5px 0 0;font-size:12px;color:#997fa3}
+.vip-tier-threshold{font-size:14px;white-space:nowrap;font-weight:900;color:#835298}
+
+/* Official Channel banners, inspired by wide media + heading/brand/subheading layout. */
+.social-page .official-links{min-width:0}
+.social-page .official-post-strip{display:flex;gap:17px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:5px 1px 21px}
+.official-channel-banner{position:relative;flex:0 0 clamp(355px,51vw,565px);max-width:calc(100vw - 44px);min-width:0;scroll-snap-align:start;border:1px solid #fff;border-radius:18px;background:#fff;overflow:hidden;box-shadow:0 10px 27px #805a921b}
+.official-channel-link{display:block;text-decoration:none;color:inherit}
+.official-channel-cover{height:auto;aspect-ratio:2/1;background:#e9dfef;overflow:hidden;display:grid;place-items:center}
+.official-channel-cover>img{display:block;width:100%;height:100%;object-fit:cover}
+.official-channel-placeholder{display:grid;place-items:center;width:100%;height:100%;font-size:88px;color:#fffd}
+.official-channel-cover.platform-youtube{background:linear-gradient(120deg,#e12e39,#7c132b)}
+.official-channel-cover.platform-discord{background:linear-gradient(120deg,#5865f2,#9d8bfa)}
+.official-channel-cover.platform-tiktok{background:linear-gradient(115deg,#152537,#fe2c55 55%,#25f4ee)}
+.official-channel-cover.platform-instagram{background:linear-gradient(125deg,#f58529,#e1306c,#833ab4)}
+.official-channel-details{min-height:160px;padding:15px 17px 21px}
+.official-channel-details h3{font-size:20px;line-height:1.2;margin:0 0 9px;color:#59436d;overflow-wrap:anywhere}
+.official-platform-tag{display:inline-flex;font-weight:900;font-size:11px;padding:6px 12px;border-radius:99px;color:white;background:#8c6ca7}
+.official-platform-tag.platform-youtube{background:#e62132}
+.official-platform-tag.platform-discord{background:#5865f2}
+.official-platform-tag.platform-tiktok{background:linear-gradient(110deg,#fe2c55,#25b8d9)}
+.official-platform-tag.platform-instagram{background:linear-gradient(110deg,#f58529,#dd2a7b)}
+.official-channel-details p{color:#8d759b;font-size:13px;line-height:1.4;margin:9px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.official-edit-action{position:absolute;top:12px;right:12px;display:inline-flex;align-items:center;gap:5px;border-radius:99px;border:1px solid #fff;background:#fffe;color:#63497a;font-size:11px;font-weight:900;padding:8px 11px;box-shadow:0 3px 13px #271c3b25}
+.official-edit-action:hover{background:#f6e5f2}
+.official-edit-preview{display:block;width:100%;aspect-ratio:2/1;object-fit:cover;border-radius:12px}
+
+/* Native React Messages fills its own tab; the original legacy iframe is not used. */
+.react-content.message-content{width:100%;max-width:none;margin:0;padding:0;height:100dvh;overflow:hidden}
+.react-msg-shell{width:100%;height:100%;display:grid;grid-template-columns:minmax(280px,370px) minmax(0,1fr);min-height:0;min-width:0;background:#faf4fc}
+.react-msg-inbox{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;border-right:1px solid #e5d3ec;background:#fff9}
+.react-msg-inbox-head{padding:24px 22px 13px}
+.react-msg-inbox-head h1{font:italic 39px Georgia,serif;color:#60427d;margin:8px 0}
+.react-msg-inbox-head p{font-size:12px;color:#9d89ad;margin:0}
+.react-msg-search{display:flex;align-items:center;gap:9px;border:1px solid #f0dcea;background:#fff;border-radius:14px;margin:9px 17px 12px;padding:12px;color:#ab8eba}
+.react-msg-search input{border:0;background:none;min-width:0;width:100%;outline:none;color:#6b4e82;font-size:13px}
+.react-msg-inbox-list{flex:1;overflow-y:auto;min-height:0;padding-bottom:16px}
+.react-msg-group-label{font-weight:900;text-transform:uppercase;letter-spacing:1.3px;font-size:10px;color:#aa81b7;padding:14px 20px 8px}
+.react-msg-listing{display:flex;align-items:center;gap:4px;border-bottom:1px solid #eaddeb;padding:8px 11px}
+.react-msg-listing.selected{background:#f2e3f7}
+.react-msg-open{flex:1;min-width:0;border:0;display:flex;align-items:center;gap:12px;background:transparent;text-align:left;padding:4px;color:#6a4b85}
+.react-msg-list-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.react-msg-list-text strong{font-size:14px}
+.react-msg-list-text small{display:block;font-size:11px;color:#987fa8;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.react-msg-unread{flex:0 0 auto;min-width:21px;height:21px;border-radius:99px;background:#b479d2;color:#fff;display:grid;place-items:center;font-size:10px;font-weight:850}
+.react-msg-pin{border:0;background:none;color:#ba9aca;font-size:23px;width:30px;height:35px}
+.react-msg-pin.active{color:#9a54b8}
+.react-msg-privacy{font-size:10px;color:#9d88ac;border-top:1px solid #eddfed;margin:0;padding:12px 17px}
+.react-msg-thread{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.react-msg-thread-head{height:73px;flex:0 0 73px;display:flex;align-items:center;gap:12px;padding:10px 18px;background:#fffc;border-bottom:1px solid #e8d7ec}
+.react-msg-thread-head>div:not(.member-pic){display:flex;flex:1;flex-direction:column;gap:4px;min-width:0}
+.react-msg-thread-head strong{font-size:15px;color:#68477d}
+.react-msg-thread-head small{font-size:11px;color:#947fa4}
+.react-msg-back{display:none;border:0;background:none;color:#795c93;padding:5px}
+.react-msg-profile-link{margin-left:auto;border:0;background:none;color:#9977b2}
+.react-msg-log{flex:1;min-height:0;overflow-y:auto;padding:17px clamp(15px,3vw,40px);background:linear-gradient(145deg,#faf3ff,#f7ecf9,#fbedf5)}
+.react-msg-row{display:flex;margin:10px 0}
+.react-msg-row.out{justify-content:flex-end}
+.react-msg-row.in{justify-content:flex-start}
+.react-msg-bubble{max-width:min(82%,610px);min-width:0;border-radius:20px 20px 20px 5px;background:#fff;border:1px solid #fdf4ff;padding:11px 14px 9px;box-shadow:0 4px 14px #6b4b8d17}
+.react-msg-bubble.mine{background:linear-gradient(120deg,#d6afe9,#f2d7ec);border-radius:20px 20px 5px 20px}
+.react-msg-bubble.private{background:#fff0fb;border-color:#f5d1e7}
+.react-msg-bubble.public{background:#e9edff}
+.react-msg-bubble p{font-size:14px;color:#644e78;line-height:1.5;margin:4px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.react-msg-bubble small{display:block;text-align:right;color:#a18eb0;font-size:10px;margin-top:6px}
+.react-msg-sender{font-size:11px;color:#b05c9b}
+.react-msg-placeholder,.react-msg-empty{display:flex;flex:1;align-items:center;justify-content:center;flex-direction:column;text-align:center;color:#86699c;padding:30px}
+.react-msg-placeholder>span{font-size:48px}
+.react-msg-placeholder h2{margin:10px 0}
+.react-msg-placeholder p,.react-msg-empty p{font-size:12px;color:#987eaa}
+.react-msg-compose{flex:0 0 auto;padding:10px 18px 14px;background:#fffb;border-top:1px solid #e8d8eb}
+.react-msg-compose>p{font-size:10px;color:#947fa2;text-align:center;margin:0 0 9px}
+.react-msg-compose form,.react-msg-reply-card form{display:flex;gap:8px;align-items:center}
+.react-msg-compose input,.react-msg-reply-card input{border-radius:99px;border:1px solid #e6d5eb;padding:12px 16px;min-width:0;flex:1;background:#fff;font-size:13px;color:#684881;outline-color:#d29cd9}
+.react-msg-compose form>button,.react-msg-reply-card form>button{flex-shrink:0;border:0;border-radius:99px;min-width:39px;min-height:39px;background:linear-gradient(115deg,#ac76d4,#e88ac8);color:white;font-weight:800;font-size:15px;padding:7px 12px}
+.react-msg-lock{font-size:12px;color:#9d87aa;text-align:center;padding:10px}
+.react-msg-lock button{margin-left:12px}
+.react-msg-studio-tabs{margin:12px 14px}
+.react-msg-studio-idol{width:100%;display:flex;align-items:center;gap:10px;border:0;border-bottom:1px solid #ecdeef;background:transparent;padding:12px 18px;text-align:left;color:#6c4d86}
+.react-msg-studio-idol.selected{background:#f0e1f6}
+.react-msg-studio-idol>span:not(.member-pic){flex:1;display:flex;flex-direction:column;gap:4px}
+.react-msg-studio-idol strong{font-size:13px}
+.react-msg-studio-idol small{font-size:11px;color:#9d84ab}
+.react-msg-studio-scroll{min-height:0;flex:1;overflow-y:auto;padding:20px;background:#f9f0fa}
+.react-msg-reply-card{padding:17px;background:#fff;border-radius:17px;margin:0 0 12px;border:1px solid #ead9ee}
+.react-msg-reply-card p{font-size:13px;color:#705185}
+.react-msg-own-response{background:#f4e7f9;padding:10px;border-radius:10px;margin:8px 0}
+.react-msg-public-replies{max-height:300px;overflow-y:auto}
+.react-msg-public-replies form{margin:8px 0;display:grid;grid-template-columns:minmax(0,1fr) auto}
+.react-msg-public-replies label{grid-column:1/-1;color:#896c9f;font-size:11px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.react-msg-public-replies form>button{font-size:12px}
+@media(max-width:800px){
+ .react-content.message-content{height:calc(100dvh - 67px - env(safe-area-inset-bottom,0px))}
+ .react-msg-shell{grid-template-columns:minmax(0,1fr)}
+ .react-msg-thread{display:none}
+ .react-msg-shell.thread-open .react-msg-inbox{display:none}
+ .react-msg-shell.thread-open .react-msg-thread{display:flex}
+ .react-msg-back{display:grid;place-items:center}
+ .react-msg-inbox-head{padding:21px 17px 12px}
+ .react-msg-inbox-head h1{font-size:35px}
+ .react-msg-studio{grid-template-rows:auto minmax(0,1fr)}
+ .react-msg-studio .react-msg-inbox{max-height:235px;border-right:0;border-bottom:1px solid #e5d5ec}
+ .react-msg-studio .react-msg-inbox-head{padding:8px 13px}
+ .react-msg-studio .react-msg-inbox-head h1{font-size:24px;margin:3px 0}
+ .react-msg-studio .react-msg-inbox-head p{display:none}
+ .react-msg-studio .react-msg-inbox-list{display:flex;flex:0 0 auto;overflow-x:auto;padding:0}
+ .react-msg-studio-idol{flex:0 0 145px;padding:8px}
+ .react-msg-studio-idol svg{display:none}
+ .react-msg-studio .react-msg-thread{display:flex}
+ .vip-tier-icon{min-width:80px}
+ .vip-tier-row{padding:12px;gap:10px}
+ .vip-tier-threshold{font-size:12px}
+ .vip-tier-copy p{font-size:11px}
+ .official-channel-banner{flex-basis:min(88vw,480px)}
+}
