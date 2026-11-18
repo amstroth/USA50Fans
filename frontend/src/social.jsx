@@ -82,9 +82,9 @@ function Media({post}){
  if(['p','reel','tv'].includes(post.embedKind)&&/^[a-zA-Z0-9_-]{5,32}$/.test(post.embedId||''))return <div className="post-media instagram"><iframe src={'https://www.instagram.com/'+post.embedKind+'/'+post.embedId+'/embed/'} title="Instagram shared content" loading="lazy"/></div>;
  return link?<a href={link} target="_blank" rel="noopener noreferrer" className="post-link-preview"><span>{post.platform==='TikTok'?'♪':'◎'}</span><div><strong>Open shared {post.platform} post</strong><small>View original content</small></div><Icon name="external" size={18}/></a>:null;
 }
-function PostCard({post,author}){
+export function PostCard({post,author}){
  const {data,run,message,navigate,setSelectedProfile}=useApp();
- const [busy,setBusy]=useState('');
+ const [busy,setBusy]=useState(''),[editPost,setEditPost]=useState(false);
  const me=data?.me,own=me?.id===post.authorId,saved=(data?.social?.savedPostIds||[]).includes(post.id);
  const canHeart=me?.role==='idol'&&!own;
  async function interact(action,endpoint,payload){
@@ -116,9 +116,11 @@ function PostCard({post,author}){
    {post.heartedBy?.length>0&&<p className="hearted-label">♥ Hearted by {post.heartedBy.map(x=>x.name).join(post.heartedBy.length===2?' and ':', ')}</p>}
    <div className="post-links">
     {safeUrl(post.url)&&<a href={safeUrl(post.url)} target="_blank" rel="noopener noreferrer">Open original <Icon name="external" size={13}/></a>}
+    {(own||me?.role==='admin')&&<button className="quiet-button" onClick={()=>setEditPost(true)} aria-label="Edit Social post and profile-grid thumbnail"><Icon name="settings" size={13}/> Edit post</button>}
     {!own&&<button className="quiet-button" onClick={()=>{const reason=window.prompt('Reason for reporting this post (optional):');if(reason===null)return;interact('report','/api/social/report',{postId:post.id,reason});}}>Report</button>}
    </div>
   </footer>
+  {editPost&&<Compose post={post} close={()=>setEditPost(false)}/>}
  </article>;
 }
 function Compose({close}){
