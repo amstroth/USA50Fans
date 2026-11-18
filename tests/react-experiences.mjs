@@ -16,6 +16,24 @@ for(const term of ['pull-fullscreen','pull-animation-scene','pull-results-grid',
  assert.ok(drops.includes(term),'Missing React draw feature: '+term);
 }
 assert.ok(drops.includes('createPortal('),'Draw animation must use a full-screen portal');
+const pullPlan=read('frontend/src/pull-sequence.js');
+assert.match(pullPlan,/UR:5,MR:4,SSR:3,SR:2,R:1/,'Reward sorting uses official rarity hierarchy');
+assert.match(pullPlan,/extras=entries.filter/,'Non-card rewards should retain randomized order');
+assert.match(pullPlan,/type:'common'/,'SR and R should appear together at regular size');
+assert.match(drops,/function ShowcaseFlip\(/,'High rarity cards must get a front and back flip');
+assert.match(drops,/card\.backArtUrl/,'High rarity spin must use published card back art where available');
+assert.match(drops,/function RevealStep\(/,'Reveals must progress by step');
+assert.match(drops,/stepIndex>=steps.length/,'All steps end at the result grid');
+assert.match(drops,/Pull again x10/,'Ten-pull results should repeat the same count');
+assert.match(drops,/Pull again/,'Single-pull results should expose a repeat action');
+assert.match(drops,/onRepeat=\{\(\)=>pull\(result.mode,result.albumId\)\}/,
+ 'The repeat action must use the original mode and pack, not the current selector');
+assert.match(drops,/key=\{pullRound\}/,'Every repeat should remount the reveal animation');
+assert.match(css,/\.pull-showcase-rotator\{[^}]*pull-rare-full-spin/,
+ 'SSR-UR cards must spin through front and back');
+assert.match(css,/\.pull-reveal-common-grid\{/,'SR and R cards should reveal as a simultaneous group');
+assert.match(css,/\.pull-results-grid \.pull-reward-reveal\{animation:none/,
+ 'Standard result cards must not animate one-by-one');
 for(const term of ['/api/diary/publish','placedItems:items.map','onPointerDown','setPointerCapture','data-resize','onPointerMove','onPointerCancel','photos:photos.map','scale:','rotation:']){
  assert.ok(diary.includes(term),'Missing native diary editor feature: '+term);
 }
