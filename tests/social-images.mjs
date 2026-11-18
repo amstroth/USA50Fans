@@ -24,6 +24,7 @@ function getCover(key){
  return new Promise(resolve=>{
   const res={writeHead(status,headers){this.status=status;this.headers=headers;return this;},end(bytes){this.bytes=bytes;resolve(this);}};
   social.serveThumbnail({method:'GET'},res,key);
+  if(res.status&&!res.headers)resolve(res); // 404: no stored thumbnail; route returns synchronously.
  });
 }
 const originalFetch=globalThis.fetch;
