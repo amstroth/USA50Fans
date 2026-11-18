@@ -3,8 +3,8 @@
    Idol tickets are collectible counters only and never improve free fancall lottery odds. */
 const crypto=require('node:crypto');
 const IDOLS=[['arielle','Arielle'],['jaylene','Jaylene'],['kellie','Kellie'],['z','Z'],['michelle','Michelle'],['zoe','Zoe'],['miu','Miu']];
-const PAID_ODDS=Object.freeze({card:65,vipXP:16,pullPoints:10,idolTicket:6,merchCoupon:3});
-const FREE_ODDS=Object.freeze({card:60,vipXP:30,pullPoints:9,idolTicket:1,merchCoupon:0});
+const PAID_ODDS=Object.freeze({card:65,pullPoints:26,idolTicket:6,merchCoupon:3});
+const FREE_ODDS=Object.freeze({card:60,pullPoints:39,idolTicket:1,merchCoupon:0});
 const NYC50=['arielle','jaylene','kellie','z'];
 const LA50=['michelle','zoe','miu'];
 const ALL_IDOLS=IDOLS.map(x=>x[0]);
@@ -19,8 +19,8 @@ function ticketPoolForPack(pack){
  if(group.some(x=>/usa\s*50/.test(x)))return ALL_IDOLS.slice();
  return [];
 }
-const VIP_THRESHOLDS=[0,150,400,800,1400,2200,3200,4500,6100,8000];
-const VIP_LABELS=VIP_THRESHOLDS.map((_,i)=>'VIP'+(i+1));
+const VIP_THRESHOLDS=require('./vip-program.js').TIERS.map(t=>t.thresholdCents/100);
+const VIP_LABELS=VIP_THRESHOLDS.map((_,i)=>'VIP '+i);
 function tier(total){const xp=Math.max(0,Number(total)||0);let i=0;while(i<VIP_THRESHOLDS.length-1&&xp>=VIP_THRESHOLDS[i+1])i++;return {level:i+1,label:VIP_LABELS[i],xp,nextAt:VIP_THRESHOLDS[i+1]??null};}
 function choose(weights){
  let n=crypto.randomInt(100);
@@ -35,16 +35,13 @@ function rollRewards({u,count,free,drawCard,ticketPool=[]}){
  for(let i=0;i<count;i++){
   let type=choose(weights);
   // A pack without a recognized idol pool never awards an unrelated idol ticket.
-  if(type==='idolTicket'&&!ticketPool.length)type='vipXP';
+  if(type==='idolTicket'&&!ticketPool.length)type='pullPoints';
   let reward;
   if(type==='card'){
    const card=drawCard();
    if(!card||!card.id)throw Error('No published card is available.');
    u.state.owned[card.id]=(u.state.owned[card.id]||0)+1;
    cards.push(card);reward={type,card};
-  }else if(type==='vipXP'){
-   const amount=free?[10,15,20,25,30][crypto.randomInt(5)]:[40,50,60,70,80][crypto.randomInt(5)];
-   u.state.vipXP+=amount;reward={type,amount};
   }else if(type==='pullPoints'){
    const amount=free?[20,30,40][crypto.randomInt(3)]:[75,100,125][crypto.randomInt(3)];
    u.state.pullPoints+=amount;reward={type,amount};
@@ -66,7 +63,6 @@ function rollRewards({u,count,free,drawCard,ticketPool=[]}){
  if(count===10&&cards.length===0){
   const card=drawCard();if(!card||!card.id)throw Error('No published card available.');
   const replaced=results[9];
-  if(replaced.type==='vipXP'){u.state.vipXP-=replaced.amount;}
   if(replaced.type==='pullPoints'){u.state.pullPoints-=replaced.amount;}
   if(replaced.type==='idolTicket'){
    u.state.idolTickets[replaced.idolId]-=1;
@@ -76,8 +72,8 @@ function rollRewards({u,count,free,drawCard,ticketPool=[]}){
   u.state.owned[card.id]=(u.state.owned[card.id]||0)+1;cards.push(card);
   results[9]={type:'card',card,guaranteed:true};
  }
- u.state.vipLevel=tier(u.state.vipXP).label;
- return {rewards:results,cards,card:cards[0]||null,vipXP:u.state.vipXP,vipLevel:u.state.vipLevel,
+ const spendVIP=require('./vip-program.js').publicInfo(u);
+ return {rewards:results,cards,card:cards[0]||null,vipXP:spendVIP.vipXP,vipLevel:spendVIP.label,
    idolTickets:{...u.state.idolTickets},fancallTickets:Number(u.state.fancallTickets||0),pullPoints:u.state.pullPoints,
    ticketsAwarded:results.filter(r=>r.type==='idolTicket').length,
    fancallTicketsAwarded:results.filter(r=>r.type==='idolTicket').length,
@@ -85,5 +81,5 @@ function rollRewards({u,count,free,drawCard,ticketPool=[]}){
    vipXPAwarded:results.filter(r=>r.type==='vipXP').reduce((sum,r)=>sum+r.amount,0),
    couponsAwarded:results.filter(r=>r.type==='merchCoupon').length};
 }
-function publicInfo(u){return {paidOdds:PAID_ODDS,freeOdds:FREE_ODDS,vipThresholds:VIP_THRESHOLDS,vipLevel:tier(u?.state?.vipXP),idolTickets:u?.state?.idolTickets||{},merchCoupons:u?.state?.merchCoupons||[],notes:'Each pull awards one item. A 10-draw batch guarantees at least one card; the other draws can contain cards or currency. Idol tickets and discount coupons are nonredeemable demo collectibles and do not increase chances in free fancall lotteries.'};}
+function publicInfo(u){return {paidOdds:PAID_ODDS,freeOdds:FREE_ODDS,vipThresholds:VIP_THRESHOLDS,vipLevel:require('./vip-program.js').publicInfo(u),idolTickets:u?.state?.idolTickets||{},merchCoupons:u?.state?.merchCoupons||[],notes:'Each pull awards one item. A 10-draw batch guarantees at least one card; the other draws can contain cards or currency. Idol tickets and discount coupons are nonredeemable demo collectibles and do not increase chances in free fancall lotteries.'};}
 module.exports={rollRewards,publicInfo,tier,PAID_ODDS,FREE_ODDS,ticketPoolForPack};

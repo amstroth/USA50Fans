@@ -38,7 +38,7 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
  }
  function publicOfficial(p){
    const {thumbnailFile,thumbnailMime,thumbnailExt,thumbnailAttemptedAt,...display}=p;
-   return {...display,thumbnailUrl:thumbnailFile?'/api/official/thumbnail/'+p.id+'?v='+encodeURIComponent(p.thumbnailUpdatedAt||p.publishedAt||'1'):
+   return {...display,thumbnailUrl:thumbnailFile?'/api/official/thumbnail/'+p.id:
        p.platform==='YouTube'?'https://i.ytimg.com/vi/'+p.externalId+'/hqdefault.jpg':null};
  }
  function writeThumb(p,buf,mime){

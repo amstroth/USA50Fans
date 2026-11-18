@@ -321,10 +321,7 @@ module.exports=function createCardStudio({db,save,id,now,bodyText,json,fail,user
     const counter=progress[packId]||(progress[packId]={paidPulls:0,pityAchieved:false});
     const guaranteed=[];
     const publicCards=p.cards.map((c,i)=>cardPublic(c,p,i));
-    const beforeVip=require('./gacha-rewards.js').tier(u.state.vipXP).level;
     const result=require('./gacha-rewards.js').rollRewards({u,count,free,drawCard:()=>draw(publicCards),ticketPool:require('./gacha-rewards.js').ticketPoolForPack(p)});
-    const currentVip=require('./gacha-rewards.js').tier(u.state.vipXP);
-    if(currentVip.level>beforeVip)notify(u.id,'vip-tier','You advanced to '+currentVip.label+'!',{key:'vip-'+u.id+'-'+currentVip.level});
     if(!free){
       for(let i=0;i<count;i++){
         counter.paidPulls++;
