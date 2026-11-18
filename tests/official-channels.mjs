@@ -20,6 +20,12 @@ globalThis.fetch=async(url)=>{
   return {ok:true,json:async()=>({title:'Live TikTok premiere',
    thumbnail_url:'https://p16-sign-va.tiktokcdn.com/cached-cover.jpg'})};
  }
+ if(uri==='https://www.instagram.com/reel/ABCDE1234/'){
+  return {ok:true,headers:{get:()=>null},text:async()=>'<meta property="og:image" content="https://scontent.cdninstagram.com/usa50-ig-cover.jpg?foo=1&amp;bar=2">'};
+ }
+ if(uri.startsWith('https://scontent.cdninstagram.com/')){
+  return {ok:true,headers:{get:key=>({'content-type':'image/jpeg','content-length':String(image.length)})[key.toLowerCase()]||null},arrayBuffer:async()=>image};
+ }
  if(uri.startsWith('https://p16-sign-va.tiktokcdn.com/')){
   return {ok:true,headers:{get:key=>({'content-type':'image/jpeg','content-length':String(image.length)})[key.toLowerCase()]||null},
    arrayBuffer:async()=>image};
@@ -69,6 +75,11 @@ try{
  const publicFeed=service.info(fan);
  assert.equal(publicFeed.officialPosts.length,4);
  assert.ok(publicFeed.officialPosts.every(x=>!('thumbnailFile' in x)), 'internal volume paths must not be exposed');
+ await service.refreshPreviews();
+ const igBackfill=service.info(fan).officialPosts.find(x=>x.id===igNoThumb.body.post.id);
+ assert.equal(igBackfill.thumbnailUrl,'/api/official/thumbnail/'+igNoThumb.body.post.id,'Instagram public OG cover should be stored in the app.');
+ assert.equal((await thumb(fan,igNoThumb.body.post.id)).status,200);
+ assert.ok(calls.some(x=>x.includes('scontent.cdninstagram.com/usa50-ig-cover.jpg?foo=1&bar=2')));
  assert.equal((await remove(fan,tik.body.post.id)).status,403);
  assert.equal((await remove(admin,tik.body.post.id)).status,200);
  assert.equal((await thumb(fan,tik.body.post.id)).status,404);
