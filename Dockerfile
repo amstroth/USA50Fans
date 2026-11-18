@@ -4,8 +4,9 @@ WORKDIR /app
 COPY package.json ./
 COPY vite.config.mjs ./
 COPY frontend ./frontend
+COPY tests/react-experiences.mjs ./tests/react-experiences.mjs
 RUN npm install --ignore-scripts --no-audit --no-fund
-RUN npm run build:react && test -s www/react/index.html && test -d www/react/assets
+RUN node tests/react-experiences.mjs && npm run build:react && test -s www/react/index.html && test -d www/react/assets
 
 FROM node:22-alpine
 WORKDIR /app
