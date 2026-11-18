@@ -149,7 +149,7 @@ function NewStream({done}){
  </form>;
 }
 export function LivePage(){
- const {data,refresh,navigate,message}=useApp(),[streams,setStreams]=useState(data?.liveEvents?.streams||[]);
+ const {data,refresh,navigate,message,selectedStreamId,setSelectedStreamId}=useApp(),[streams,setStreams]=useState(data?.liveEvents?.streams||[]);
  const [selected,setSelected]=useState(null),[creating,setCreating]=useState(false);
  const me=data?.me,canCreate=['idol','admin','management'].includes(me?.role);
  useEffect(()=>{setStreams(data?.liveEvents?.streams||[]);},[data?.liveEvents?.streams]);
@@ -161,7 +161,7 @@ export function LivePage(){
   return()=>clearInterval(timer);
  },[]);
  const live=streams.filter(x=>x.status==='live'),upcoming=streams.filter(x=>x.status==='scheduled'),past=streams.filter(x=>x.status==='ended');
- const active=streams.find(x=>x.id===selected?.id)||live[0]||upcoming[0]||past[0]||null;
+ const active=streams.find(x=>x.id===(selected?.id||selectedStreamId))||live[0]||upcoming[0]||past[0]||null;
  async function changed(path,payload){try{await api(path,{method:'POST',body:payload});await refresh();const info=await api('/api/events-v2/info');setStreams(info.streams||[]);message('Livestream settings saved.');}catch(err){message(err.message);throw err;}}
  return <main className="view live-page">
   <Heading eyebrow="USA50 LIVE" title="Your idols, live ♡" subtitle="Watch official broadcasts, join the moderated live chat, and send demo STAR gifts." action={canCreate?<button className="action primary" onClick={()=>setCreating(x=>!x)}><Icon name="plus" size={17}/> {creating?'Close scheduler':'Schedule stream'}</button>:null}/>
@@ -175,7 +175,7 @@ export function LivePage(){
   </div>
   <aside className="live-side"><div className="live-desktop-chat">{active&&<LiveChat key={active.id} stream={active}/>}</div>
    <SectionTitle title={live.length?'Live now':'Broadcast lineup'}/>
-   {streams.length?<div className="live-stream-list">{[...live,...upcoming,...past].map(s=><button type="button" key={s.id} className={'live-stream-choice '+(active?.id===s.id?'active':'')} onClick={()=>setSelected(s)}><span className="live-stream-thumb">{s.status==='live'?'🔴':'✧'}</span><span><strong>{s.title}</strong><small>{s.hostNames?.join(', ')||'USA50'} · {s.status}</small><small>{dateTime(s.startsAt)}</small></span><Icon name="chevron" size={14}/></button>)}</div>:null}
+   {streams.length?<div className="live-stream-list">{[...live,...upcoming,...past].map(s=><button type="button" key={s.id} className={'live-stream-choice '+(active?.id===s.id?'active':'')} onClick={()=>{setSelected(s);setSelectedStreamId(s.id);}}><span className="live-stream-thumb">{s.status==='live'?'🔴':'✧'}</span><span><strong>{s.title}</strong><small>{s.hostNames?.join(', ')||'USA50'} · {s.status}</small><small>{dateTime(s.startsAt)}</small></span><Icon name="chevron" size={14}/></button>)}</div>:null}
    {canCreate&&<div className="react-note"><strong>Broadcast framework</strong><p>OBS sends video to an external RTMPS provider. USA50 displays the approved HTTPS player and hosts live chat, gifts, moderation, and a demo creator ledger. Real video ingest and payments require a configured provider.</p></div>}
   </aside>
   </div>
