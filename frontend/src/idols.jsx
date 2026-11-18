@@ -155,7 +155,10 @@ function IdolEditor({member,profile,close}){
    }}/>}
  </div>;
 }
-function Fact({label,children}){return children?<div className="idol-fact"><span>{label}</span><strong>{children}</strong></div>:null;}
+function InfoRow({label,children}){
+ if(children===undefined||children===null||children==='')return null;
+ return <div className="idol-layout-row"><span>{label}</span><strong>{children}</strong></div>;
+}
 export function MeetIdolsPage(){
  const {data,selectedIdolId,setSelectedIdolId}=useApp();
  const members=data?.members||[],profiles=data?.idolProfiles||{},me=data?.me;
