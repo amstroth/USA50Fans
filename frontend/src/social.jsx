@@ -137,9 +137,27 @@ function CommentSection({postId}){
  </section>;
 }
 
+
+const FAN_POST_LIMIT_MESSAGE="Woah slow down there. Only 5 posts are allowed per day. Make sure you're only posting your own content. <#3";
+function DailyPostLimitPopup({onClose}){
+ useEffect(()=>{
+  const key=e=>{if(e.key==='Escape')onClose();};
+  document.addEventListener('keydown',key);
+  return ()=>document.removeEventListener('keydown',key);
+ },[onClose]);
+ return createPortal(<div className="social-daily-limit-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)onClose();}}>
+  <section className="social-daily-limit-dialog" role="alertdialog" aria-modal="true" aria-labelledby="social-daily-limit-title" aria-describedby="social-daily-limit-text">
+   <div className="social-daily-limit-icon" aria-hidden="true">♡</div>
+   <h2 id="social-daily-limit-title">Daily posting limit reached</h2>
+   <p id="social-daily-limit-text">{FAN_POST_LIMIT_MESSAGE}</p>
+   <button className="action primary full" type="button" onClick={onClose} autoFocus>Got it ♡</button>
+  </section>
+ </div>,document.body);
+}
+
 export function PostCard({post,author}){
  const {data,run,message,navigate,setSelectedProfile}=useApp();
- const [busy,setBusy]=useState(''),[editPost,setEditPost]=useState(false),[showComments,setShowComments]=useState(false);
+ const [busy,setBusy]=useState(''),[editPost,setEditPost]=useState(false),[showComments,setShowComments]=useState(false),[limitOpen,setLimitOpen]=useState(false);
  const me=data?.me,own=me?.id===post.authorId,saved=(data?.social?.savedPostIds||[]).includes(post.id);
  const canHeart=me?.role==='idol'&&!own;
  async function interact(action,endpoint,payload){
@@ -148,7 +166,7 @@ export function PostCard({post,author}){
   try{
    const result=await run(endpoint,payload);
    if(action==='heart')message(result.alreadyHearted?'You already hearted this post.':'Idol heart sent! +150 Fan XP awarded.');
-  }catch(err){message(err.message);}finally{setBusy('');}
+  }catch(err){if(err.message===FAN_POST_LIMIT_MESSAGE)setLimitOpen(true);else message(err.message);}finally{setBusy('');}
  }
  const name=author?.displayName||'USA50 fan';
  return <article className="social-entry">
@@ -178,6 +196,7 @@ export function PostCard({post,author}){
   </footer>
   {showComments&&<CommentSection postId={post.id}/>}
   {editPost&&<Compose post={post} close={()=>setEditPost(false)}/>}
+  {limitOpen&&<DailyPostLimitPopup onClose={()=>setLimitOpen(false)}/>}
  </article>;
 }
 async function gridCoverData(file){
@@ -210,7 +229,7 @@ export function Compose({close,post=null}){
   return ()=>{document.body.style.overflow=prior;window.removeEventListener('keydown',escape);};
  },[close]);
  const [caption,setCaption]=useState(post?.caption||''),[url,setUrl]=useState(post?.url||''),[category,setCategory]=useState(post?.category||'fan');
- const [cover,setCover]=useState(null),[thumbnailMode,setThumbnailMode]=useState(post?.hasCustomThumbnail?'custom':'auto'),[uploading,setUploading]=useState(false),[busy,setBusy]=useState(false),[confirmDelete,setConfirmDelete]=useState(false),[deleting,setDeleting]=useState(false);
+ const [cover,setCover]=useState(null),[thumbnailMode,setThumbnailMode]=useState(post?.hasCustomThumbnail?'custom':'auto'),[uploading,setUploading]=useState(false),[busy,setBusy]=useState(false),[confirmDelete,setConfirmDelete]=useState(false),[deleting,setDeleting]=useState(false),[limitOpen,setLimitOpen]=useState(false);
  async function pickCover(e){
   const file=e.target.files?.[0];e.target.value='';if(!file)return;
   setUploading(true);
@@ -225,7 +244,7 @@ export function Compose({close,post=null}){
    const result=await run(editing?'/api/social/post-edit':'/api/social/post',payload);
    message(editing?'Post updated ♡':'Post published. +'+result.fanXPAwarded+' Fan XP');
    close();
-  }catch(err){message(err.message);}finally{setBusy(false);}
+  }catch(err){if(err.message===FAN_POST_LIMIT_MESSAGE)setLimitOpen(true);else message(err.message);}finally{setBusy(false);}
  }
  async function deletePost(){
   if(!editing||!confirmDelete||deleting)return;
@@ -273,6 +292,7 @@ export function Compose({close,post=null}){
     </div>
    </section>
   </div>}
+  {limitOpen&&<DailyPostLimitPopup onClose={()=>setLimitOpen(false)}/>}
  </div>,document.body);
 }
 export function SocialPage(){
