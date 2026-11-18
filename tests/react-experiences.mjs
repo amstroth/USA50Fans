@@ -26,4 +26,22 @@ assert.match(read('frontend/src/core-pages.jsx'),/setViewerCard\(card\)/,'Owned 
 assert.match(css,/\.pull-fullscreen\{position:fixed;inset:0;z-index:10000/);
 assert.match(css,/\.react-collector-fullscreen\{position:fixed;inset:0;z-index:11000/);
 assert.match(css,/\.react-diary-decoration\{[^}]*touch-action:none/);
+// Profile grid post navigation is its own scrollable, author-scoped React feed.
+const social=read('frontend/src/social.jsx'),profile=read('frontend/src/profile.jsx'),appCSS=read('frontend/src/app.css');
+assert.doesNotMatch(state,/name:'Recycle'/,'Recycle must be removed from React navigation');
+assert.doesNotMatch(state,/name:'Creator Studio'/,'Creator Studio must be removed from React navigation');
+assert.doesNotMatch(read('frontend/src/core-pages.jsx'),/navigate\('recycle'\)/,'Collection should not navigate to removed page');
+assert.match(social,/export function PostCard\(/,'Profile feed should reuse existing Social post renderer');
+assert.match(social,/export function Compose\(/,'Post composer must support create and edit');
+assert.match(social,/\/api\/social\/post-edit/,'Edit existing post endpoint should be wired up');
+assert.match(social,/thumbnailDataUrl:cover/,'Optional grid cover should be submitted');
+assert.match(social,/Use original embed preview/,'User can revert to source embed');
+assert.match(profile,/function ProfilePostFeed\(/,'Profile should support continuous post scrolling');
+assert.match(profile,/selectedPostId/,'The tapped profile post should be selected');
+assert.match(profile,/onOpen=\{setFeedStart\}/,'Grid taps should open profile feed');
+assert.match(profile,/profile-feed-overlay social-page/,'Use Social feed presentation inside profile viewer');
+assert.match(profile,/function ProfileEmbedPreview\(/,'Grid defaults to the original embed when no cover exists');
+assert.match(appCSS,/\.profile-feed-overlay\.social-page/);
+assert.match(appCSS,/\.social-compose-cover-overlay\.react-modal-cover\{z-index:9500\}/);
+
 console.log('React immersive experience checks passed: native routes, live crash fix, full-screen card pull, 3D viewer lifecycle and diary pointer editing.');
