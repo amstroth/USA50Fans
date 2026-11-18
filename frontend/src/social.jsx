@@ -1,4 +1,5 @@
 import React,{useMemo,useState} from 'react';
+import {createPortal} from 'react-dom';
 import {useApp} from './state';
 import {Avatar,Badge,Empty,Heading,Icon,SectionTitle,VerifiedStar,rankTone} from './ui';
 import {api,dateLabel,safeUrl} from './api';
@@ -41,7 +42,7 @@ function ChannelBanner({post,editable}){
    </div>
   </a>
   {editable&&<button className="official-edit-action" aria-label={'Edit '+(post.title||'official channel')+' banner'} onClick={()=>{setTitle(post.title||'');setSubheading(post.caption||'');setEdit(true);}}><Icon name="settings" size={15}/> Edit</button>}
-  {edit&&<div className="react-modal-cover" role="presentation" onMouseDown={e=>e.target===e.currentTarget&&setEdit(false)}><div role="dialog" aria-modal="true" className="react-modal official-edit-modal" aria-label="Edit official channel banner">
+  {edit&&createPortal(<div className="react-modal-cover" role="presentation" onMouseDown={e=>e.target===e.currentTarget&&setEdit(false)}><div role="dialog" aria-modal="true" className="react-modal official-edit-modal" aria-label="Edit official channel banner">
     <header><h2>Edit official banner</h2><button type="button" aria-label="Close" onClick={()=>setEdit(false)}><Icon name="x"/></button></header>
     <form className="react-form" onSubmit={save}>
      <label>Heading<input required maxLength={170} value={title} onChange={e=>setTitle(e.target.value)}/></label>
@@ -51,7 +52,7 @@ function ChannelBanner({post,editable}){
      {thumbnail&&!broken&&<img className="official-edit-preview" src={thumbnail} alt="Preview of selected banner"/>}
      <button type="submit" className="action primary full" disabled={busy}>{busy?'Saving…':'Save banner'}</button>
     </form>
-   </div></div>}
+   </div></div>,document.body)}
  </article>;
 }
 

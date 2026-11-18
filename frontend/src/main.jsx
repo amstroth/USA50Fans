@@ -51,7 +51,7 @@ function AppShell(){
   <aside className={'react-sidebar '+(menuOpen?'menu-open':'')}>
    <button className="sidebar-logo" onClick={()=>switchTo('home')}><span>USA50</span><small>FAN CLUB</small></button>
    <div className="sidebar-links">{NAV.slice(0,9).map(x=>navLink(x))}<div className="sidebar-divider"/>{NAV.slice(9).filter(x=>x.id!=='admin'||me?.role==='admin').map(x=>navLink(x))}</div>
-   <div className="sidebar-foot"><span className="eyebrow">DEVELOPMENT PREVIEW</span><p>Closer to your stars ♡</p><a href="/index.html" className="classic-link">Use original interface <Icon name="external" size={13}/></a></div>
+   <div className="sidebar-foot"><span className="eyebrow">DEVELOPMENT PREVIEW</span><p>Closer to your stars ♡</p>{route!=='messages'&&<a href="/index.html" className="classic-link">Use original interface <Icon name="external" size={13}/></a>}</div>
   </aside>
   <div className="react-main">
    {route!=='messages'&&<header className="react-topbar">
