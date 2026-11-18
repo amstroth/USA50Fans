@@ -180,3 +180,6 @@
  .native-call-sidebar{max-height:175px;padding:9px}
  .call-connect-toolbar .action{font-size:10px;padding:9px}
 }
+
+/* A single live chat instance is shared by mobile and desktop to avoid double polling. */
+@media(max-width:800px){.live-feature-layout .live-desktop-chat{display:block}.live-feature-layout .live-side{gap:13px}}
