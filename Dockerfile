@@ -24,6 +24,7 @@ COPY web-push-service.js ./
 COPY tests/live-streams.mjs ./tests/live-streams.mjs
 COPY tests/social-images.mjs ./tests/social-images.mjs
 COPY tests/social-delete-comments.mjs ./tests/social-delete-comments.mjs
+COPY tests/social-daily-limit.mjs ./tests/social-daily-limit.mjs
 COPY tests/idol-profiles.mjs ./tests/idol-profiles.mjs
 COPY tests/idol-gallery.mjs ./tests/idol-gallery.mjs
 COPY tests/official-channels.mjs ./tests/official-channels.mjs
@@ -58,6 +59,7 @@ RUN node tests/idol-profiles.mjs
 RUN node tests/idol-gallery.mjs
 RUN node tests/social-images.mjs
 RUN node tests/social-delete-comments.mjs
+RUN node tests/social-daily-limit.mjs
 RUN node tests/official-channels.mjs
 RUN node tests/react-smoke.mjs
 RUN node tests/react-media-rooms.mjs

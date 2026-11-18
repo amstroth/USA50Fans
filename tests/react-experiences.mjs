@@ -35,6 +35,10 @@ assert.match(social,/export function PostCard\(/,'Profile feed should reuse exis
 assert.match(social,/function CommentSection\(/,'Posts must have an expandable comment thread');
 assert.match(social,/Delete post permanently/,'Post edit screen must expose deletion');
 assert.match(social,/role="alertdialog"/,'Deletion needs an accessible are-you-sure confirmation');
+assert.match(social,/function DailyPostLimitPopup\(/,'Sixth fan post must show an actual popup');
+assert.match(social,/setLimitOpen\(true\)/,'The daily-limit response must open the popup');
+assert.match(social,/Woah slow down there\. Only 5 posts are allowed per day\. Make sure you're only posting your own content\. <#3/,'The user-defined posting-limit message must be exact');
+assert.match(appCSS,/\.social-daily-limit-backdrop\{position:fixed;inset:0;z-index:9800/,'Popup must overlay full-screen Add Post');
 assert.match(social,/all XP awarded from those hearts/,'Deletion must warn about irreversible idol-heart XP reversal');
 assert.match(social,/export function Compose\(/,'Post composer must support create and edit');
 assert.match(social,/\/api\/social\/post-edit/,'Edit existing post endpoint should be wired up');
