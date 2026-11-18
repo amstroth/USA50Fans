@@ -4,6 +4,7 @@
  const params=new URLSearchParams(window.location.search);
  const embedded=params.get('embed')==='1';
  const target=params.get('screen')||'';
+ let initialNavigation=true;
  if(!embedded&&!target)return;
  if(embedded){
   document.documentElement.classList.add('usa50-react-embedded');
@@ -18,7 +19,7 @@
   const original=go;
   go=function(screen){
    const result=original(screen);
-   if(allowed.includes(screen)&&window.parent!==window){
+   if(!initialNavigation&&allowed.includes(screen)&&window.parent!==window){
     window.parent.postMessage({type:'usa50:legacy-navigate',route:screen},window.location.origin);
    }
    return result;
@@ -26,6 +27,7 @@
  }
  function launch(){
   if(target&&allowed.includes(target))routeTo(target);
+  initialNavigation=false;
   const room=params.get('room');
   if(room&&target==='events'){
    let attempts=0;
