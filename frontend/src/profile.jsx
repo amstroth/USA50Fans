@@ -2,26 +2,7 @@ import React,{useEffect,useState} from 'react';
 import {useApp} from './state';
 import {Avatar,Badge,Empty,Heading,Icon,VerifiedStar,rankTone,VipBadge} from './ui';
 import {api,dateLabel,number} from './api';
-function resizeAvatar(file){
- return new Promise((resolve,reject)=>{
-  if(!file?.size)return resolve(null);
-  if(!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>8_000_000)return reject(Error('Choose a JPG, PNG or WebP under 8 MB.'));
-  const url=URL.createObjectURL(file),image=new Image();
-  image.onload=()=>{
-   try{
-    const canvas=document.createElement('canvas');canvas.width=224;canvas.height=224;
-    const ctx=canvas.getContext('2d'),edge=Math.min(image.width,image.height);
-    ctx.drawImage(image,(image.width-edge)/2,(image.height-edge)/2,edge,edge,0,0,224,224);
-    URL.revokeObjectURL(url);
-    const output=canvas.toDataURL('image/jpeg',.72);
-    if(output.length>205000)return reject(Error('Avatar is too detailed; please use a simpler picture.'));
-    resolve(output);
-   }catch(err){URL.revokeObjectURL(url);reject(err);}
-  };
-  image.onerror=()=>{URL.revokeObjectURL(url);reject(Error('Could not open image.'));};
-  image.src=url;
- });
-}
+import {CropPhoto,preparePhoto} from './photo-crop';
 function AccountAccess(){
  const {signIn,message}=useApp();
  const [mode,setMode]=useState('login'),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[displayName,setDisplayName]=useState(''),[busy,setBusy]=useState(false);
@@ -43,7 +24,7 @@ function EditProfile({profile,close}){
  const isIdol=profile.verifiedIdol,staff=profile.verifiedStaff;
  const [handle,setHandle]=useState(profile.handle||''),[bio,setBio]=useState(profile.bio||''),[oshi,setOshi]=useState(profile.oshiIds||[]);
  const [ring,setRing]=useState(profile.ring||'classic'),[color,setColor]=useState(profile.idolBorderColor||'#E63A84');
- const [photo,setPhoto]=useState(null),[busy,setBusy]=useState(false);
+ const [avatarUrl,setAvatarUrl]=useState(null),[cropSource,setCropSource]=useState(null),[busy,setBusy]=useState(false);
  const members=data?.members||[];
  function toggleOshi(id){setOshi(arr=>arr.includes(id)?arr.filter(x=>x!==id):[...arr,id]);}
  async function save(e){
@@ -53,7 +34,7 @@ function EditProfile({profile,close}){
    if(!isIdol){body.handle=handle;body.oshiIds=oshi;}
    if(isIdol)body.idolBorderColor=color;
    if(!isIdol&&!staff)body.ring=ring;
-   if(photo){const avatarUrl=await resizeAvatar(photo);if(avatarUrl)body.avatarUrl=avatarUrl;}
+   if(avatarUrl)body.avatarUrl=avatarUrl;
    await run('/api/social/profile',body);
    message('Profile updated ♡');close();
   }catch(err){message(err.message);}finally{setBusy(false);}
@@ -62,7 +43,13 @@ function EditProfile({profile,close}){
   <div className="react-modal" role="dialog" aria-modal="true" aria-label="Edit your profile">
    <header><h2>Edit profile</h2><button aria-label="Close" onClick={close}><Icon name="x"/></button></header>
    <form className="react-form" onSubmit={save}>
-    <label>Profile picture<input type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label>
+    <label>Profile picture (drag and zoom to crop into a circle)
+     <input type="file" accept="image/png,image/jpeg,image/webp" onChange={async e=>{
+      const file=e.target.files?.[0];e.target.value='';if(!file)return;
+      try{setCropSource(await preparePhoto(file,{maxChars:950000}));}catch(err){message(err.message);}
+     }}/>
+    </label>
+    {(avatarUrl||profile.avatarUrl)&&<div className="profile-avatar-preview"><img src={avatarUrl||profile.avatarUrl} alt="Profile photo preview"/></div>}
     {isIdol?<><p className="fineprint">Official verified username: @{profile.handle}</p><label>Idol border color<input type="color" value={color} onChange={e=>setColor(e.target.value)}/></label></>:
      <label>Username<input value={handle} minLength={3} maxLength={22} pattern="[A-Za-z][A-Za-z0-9_]{2,21}" onChange={e=>setHandle(e.target.value)} required/><small>Unique, 3–22 letters, numbers or underscores.</small></label>}
     <label>Bio<textarea value={bio} maxLength={180} rows={3} onChange={e=>setBio(e.target.value)} placeholder="Tell USA50 fans about yourself…"/></label>
@@ -73,6 +60,8 @@ function EditProfile({profile,close}){
     <button disabled={busy} className="action primary full">{busy?'Saving…':'Save profile'}</button>
    </form>
   </div>
+  {cropSource&&<CropPhoto source={cropSource} title="Crop your profile picture" outputSize={300} maxChars={182000}
+    onCancel={()=>setCropSource(null)} onSave={image=>{setAvatarUrl(image);setCropSource(null);}}/>}
  </div>;
 }
 function PostThumbnail({post}){
