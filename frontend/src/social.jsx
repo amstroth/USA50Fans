@@ -162,7 +162,7 @@ export function Compose({close,post=null}){
   }catch(err){message(err.message);}finally{setBusy(false);}
  }
  const preview=cover||(!clearCover?post?.thumbnailUrl:null);
- return createPortal(<div className="react-modal-cover" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}>
+ return createPortal(<div className="react-modal-cover social-compose-cover-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}>
   <div role="dialog" aria-modal="true" aria-label={editing?'Edit Social post':'Share Social post'} className="react-modal social-compose-modal">
    <header><h2>{editing?'Edit post':'Share a USA50 edit ♡'}</h2><button type="button" aria-label="Close post editor" onClick={close}><Icon name="x"/></button></header>
    <form className="react-form" onSubmit={submit}>
