@@ -22,6 +22,7 @@ COPY livestream-social.js ./
 COPY web-push-service.js ./
 COPY tests/live-streams.mjs ./tests/live-streams.mjs
 COPY tests/social-images.mjs ./tests/social-images.mjs
+COPY tests/idol-profiles.mjs ./tests/idol-profiles.mjs
 COPY tests/official-channels.mjs ./tests/official-channels.mjs
 COPY tests/react-smoke.mjs ./tests/react-smoke.mjs
 COPY tests/react-media-rooms.mjs ./tests/react-media-rooms.mjs
@@ -49,6 +50,7 @@ RUN test -s www/vendor/three.module.js && test -s www/vendor/three.core.js \
 RUN node --check server.js && node --check fancall-lottery.js && node --check economy-pricing.js && node --check gacha-rewards.js && node --check vip-program.js && node --check notification-center.js && node --check event-streams.js && node --check livestream-social.js && node --check web-push-service.js && node --check www/livestream-v27.js && node --check www/interactive-preview-v28.js && node --check www/immersive-live-v29.js && node --check www/live-tts-overlay.js && node --check fancall-rtc.js && node --check social-hub.js && node --check card-studio.js && node --check www/fancall-social-v17.js && node --check www/economy-v19.js && node --check www/gacha-reveal-v20.js && node --check www/social-roles-v22.js && node --check www/notification-center-v23.js && node --check www/diary-layout-v24.js && node --check www/event-stream-v25.js && node --check www/fancall-rtc-v26.js && node --check www/social-profile-v16.js && node --check official-auto-sync.js && node -e "require('./official-auto-sync.js')" && node --check official-diary.js && node --check www/diary-social.js && node --check www/studio.js && node --check www/idol-studio-v10.js && node --check www/dream.js && node --check role-features.js && node --check idol-profiles.js
 RUN test -s www/react/index.html && test -d www/react/assets && node --check www/react-bridge.js
 RUN node tests/live-streams.mjs
+RUN node tests/idol-profiles.mjs
 RUN node tests/social-images.mjs
 RUN node tests/official-channels.mjs
 RUN node tests/react-smoke.mjs

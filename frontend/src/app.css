@@ -509,3 +509,10 @@
  .idol-form-grid{grid-template-columns:1fr}
 }
 @media(max-width:430px){.idol-profile-stage{grid-template-columns:31px minmax(0,1fr) 31px}.idol-stage-arrow{width:30px}.idol-stage-arrow svg{width:22px}.idol-facts-grid{grid-template-columns:1fr}.idol-portrait-caption h2{font-size:24px}}
+/* Thumbnail repair is isolated to the profile grid; Social feed remains unchanged. */
+.profile-post-tile{position:relative;min-width:0;width:100%;aspect-ratio:1/1;overflow:hidden;background:#eedbed}
+.profile-post-grid .profile-post-tile .profile-post-open{width:100%;height:100%;aspect-ratio:auto;display:block}
+.profile-cover-edit{position:absolute;z-index:2;right:6px;top:6px;display:inline-flex;align-items:center;gap:4px;background:#fffefa;color:#77528f;font-size:10px;font-weight:850;border-radius:999px;padding:6px 9px;box-shadow:0 3px 10px #53304d38;cursor:pointer}
+.profile-cover-edit input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.profile-cover-edit:focus-within{outline:2px solid #985bc1;outline-offset:2px}
+
