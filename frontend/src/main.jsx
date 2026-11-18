@@ -6,6 +6,7 @@ import {HomePage,CollectionPage,ShopPage,LegacyPage} from './core-pages';
 import {SocialPage} from './social';
 import {ProfilePage} from './profile';
 import {EventsPage} from './events';
+import {RankingsPage} from './rankings';
 import {dateTime,number} from './api';
 import './app.css';
 function Mailbox(){
@@ -61,7 +62,7 @@ function AppShell(){
     </div>
    </header>
    <div className={'react-content '+(['drops','messages','live','fansites','recycle','studio','admin'].includes(route)?'compat-content':'')}>
-    {route==='home'?<HomePage/>:route==='collection'?<CollectionPage/>:route==='shop'?<ShopPage/>:route==='community'?<SocialPage/>:route==='events'?<EventsPage/>:route==='profile'?<ProfilePage/>:<LegacyPage route={route}/>}
+    {route==='home'?<HomePage/>:route==='collection'?<CollectionPage/>:route==='shop'?<ShopPage/>:route==='community'?<SocialPage/>:route==='rankings'?<RankingsPage/>:route==='events'?<EventsPage/>:route==='profile'?<ProfilePage/>:<LegacyPage route={route}/>}
    </div>
   </div>
   <nav className="react-bottom-nav" aria-label="Bottom navigation">{BOTTOM.map(id=>{const entry=NAV.find(x=>x.id===id);return <button key={id} className={route===id?'active':''} onClick={()=>switchTo(id)} aria-current={route===id?'page':undefined}><Icon name={entry.icon} size={21}/><small>{entry.name==='Collection'?'Collector':entry.name==='My Page'?'My Page':entry.name}</small></button>;})}</nav>
