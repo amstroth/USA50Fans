@@ -62,7 +62,7 @@ function PhotoManager({member,kind,onCrop}){
   <div className="idol-photo-manager-top"><div><strong>{kind==='gallery'?'Main gallery':'Circular profile pictures'}</strong>
    <small>{photos.length}/{max} · Drag or use arrows to reorder. The first photo is featured.</small></div>
    {photos.length<max&&<label className="action secondary idol-photo-upload">+ Add photo{kind==='gallery'?'s':''}
-    <input type="file" accept="image/jpeg,image/png,image/webp" multiple={kind==='gallery'} disabled={busy} onChange={e=>{const files=e.target.files;e.target.value='';receiveFiles(files);}}/>
+    <input type="file" accept="image/jpeg,image/png,image/webp" multiple={kind==='gallery'} disabled={busy} onChange={e=>{const files=Array.from(e.target.files||[]);e.target.value='';receiveFiles(files);}}/>
    </label>}
   </div>
   <div className="idol-photo-manager-items">
@@ -75,7 +75,7 @@ function PhotoManager({member,kind,onCrop}){
      <button type="button" disabled={busy||i===0} onClick={()=>move(i,i-1)} title="Move earlier">←</button>
      <button type="button" disabled={busy||i===photos.length-1} onClick={()=>move(i,i+1)} title="Move later">→</button>
      {kind==='circle'&&<button type="button" onClick={()=>onCrop({source:p.originalUrl,replaceId:p.id,recrop:true})}>Crop</button>}
-     <label>Replace<input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e=>{const files=e.target.files;e.target.value='';receiveFiles(files,p.id);}}/></label>
+     <label>Replace<input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e=>{const files=Array.from(e.target.files||[]);e.target.value='';receiveFiles(files,p.id);}}/></label>
      <button type="button" onClick={()=>remove(p)} disabled={busy} title="Remove photo">×</button>
     </div>
    </div>)}
