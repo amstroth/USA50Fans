@@ -21,3 +21,9 @@
 .official-post-teaser img{width:100%;height:100%;object-fit:cover}
 .official-post-teaser strong{font-size:11px;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .official-post-teaser small{font-size:10px;color:#9a80a7}
+
+.push-settings{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;background:linear-gradient(110deg,#f8e2f2,#e4d3f0);border:1px solid white;border-radius:16px;padding:15px;margin:15px 0 23px}
+.push-settings>div{display:grid;gap:5px}
+.push-settings strong{font-size:13px;color:#78528f}
+.push-settings small{font-size:11px;color:#987dab}
+@media(max-width:650px){.push-settings{align-items:stretch}.push-settings button{width:100%}}
