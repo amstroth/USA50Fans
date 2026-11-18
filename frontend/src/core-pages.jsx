@@ -42,7 +42,7 @@ export function CollectionPage(){
     if(Number(owned[card.id]||0)>0)setViewerCard(card);
     else message('Collect this card before opening its 3D viewer.');
    }}/>)}</div>:<Empty title="No cards in this set yet" detail="There are no published photocards matching these set and rarity filters."/ >}
-   <div className="react-note"><strong>Collector rules</strong><p>Your last unique card is protected. Tap an obtained card to open its full-screen interactive 3D collector view. Duplicate recycling is available separately.</p><button className="text-link" onClick={()=>navigate('recycle')}>Recycle duplicates →</button></div>
+   <div className="react-note"><strong>Collector rules</strong><p>Your last unique card is protected. Tap an obtained card to open its full-screen interactive 3D collector view.</p></div>
   </>:<><div className="summary-grid"><div><strong>{number(ticketCount)}</strong><small>Idol tickets</small></div><div><strong>{number(coupons.length)}</strong><small>Merch coupons</small></div></div>
    <SectionTitle title="Idol tickets"/>{members.filter(x=>tickets[x.id]>0).length?members.filter(x=>tickets[x.id]>0).map(m=><div className="inventory-row" key={m.id}><span className="ticket-icon">🎫</span><div><strong>{m.name} Ticket</strong><small>{m.team} · Demo collectible</small></div><strong>×{number(tickets[m.id])}</strong></div>):<Empty icon="🎫" title="No tickets yet" detail="Collect idol tickets from eligible card packs." action={<button className="action secondary" onClick={()=>navigate('drops')}>Open packs</button>}/>}
    <SectionTitle title="Merch coupons"/>{coupons.length?coupons.map((c,i)=><div key={c.id||i} className="inventory-row"><span className="ticket-icon">🏷️</span><div><strong>{c.discountPercent||0}% Merch Coupon</strong><small>Not yet redeemable</small></div></div>):<p className="muted">No coupons collected yet.</p>}
@@ -59,7 +59,7 @@ export function ShopPage(){
   <div className="react-note"><strong>STAR Shop is a development preview.</strong><p>No payment is collected here. Developer demo grants are restricted to management accounts that are authorized as admins.</p></div></main>;
 }
 export function LegacyPage({route}){
- const titles={drops:'Card Drops',messages:'Messages',live:'Livestream Studio',fansites:'Fansites',recycle:'Recycle Duplicates',studio:'Creator Studio',admin:'Management',diary:'Diary Entries'};
- const target=route==='studio'?'messages':route==='live'?'events':route==='diary'?'community':route,src='/index.html?embed=1&screen='+encodeURIComponent(target);
+ const titles={drops:'Card Drops',messages:'Messages',live:'Livestream Studio',fansites:'Fansites',admin:'Management',diary:'Diary Entries'};
+ const target=route==='live'?'events':route==='diary'?'community':route,src='/index.html?embed=1&screen='+encodeURIComponent(target);
  return <section className="legacy-view"><div className="legacy-view-head"><div><span className="eyebrow">USA50 · COMPATIBILITY FEATURE</span><h1>{titles[route]||'USA50'}</h1></div><a className="action secondary" href={'/index.html?screen='+encodeURIComponent(target)} target="_blank" rel="noopener noreferrer">Full view <Icon name="external" size={16}/></a></div><iframe key={route} className="legacy-frame" src={src} title={titles[route]||'USA50'} allow="camera; microphone; fullscreen; clipboard-read; clipboard-write" loading="eager"/></section>;
 }

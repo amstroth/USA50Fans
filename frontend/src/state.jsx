@@ -16,8 +16,6 @@ export const NAV=[
  {id:'profile',name:'My Page',icon:'profile'},
  {id:'diary',name:'Diary Entries',icon:'collection'},
  {id:'fansites',name:'Fansites',icon:'camera',legacy:true},
- {id:'recycle',name:'Recycle',icon:'collection',legacy:true},
- {id:'studio',name:'Creator Studio',icon:'camera',legacy:true},
  {id:'admin',name:'Management',icon:'settings',legacy:true}
 ];
 const routeFromHash=()=>{
