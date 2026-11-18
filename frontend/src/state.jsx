@@ -11,6 +11,7 @@ export const NAV=[
  {id:'events',name:'Events',icon:'events'},
  {id:'live',name:'Livestreams',icon:'live',legacy:true},
  {id:'profile',name:'My Page',icon:'profile'},
+ {id:'diary',name:'Diary Entries',icon:'collection',legacy:true},
  {id:'fansites',name:'Fansites',icon:'camera',legacy:true},
  {id:'recycle',name:'Recycle',icon:'collection',legacy:true},
  {id:'studio',name:'Creator Studio',icon:'camera',legacy:true},
