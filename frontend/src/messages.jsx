@@ -45,7 +45,14 @@ function FanMessages(){
   .sort((a,b)=>Number(b.pinned)-Number(a.pinned)||stamp(b.items.at(-1)?.at)-stamp(a.items.at(-1)?.at)||a.name.localeCompare(b.name));
  const shown=conversations.filter(m=>(m.name+' '+m.team).toLowerCase().includes(query.toLowerCase().trim()));
  const chosen=conversations.find(m=>m.id===selected),latest=(mail.posts||[]).filter(p=>p.idolId===selected).sort((a,b)=>stamp(b.createdAt)-stamp(a.createdAt))[0];
- const canReply=Boolean(me?.role==='fan'&&me?.state?.subscriberPreview&&!me?.mustChangePassword&&!mail.banned&&latest);
+ const isFan=me?.role==='fan',subscribed=Boolean(me?.state?.subscriberPreview);
+ const canReply=Boolean(isFan&&subscribed&&!me?.mustChangePassword&&!mail.banned&&latest);
+ async function toggleSubscription(){
+  if(!me)return navigate('profile');
+  if(!isFan||me.mustChangePassword)return;
+  const next=!subscribed;
+  await send('/api/demo/subscriber-preview',{enabled:next},next?'Messaging subscription enabled (demo) ♡':'Messaging subscription paused (demo)');
+ }
  async function open(id){
   setSelected(id);setDraft('');
   if(me?.role==='fan'&&!me?.mustChangePassword&&Number(unread[id])>0)await send('/api/messages/mark-read',{idolId:id});
@@ -77,10 +84,19 @@ function FanMessages(){
     <button className="react-msg-profile-link" onClick={()=>navigate('community')} title="Community"><Icon name="community" size={19}/></button>
    </header>
    <ChatLog entries={chosen.items} empty={'No messages from '+chosen.name+' yet ♡'}/>
-   <footer className="react-msg-compose"><p>Your replies are private to the idol.</p>
-    {canReply?<form onSubmit={submit}><input aria-label={'Reply to '+chosen.name} maxLength={500} value={draft} onChange={e=>setDraft(e.target.value)} placeholder={'Reply privately to '+chosen.name+'…'}/><button disabled={busy||!draft.trim()} type="submit" aria-label="Send message">↑</button></form>:
-     <div className="react-msg-lock">{!latest?'Waiting for an idol message':mail.banned?'Messaging privileges suspended':me?.mustChangePassword?'Change your temporary password in My Page':me?'Subscriber messaging is not enabled for your account':'Sign in to reply privately'}
-      {!me&&<button className="text-link" onClick={()=>navigate('profile')}>Sign in</button>}</div>}
+   <footer className="react-msg-compose"><p>Your replies are private to the idol. Demo subscription: no payment required.</p>
+    <form onSubmit={submit} className="react-msg-fan-bar">
+     {isFan&&!me?.mustChangePassword&&<button type="button" className={'react-msg-subscribe'+(subscribed?' subscribed':'')} disabled={busy} onClick={toggleSubscription} aria-pressed={subscribed} title={subscribed?'Turn off demo subscriber messaging':'Enable demo subscriber messaging'}>
+      {subscribed?'✓ Subscribed':'✦ Subscribe'}
+     </button>}
+     <input aria-label={'Reply to '+chosen.name} maxLength={500} value={draft} onChange={e=>setDraft(e.target.value)}
+      disabled={!canReply||busy} placeholder={!me?'Sign in to reply':me?.mustChangePassword?'Change your temporary password first':mail.banned?'Messaging suspended':!subscribed?'Subscribe to reply…':!latest?'Waiting for an idol message…':'Reply privately to '+chosen.name+'…'}/>
+     <button type="submit" className="react-msg-send" disabled={!canReply||busy||!draft.trim()} aria-label="Send message">↑</button>
+    </form>
+    {!isFan&&<div className="react-msg-lock">{!me?'Sign in to reply privately':'Only fan accounts can subscribe to messages'}
+     {!me&&<button className="text-link" onClick={()=>navigate('profile')}>Sign in</button>}</div>}
+    {isFan&&mail.banned&&<div className="react-msg-lock">Messaging privileges suspended</div>}
+    {isFan&&me?.mustChangePassword&&<div className="react-msg-lock">Change your temporary password in My Page to subscribe.</div>}
    </footer></>:<div className="react-msg-placeholder"><span>💌</span><h2>Select an idol conversation</h2><p>Choose someone on the left to read updates and private replies.</p></div>}
   </section>
  </div>;

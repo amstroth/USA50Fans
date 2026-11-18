@@ -15,6 +15,12 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
   for(const k of ['posts','profiles','votes','follows','reports','bans','ticketMilestones','dailyCredits','idolHearts','notifications']){
     if(!state[k])state[k]=['posts','reports'].includes(k)?[]:{};
   }
+  // Repair legacy hidden previews: removing an uploaded cover must never blank
+  // the post's original embedded player or its profile-grid square.
+  if(state.posts.some(p=>Object.hasOwn(p,'thumbnailHidden'))){
+    for(const post of state.posts)delete post.thumbnailHidden;
+    save();
+  }
   function account(uid){return db.users[uid]||null;}
   function approvedFansite(uid){return db.fansites.some(f=>f.userId===uid&&f.status==='approved');}
   function role(u){return u?.role||'fan';}
@@ -73,9 +79,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
   const IMAGE_TYPES={'image/jpeg':'.jpg','image/png':'.png','image/webp':'.webp'},IMAGE_MAX=1200000;
   function imageLocation(p){return crypto.createHash('sha256').update(String(p.id)).digest('hex');}
   function pictureUrl(post){
-    if(post.thumbnailHidden)return null;
     const p=post.repostOf?state.posts.find(x=>x.id===post.repostOf&&!x.hidden)||post:post;
-    if(p.thumbnailHidden)return null;
     return p.thumbnailFile?'/api/social/thumbnail/'+encodeURIComponent(p.id)+'?v='+encodeURIComponent(p.thumbnailUpdatedAt||p.createdAt||'1'):p.thumbnailUrl||null;
   }
   function verifiedImage(bytes,mime){
@@ -163,7 +167,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
   }
   const previewJobs=new Map();
   async function refreshPreview(p){
-    if(p.thumbnailFile||p.thumbnailHidden||Date.now()-Date.parse(p.thumbnailAttemptedAt||0)<3600000)return;
+    if(p.thumbnailFile||Date.now()-Date.parse(p.thumbnailAttemptedAt||0)<3600000)return;
     if(!previewJobs.has(p.id)){
       const job=(async()=>{try{await fetchProviderImage(p);}finally{p.thumbnailAttemptedAt=now();save();}})();
       previewJobs.set(p.id,job);job.finally(()=>previewJobs.delete(p.id)).catch(()=>{});
@@ -177,7 +181,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
     const profiles={};for(const target of ids){if(target)profiles[target]=publicProfile(target,uid,ranking);}
     const posts=state.posts.filter(p=>!p.hidden).slice(-250).map(post=>{
       const count=counts(post);
-      return {id:post.id,authorId:post.authorId,category:post.category,caption:post.caption,url:post.url,platform:post.platform,embedId:post.embedId,embedKind:post.embedKind,createdAt:post.createdAt,updatedAt:post.updatedAt||null,thumbnailUrl:pictureUrl(post),hasCustomThumbnail:!!post.thumbnailManual,thumbnailHidden:!!post.thumbnailHidden,repostOf:post.repostOf||null,repostAuthor:post.repostAuthor||null,...count,heartedBy:(state.idolHearts[post.id]||[]).filter(x=>role(account(x))==='idol').map(x=>({id:x,name:account(x).displayName})),myHeart:uid?(state.idolHearts[post.id]||[]).includes(uid):false,myVote:uid?(state.votes[post.id]?.[uid]||0):0,isFollowing:Boolean(uid&&(state.follows[uid]||[]).includes(post.authorId))};
+      return {id:post.id,authorId:post.authorId,category:post.category,caption:post.caption,url:post.url,platform:post.platform,embedId:post.embedId,embedKind:post.embedKind,createdAt:post.createdAt,updatedAt:post.updatedAt||null,thumbnailUrl:pictureUrl(post),hasCustomThumbnail:!!post.thumbnailManual,repostOf:post.repostOf||null,repostAuthor:post.repostAuthor||null,...count,heartedBy:(state.idolHearts[post.id]||[]).filter(x=>role(account(x))==='idol').map(x=>({id:x,name:account(x).displayName})),myHeart:uid?(state.idolHearts[post.id]||[]).includes(uid):false,myVote:uid?(state.votes[post.id]?.[uid]||0):0,isFollowing:Boolean(uid&&(state.follows[uid]||[]).includes(post.authorId))};
     });
     return {posts,profiles,rankings:ranking,following:uid?(state.follows[uid]||[]):[],myProfile:uid?profiles[uid]:null,savedPostIds:uid?(profileFor(uid).savedPostIds||[]):[],notifications:uid?(state.notifications[uid]||[]).slice(-40).reverse():[],topHashtags:Object.entries(state.posts.filter(p=>!p.hidden).flatMap(p=>(p.caption.match(/#[A-Za-z0-9_]+/g)||[]).map(t=>t.toLowerCase())).reduce((a,h)=>(a[h]=(a[h]||0)+1,a),{})).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([tag,count])=>({tag,count})),top100Limit:100,earnings:{postPullPoints:50,dailyCreditedPosts:2,upvotesPerTicket:100},policy:'Demo awards, not real fancall entry or confirmed ticketing.',reports:role(user)==='admin'?state.reports.filter(x=>x.status==='pending').slice(-80):[],bans:role(user)==='admin'?state.bans:{}};
   }
@@ -268,8 +272,8 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
     if(!p)return null;
     if(p.embedKind==='link'&&p.platform==='TikTok')await resolveTikTokShort(p);
     const media=p.repostOf?state.posts.find(x=>x.id===p.repostOf&&!x.hidden)||p:p;
-    if(!p.thumbnailHidden)await refreshPreview(media);
-    return {postId:p.id,embedId:media.embedId||null,embedKind:media.embedKind,platform:media.platform,url:media.url,thumbnailUrl:pictureUrl(p),thumbnailHidden:!!p.thumbnailHidden};
+    await refreshPreview(media);
+    return {postId:p.id,embedId:media.embedId||null,embedKind:media.embedKind,platform:media.platform,url:media.url,thumbnailUrl:pictureUrl(p)};
   }
   function requireFan(req,res){
     const u=userFrom(req);
@@ -319,11 +323,12 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
       if(state.posts.some(p=>p.authorId===u.id&&p.url===source.url&&!p.hidden))return fail(res,409,'You already shared this post.'),true;
       const day=now().slice(0,10);
       if(state.posts.filter(p=>p.authorId===u.id&&p.createdAt.slice(0,10)===day).length>=5)return fail(res,429,'Limit 5 submissions per day in this development preview.'),true;
-      if(data.hideThumbnail===true&&Object.hasOwn(data,'thumbnailDataUrl'))return fail(res,400,'Choose either a thumbnail or no thumbnail.'),true;
-      const post={id:id(),authorId:u.id,category,caption,url:source.url,platform:source.platform,embedKind:source.embedKind,embedId:source.embedId,thumbnailUrl:null,thumbnailHidden:data.hideThumbnail===true,createdAt:now(),hidden:false};
+      if(data.hideThumbnail===true&&Object.hasOwn(data,'thumbnailDataUrl'))return fail(res,400,'Choose either a thumbnail or its removal.'),true;
+      // Omitting a custom cover always leaves the original embedded preview visible.
+      const post={id:id(),authorId:u.id,category,caption,url:source.url,platform:source.platform,embedKind:source.embedKind,embedId:source.embedId,thumbnailUrl:null,createdAt:now(),hidden:false};
       // Resolve only provider-approved thumbnail metadata for a verified post URL.
       // Failure never blocks publishing; Instagram may require provider credentials.
-      if(!post.thumbnailHidden&&source.platform==='TikTok' && source.embedId){
+      if(source.platform==='TikTok' && source.embedId){
         try{
           const metaUrl='https://www.tiktok.com/oembed?url='+encodeURIComponent(source.url);
           const metaRes=await fetch(metaUrl,{signal:AbortSignal.timeout(3500)});
@@ -355,19 +360,19 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
       if(state.posts.some(p=>p.id!==post.id&&p.authorId===post.authorId&&p.url===source.url&&!p.hidden))
         return fail(res,409,'This account already shared that post.'),true;
       const changingUrl=post.url!==source.url;
-      if(data.hideThumbnail===true&&Object.hasOwn(data,'thumbnailDataUrl'))return fail(res,400,'Choose either a thumbnail or no thumbnail.'),true;
+      const removeCover=data.clearThumbnail===true||data.hideThumbnail===true;
+      if(removeCover&&Object.hasOwn(data,'thumbnailDataUrl'))return fail(res,400,'Choose either a thumbnail or its removal.'),true;
       if(Object.hasOwn(data,'thumbnailDataUrl')){
-        try{saveImageFromData(post,data.thumbnailDataUrl);post.thumbnailManual=true;post.thumbnailHidden=false;}
+        try{saveImageFromData(post,data.thumbnailDataUrl);post.thumbnailManual=true;}
         catch(err){return fail(res,400,err.message),true;}
-      }else if(data.hideThumbnail===true||data.clearThumbnail===true||changingUrl){
-        // Removing a cover deletes the saved image file, not just its display URL.
+      }else if(removeCover||changingUrl){
+        // Only the uploaded/cached image is removed; embed ID, player and grid
+        // square remain untouched and fall back to the original post's preview.
         if(post.thumbnailFile&&mediaDir)try{fs.unlinkSync(path.join(mediaDir,post.thumbnailFile));}catch{}
         post.thumbnailFile=null;post.thumbnailMime=null;post.thumbnailUpdatedAt=null;
         post.thumbnailManual=false;post.thumbnailUrl=null;post.thumbnailAttemptedAt=null;
-        if(data.hideThumbnail===true)post.thumbnailHidden=true;
-        else if(data.clearThumbnail===true)post.thumbnailHidden=false;
-        // Changing the external post link preserves the explicit "no thumbnail" choice.
       }
+      delete post.thumbnailHidden;
       post.caption=caption;post.url=source.url;post.category=category;post.platform=source.platform;
       post.embedKind=source.embedKind;post.embedId=source.embedId;post.updatedAt=now();
       save();return json(res,200,{ok:true,postId:post.id,thumbnailUrl:pictureUrl(post)}),true;
@@ -376,7 +381,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
       const post=state.posts.find(p=>p.id===String(data.postId||'')&&!p.hidden);
       if(!post)return fail(res,404,'Post not found.'),true;
       if(post.authorId!==u.id&&role(u)!=='admin')return fail(res,403,'Only the post author or management can update its image.'),true;
-      try{saveImageFromData(post,data.thumbnailDataUrl);post.thumbnailManual=true;post.thumbnailHidden=false;}catch(err){return fail(res,400,err.message),true;}
+      try{saveImageFromData(post,data.thumbnailDataUrl);post.thumbnailManual=true;delete post.thumbnailHidden;}catch(err){return fail(res,400,err.message),true;}
       save();return json(res,200,{ok:true,postId:post.id,thumbnailUrl:pictureUrl(post)}),true;
     }
     if(ep==='/api/social/heart'){

@@ -73,7 +73,6 @@ function PostThumbnail({post}){
   let active=true;
   setThumbnail(post.thumbnailUrl||null);
   setRetry(0);
-  if(post.thumbnailHidden)return;
   // The profile grid uses the exact saved thumbnail for the same Social post.
   // Older posts without a saved cover are resolved through their source URL.
   if(!String(post.thumbnailUrl||'').startsWith('/api/social/thumbnail/')){
@@ -82,9 +81,8 @@ function PostThumbnail({post}){
     .catch(()=>{});
   }
   return ()=>{active=false;};
- },[post.id,post.thumbnailUrl,post.thumbnailHidden]);
+ },[post.id,post.thumbnailUrl]);
  async function retryThumbnail(){
-  if(post.thumbnailHidden)return;
   if(retry>0){setThumbnail(null);return;}
   setRetry(1);
   try{
@@ -93,7 +91,7 @@ function PostThumbnail({post}){
   }catch{setThumbnail(null);}
  }
  return <span className="profile-post-image">
-  {post.thumbnailHidden?<span className="profile-post-no-thumbnail" aria-label="No thumbnail"/>:thumbnail?<img src={thumbnail} alt={post.caption?'Thumbnail for '+post.caption.slice(0,80):'Post thumbnail'} loading="lazy" onError={retryThumbnail}/>:
+  {thumbnail?<img src={thumbnail} alt={post.caption?'Thumbnail for '+post.caption.slice(0,80):'Post thumbnail'} loading="lazy" onError={retryThumbnail}/>:
    <ProfileEmbedPreview post={post}/>}
  </span>;
 }

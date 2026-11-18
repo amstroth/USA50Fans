@@ -35,7 +35,8 @@ assert.match(social,/export function PostCard\(/,'Profile feed should reuse exis
 assert.match(social,/export function Compose\(/,'Post composer must support create and edit');
 assert.match(social,/\/api\/social\/post-edit/,'Edit existing post endpoint should be wired up');
 assert.match(social,/thumbnailDataUrl:cover/,'Optional grid cover should be submitted');
-assert.match(social,/Use original embed preview/,'User can revert to source embed');
+assert.match(social,/Use original embed preview/,'Removing an uploaded thumbnail must restore the source embed');
+assert.doesNotMatch(profile,/post\.thumbnailHidden/,'Removing an uploaded cover must not hide the embedded player');
 assert.match(profile,/function ProfilePostFeed\(/,'Profile should support continuous post scrolling');
 assert.match(profile,/selectedPostId/,'The tapped profile post should be selected');
 assert.match(profile,/onOpen=\{setFeedStart\}/,'Grid taps should open profile feed');
@@ -43,5 +44,11 @@ assert.match(profile,/profile-feed-overlay social-page/,'Use Social feed present
 assert.match(profile,/function ProfileEmbedPreview\(/,'Grid defaults to the original embed when no cover exists');
 assert.match(appCSS,/\.profile-feed-overlay\.social-page/);
 assert.match(appCSS,/\.social-compose-cover-overlay\.react-modal-cover\{z-index:9500\}/);
+const chat=read('frontend/src/messages.jsx');
+assert.match(chat,/react-msg-subscribe/,'Fan messaging input should display a subscription toggle');
+assert.match(chat,/\/api\/demo\/subscriber-preview/,'Subscription toggle should use the existing persisted demo endpoint');
+assert.match(chat,/aria-pressed=\{subscribed\}/,'The subscription button must reflect subscriber state');
+assert.match(chat,/disabled=\{!canReply\|\|busy\}/,'Unsubscribed fans should not be able to reply');
+
 
 console.log('React immersive experience checks passed: native routes, live crash fix, full-screen card pull, 3D viewer lifecycle and diary pointer editing.');

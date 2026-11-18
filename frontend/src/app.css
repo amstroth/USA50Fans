@@ -779,3 +779,20 @@
 .social-compose-cover-preview .social-cover-no-image small{color:#916f97;font-size:12px}
 .profile-post-no-thumbnail{display:block;position:absolute;inset:0;width:100%;height:100%;background:#f7f4f7}
 
+
+
+/* A fan may enable/disable demo messaging directly beside the chat input. */
+.react-msg-fan-bar{display:flex;align-items:center;gap:8px;min-width:0}
+.react-msg-fan-bar .react-msg-subscribe{min-width:0;min-height:39px;flex:0 0 auto;padding:9px 13px;border-radius:999px;
+ background:#fff5ff;color:#8b4e9d;border:1px solid #cba1d5;font-size:12px;font-weight:850;line-height:1.2;white-space:nowrap}
+.react-msg-fan-bar .react-msg-subscribe.subscribed{background:#e7f5ee;color:#377a59;border-color:#9bc8b0}
+.react-msg-fan-bar .react-msg-subscribe:disabled{opacity:.55;cursor:wait}
+.react-msg-fan-bar input:disabled{background:#f7f0f7;color:#ad92af}
+.react-msg-fan-bar .react-msg-send{min-width:39px;min-height:39px;flex:0 0 39px}
+@media(max-width:450px){
+ .react-msg-compose{padding:10px 9px 13px}
+ .react-msg-fan-bar{gap:5px}
+ .react-msg-fan-bar .react-msg-subscribe{padding:8px 9px;font-size:11px}
+ .react-msg-fan-bar input{padding:10px 9px;font-size:12px}
+}
+
