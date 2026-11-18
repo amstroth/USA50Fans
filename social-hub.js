@@ -175,7 +175,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
     const profiles={};for(const target of ids){if(target)profiles[target]=publicProfile(target,uid,ranking);}
     const posts=state.posts.filter(p=>!p.hidden).slice(-250).map(post=>{
       const count=counts(post);
-      return {id:post.id,authorId:post.authorId,category:post.category,caption:post.caption,url:post.url,platform:post.platform,embedId:post.embedId,embedKind:post.embedKind,createdAt:post.createdAt,thumbnailUrl:pictureUrl(post),repostOf:post.repostOf||null,repostAuthor:post.repostAuthor||null,...count,heartedBy:(state.idolHearts[post.id]||[]).filter(x=>role(account(x))==='idol').map(x=>({id:x,name:account(x).displayName})),myHeart:uid?(state.idolHearts[post.id]||[]).includes(uid):false,myVote:uid?(state.votes[post.id]?.[uid]||0):0,isFollowing:Boolean(uid&&(state.follows[uid]||[]).includes(post.authorId))};
+      return {id:post.id,authorId:post.authorId,category:post.category,caption:post.caption,url:post.url,platform:post.platform,embedId:post.embedId,embedKind:post.embedKind,createdAt:post.createdAt,updatedAt:post.updatedAt||null,thumbnailUrl:pictureUrl(post),hasCustomThumbnail:!!post.thumbnailManual,repostOf:post.repostOf||null,repostAuthor:post.repostAuthor||null,...count,heartedBy:(state.idolHearts[post.id]||[]).filter(x=>role(account(x))==='idol').map(x=>({id:x,name:account(x).displayName})),myHeart:uid?(state.idolHearts[post.id]||[]).includes(uid):false,myVote:uid?(state.votes[post.id]?.[uid]||0):0,isFollowing:Boolean(uid&&(state.follows[uid]||[]).includes(post.authorId))};
     });
     return {posts,profiles,rankings:ranking,following:uid?(state.follows[uid]||[]):[],myProfile:uid?profiles[uid]:null,savedPostIds:uid?(profileFor(uid).savedPostIds||[]):[],notifications:uid?(state.notifications[uid]||[]).slice(-40).reverse():[],topHashtags:Object.entries(state.posts.filter(p=>!p.hidden).flatMap(p=>(p.caption.match(/#[A-Za-z0-9_]+/g)||[]).map(t=>t.toLowerCase())).reduce((a,h)=>(a[h]=(a[h]||0)+1,a),{})).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([tag,count])=>({tag,count})),top100Limit:100,earnings:{postPullPoints:50,dailyCreditedPosts:2,upvotesPerTicket:100},policy:'Demo awards, not real fancall entry or confirmed ticketing.',reports:role(user)==='admin'?state.reports.filter(x=>x.status==='pending').slice(-80):[],bans:role(user)==='admin'?state.bans:{}};
   }
@@ -328,7 +328,8 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
         }catch(_err){}
       }
       if(Object.hasOwn(data,'thumbnailDataUrl')){
-        try{saveImageFromData(post,data.thumbnailDataUrl);}catch(err){return fail(res,400,err.message),true;}
+        try{saveImageFromData(post,data.thumbnailDataUrl);post.thumbnailManual=true;}
+        catch(err){return fail(res,400,err.message),true;}
       }
       state.posts.push(post);
       const credit=state.dailyCredits[u.id]||{day,count:0};if(credit.day!==day){credit.day=day;credit.count=0;}
@@ -338,12 +339,37 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
       profileFor(u.id).xp+=15;
       save();return json(res,201,{ok:true,postId:post.id,pullPointsAwarded:pointsAwarded,fanXPAwarded:15}),true;
     }
+    if(ep==='/api/social/post-edit'){
+      const post=state.posts.find(p=>p.id===String(data.postId||'')&&!p.hidden);
+      if(!post)return fail(res,404,'Post not found.'),true;
+      if(post.authorId!==u.id&&role(u)!=='admin')return fail(res,403,'Only the author or management can edit this post.'),true;
+      // Retain engagement and social identity; cover affects the profile grid only.
+      const caption=text('caption'),source=sourceUrl(data.url||post.url);
+      const category=data.category==='fansite'?'fansite':'fan';
+      if(caption.length<6||caption.length>650)return fail(res,400,'Add a description between 6 and 650 characters.'),true;
+      if(!source)return fail(res,400,'Use a public TikTok or Instagram post link.'),true;
+      if(category==='fansite'&&!approvedFansite(post.authorId))return fail(res,403,'Fansite publishing requires approval.'),true;
+      if(state.posts.some(p=>p.id!==post.id&&p.authorId===post.authorId&&p.url===source.url&&!p.hidden))
+        return fail(res,409,'This account already shared that post.'),true;
+      const changingUrl=post.url!==source.url;
+      if(Object.hasOwn(data,'thumbnailDataUrl')){
+        try{saveImageFromData(post,data.thumbnailDataUrl);post.thumbnailManual=true;}
+        catch(err){return fail(res,400,err.message),true;}
+      }else if(data.clearThumbnail===true||changingUrl){
+        if(post.thumbnailFile&&mediaDir)try{fs.unlinkSync(path.join(mediaDir,post.thumbnailFile));}catch{}
+        post.thumbnailFile=null;post.thumbnailMime=null;post.thumbnailUpdatedAt=null;
+        post.thumbnailManual=false;post.thumbnailUrl=null;post.thumbnailAttemptedAt=null;
+      }
+      post.caption=caption;post.url=source.url;post.category=category;post.platform=source.platform;
+      post.embedKind=source.embedKind;post.embedId=source.embedId;post.updatedAt=now();
+      save();return json(res,200,{ok:true,postId:post.id,thumbnailUrl:pictureUrl(post)}),true;
+    }
     if(ep==='/api/social/thumbnail'){
       const post=state.posts.find(p=>p.id===String(data.postId||'')&&!p.hidden);
       if(!post)return fail(res,404,'Post not found.'),true;
       if(post.authorId!==u.id&&role(u)!=='admin')return fail(res,403,'Only the post author or management can update its image.'),true;
-      try{saveImageFromData(post,data.thumbnailDataUrl);}catch(err){return fail(res,400,err.message),true;}
-      return json(res,200,{ok:true,postId:post.id,thumbnailUrl:pictureUrl(post)}),true;
+      try{saveImageFromData(post,data.thumbnailDataUrl);post.thumbnailManual=true;}catch(err){return fail(res,400,err.message),true;}
+      save();return json(res,200,{ok:true,postId:post.id,thumbnailUrl:pictureUrl(post)}),true;
     }
     if(ep==='/api/social/heart'){
       if(role(u)!=='idol')return fail(res,403,'Only verified idol accounts can heart posts.'),true;
