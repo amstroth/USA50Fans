@@ -420,3 +420,92 @@
  .vip-tier-copy p{font-size:11px}
  .official-channel-banner{flex-basis:min(88vw,480px)}
 }
+
+/* Meet the Idols — member sidebar, portrait stage and fan-facing biography. */
+.react-content:has(.idol-directory-page){width:100%;max-width:none;padding:0 0 96px}
+.idol-directory-page{width:100%}
+.idol-directory-shell{display:grid;grid-template-columns:190px minmax(0,1fr);gap:0;min-height:calc(100vh - 75px);background:#fffcff}
+.idol-directory-nav{align-self:stretch;background:#fff2f8;border-right:1px solid #f3e0ec;padding:0 0 20px}
+.idol-directory-nav-title{display:grid;gap:4px;padding:23px 18px 26px;background:#f8dce9}
+.idol-directory-nav-title span{font-size:21px;font-weight:900;letter-spacing:-.9px;color:#825181}
+.idol-directory-nav-title small{font-size:9px;font-weight:850;letter-spacing:1.8px;color:#aa6c94}
+.idol-nav-team{border-bottom:1px solid #f4dbea}
+.idol-team-toggle{width:100%;padding:18px 16px;background:#f5a6c6;border:0;color:#613d6d;font-size:16px;display:flex;justify-content:space-between;align-items:center}
+.idol-team-toggle svg{transition:transform .2s}
+.idol-team-toggle.expanded svg{transform:rotate(90deg)}
+.idol-team-toggle:focus-visible,.idol-nav-members button:focus-visible{outline:2px solid #b65ea6;outline-offset:-2px}
+.idol-nav-members{display:flex;flex-direction:column;background:#fff0f6}
+.idol-nav-members button{width:100%;border:0;border-bottom:1px solid #f9dfeb;text-align:left;background:transparent;padding:16px 18px;font-size:14px;color:#784e7d;white-space:normal}
+.idol-nav-members button:hover{background:#ffe0ed}
+.idol-nav-members button.chosen{background:linear-gradient(100deg,#ffc4da,#f8d8e9);font-weight:850;box-shadow:inset 4px 0 #e567a5;color:#773c76}
+.idol-directory-content{min-width:0;margin:0 auto;width:min(100%,1050px);padding:31px clamp(18px,4vw,59px) 65px}
+.idol-directory-intro{display:flex;align-items:center;flex-wrap:wrap;gap:7px 12px;margin:0 0 24px}
+.idol-directory-intro .eyebrow{flex-basis:100%}
+.idol-directory-intro h1{flex:1;margin:0;font-size:clamp(27px,3.5vw,41px)}
+.idol-directory-intro .action{margin-left:auto}
+.idol-profile-stage{display:grid;grid-template-columns:minmax(50px,1fr) minmax(0,410px) minmax(50px,1fr);gap:10px;align-items:center;justify-content:center;margin:5px auto 22px;max-width:780px}
+.idol-stage-arrow{display:grid;place-items:center;justify-self:center;width:50px;height:65px;border:0;border-radius:17px;background:transparent;color:#9664a1;transition:background .15s,transform .15s}
+.idol-stage-arrow:hover{background:#f7e5f4;transform:scale(1.07)}
+.idol-stage-arrow:focus-visible{outline:2px solid #a364aa}
+.idol-center-profile{min-width:0;text-align:center}
+.idol-feature-photo{width:100%;aspect-ratio:4/5;display:grid;place-items:center;background:linear-gradient(145deg,#f2d9e9,#d4c4e8);border:1px solid #fff;box-shadow:0 12px 38px #9c75b929;overflow:hidden;border-radius:15px}
+.idol-feature-photo img{width:100%;height:100%;object-fit:cover;object-position:50% 18%;display:block}
+.idol-empty-photo{display:grid;place-items:center;gap:13px;padding:15px;color:#99749e}
+.idol-empty-photo>span{font-size:65px;color:#fff}
+.idol-empty-photo strong{font:italic 27px Georgia,serif}
+.idol-empty-photo small{font-size:11px}
+.idol-portrait-caption{margin:18px auto 0}
+.idol-portrait-caption h2{margin:0 0 4px;font-size:31px;color:#664377}
+.idol-portrait-caption span{font-size:12px;letter-spacing:1px;color:#a581ae;font-weight:800}
+.idol-bio-sections{max-width:840px;margin:0 auto;display:grid;gap:15px}
+.idol-bio-panel{padding:25px clamp(17px,3vw,30px);border:1px solid #f5e9f5;background:#fff;border-radius:18px;box-shadow:0 7px 25px #b68fbc12}
+.idol-bio-panel h3{font:italic 26px Georgia,serif;margin:0 0 21px;color:#7b4e86}
+.idol-bio-panel h3 span{color:#dd85b5}
+.idol-facts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:21px 25px}
+.idol-fact{min-width:0;display:grid;gap:7px}
+.idol-fact>span,.idol-goal>span{font-size:10px;letter-spacing:1.5px;font-weight:900;color:#ba78a9;text-transform:uppercase}
+.idol-fact strong{font-size:15px;overflow-wrap:anywhere;color:#63476e}
+.idol-favorite-colors{grid-column:1/-1}
+.idol-color-chips{display:flex;gap:10px;flex-wrap:wrap}
+.idol-color-chip{display:inline-flex;gap:8px;align-items:center;border:1px solid #ecd8ed;border-radius:99px;padding:7px 11px;font-size:12px;font-weight:750;color:#755888;background:#fcf8fe}
+.idol-color-chip i{width:19px;height:19px;display:block;border-radius:50%;border:1px solid #a18ea5;flex:0 0 auto}
+.idol-bio-empty{margin:0;color:#a088aa;font-size:13px}
+.idol-bio-quote{text-align:center;border-radius:18px;background:linear-gradient(110deg,#f9dce9,#f0def4);padding:29px 24px;color:#855784}
+.idol-bio-quote>span{font-size:10px;letter-spacing:2px;font-weight:850}
+.idol-bio-quote blockquote{margin:15px 0 0;font:italic 24px/1.55 Georgia,serif;white-space:pre-wrap;overflow-wrap:anywhere}
+.idol-goal+.idol-goal{border-top:1px solid #f3e5ef;margin-top:16px;padding-top:16px}
+.idol-goal p{font-size:14px;color:#73597f;margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.idol-editor{max-width:640px}
+.idol-editor .react-form{gap:17px}
+.idol-editor-photo{width:min(100%,210px);max-height:270px;object-fit:contain;border-radius:14px;background:#f0e7ef}
+.idol-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.idol-zodiac-fieldset{border:1px solid #e8d7ed;border-radius:13px;display:grid;gap:10px;padding:15px 14px}
+.idol-zodiac-fieldset legend{font-size:12px;font-weight:850;color:#8b6396;padding:0 7px}
+.idol-zodiac-fieldset small{color:#9982a1;font-size:11px}
+.idol-color-editor{display:flex;gap:9px;align-items:center}
+.idol-color-editor input[type=color]{width:53px;min-width:53px;height:45px;padding:4px;border:1px solid #dbcce0;background:#fff;border-radius:10px}
+.idol-color-editor input:not([type=color]){min-width:0;flex:1}
+.idol-color-editor button{border:0;background:#f6e8f4;border-radius:10px;padding:9px;color:#815591}
+@media(max-width:950px){.idol-directory-shell{grid-template-columns:155px minmax(0,1fr)}.idol-nav-members button{padding:14px 12px}}
+@media(max-width:750px){
+ .react-content:has(.idol-directory-page){padding:0 0 95px}
+ .idol-directory-shell{display:block;min-height:calc(100dvh - 130px)}
+ .idol-directory-nav{border-right:0;border-bottom:1px solid #f4deee;padding:0;display:flex;align-items:stretch;overflow-x:auto;gap:0}
+ .idol-directory-nav-title{flex:0 0 92px;min-height:64px;padding:15px 8px}
+ .idol-directory-nav-title span{font-size:15px}
+ .idol-directory-nav-title small{font-size:8px;letter-spacing:.6px}
+ .idol-nav-team{flex:0 0 auto;min-width:120px;border-bottom:0;border-right:1px solid #f7d7e6}
+ .idol-team-toggle{font-size:12px;padding:15px 10px;min-height:64px}
+ .idol-nav-members{position:absolute;z-index:25;min-width:135px;box-shadow:0 13px 23px #8b4c7b30;border-radius:0 0 12px 12px}
+ .idol-nav-members button{padding:11px 14px;font-size:12px}
+ .idol-directory-content{padding:22px 15px 40px}
+ .idol-directory-intro{margin-bottom:14px}
+ .idol-directory-intro h1{font-size:27px}
+ .idol-profile-stage{grid-template-columns:42px minmax(0,360px) 42px;gap:3px}
+ .idol-stage-arrow{width:39px}
+ .idol-portrait-caption h2{font-size:26px}
+ .idol-bio-panel{padding:20px 16px}
+ .idol-facts-grid{gap:17px 12px}
+ .idol-form-grid{grid-template-columns:1fr}
+}
+@media(max-width:430px){.idol-profile-stage{grid-template-columns:31px minmax(0,1fr) 31px}.idol-stage-arrow{width:30px}.idol-stage-arrow svg{width:22px}.idol-facts-grid{grid-template-columns:1fr}.idol-portrait-caption h2{font-size:24px}}
