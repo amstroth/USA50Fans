@@ -2,6 +2,59 @@ import React,{useMemo,useState} from 'react';
 import {useApp} from './state';
 import {Avatar,Badge,Empty,Heading,Icon,SectionTitle,VerifiedStar,rankTone} from './ui';
 import {api,dateLabel,safeUrl} from './api';
+async function bannerImage(file){
+ if(!file||!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>15_000_000)throw Error('Choose a JPG, PNG or WebP image under 15 MB.');
+ const input=URL.createObjectURL(file);
+ try{
+  const image=new Image();image.src=input;
+  await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error('Could not open that image.'));});
+  const canvas=document.createElement('canvas');canvas.width=1280;canvas.height=640;
+  const ctx=canvas.getContext('2d'),scale=Math.max(canvas.width/image.width,canvas.height/image.height);
+  const w=image.width*scale,h=image.height*scale;
+  ctx.drawImage(image,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
+  const result=canvas.toDataURL('image/jpeg',.8);
+  if(result.length>1_750_000)throw Error('Thumbnail too detailed; try a smaller image.');
+  return result;
+ }finally{URL.revokeObjectURL(input);}
+}
+function ChannelBanner({post,editable}){
+ const {run,message}=useApp();
+ const [edit,setEdit]=useState(false),[title,setTitle]=useState(post.title||''),[subheading,setSubheading]=useState(post.caption||''),[cover,setCover]=useState(null),[busy,setBusy]=useState(false),[broken,setBroken]=useState(false);
+ const brand=(post.platform||'official').toLowerCase();
+ const thumbnail=cover||(post.thumbnailUrl?post.thumbnailUrl+(post.thumbnailUrl.includes('?')?'&':'?')+'v='+encodeURIComponent(post.thumbnailUpdatedAt||post.updatedAt||post.publishedAt||'1'):null);
+ async function changeFile(e){
+  const file=e.target.files?.[0];if(!file)return;
+  try{setCover(await bannerImage(file));setBroken(false);}catch(err){message(err.message);}
+ }
+ async function save(e){
+  e.preventDefault();if(!title.trim())return;setBusy(true);
+  try{
+   await run('/api/official/update',{id:post.id,title:title.trim(),caption:subheading.trim(),...(cover?{thumbnailDataUrl:cover}:{})});
+   message('Official banner updated ♡');setEdit(false);setCover(null);setBroken(false);
+  }catch(err){message(err.message);}finally{setBusy(false);}
+ }
+ return <article className="official-channel-banner">
+  <a className="official-channel-link" href={safeUrl(post.url)||'#'} target="_blank" rel="noopener noreferrer" aria-label={'Open '+(post.title||'official post')}>
+   <div className={'official-channel-cover platform-'+brand}>{thumbnail&&!broken?<img src={thumbnail} loading="lazy" alt={post.title||'Official channel thumbnail'} onError={()=>setBroken(true)}/>:<div className="official-channel-placeholder">{brand==='youtube'?'▶':brand==='discord'?'◈':brand==='tiktok'?'♪':'◎'}</div>}</div>
+   <div className="official-channel-details"><h3>{post.title||'USA50 Official'}</h3><span className={'official-platform-tag platform-'+brand}>{post.platform||'Official'}</span>
+    <p>{post.caption||'Watch the latest official USA50 update.'}</p>
+   </div>
+  </a>
+  {editable&&<button className="official-edit-action" aria-label={'Edit '+(post.title||'official channel')+' banner'} onClick={()=>{setTitle(post.title||'');setSubheading(post.caption||'');setEdit(true);}}><Icon name="settings" size={15}/> Edit</button>}
+  {edit&&<div className="react-modal-cover" role="presentation" onMouseDown={e=>e.target===e.currentTarget&&setEdit(false)}><div role="dialog" aria-modal="true" className="react-modal official-edit-modal" aria-label="Edit official channel banner">
+    <header><h2>Edit official banner</h2><button type="button" aria-label="Close" onClick={()=>setEdit(false)}><Icon name="x"/></button></header>
+    <form className="react-form" onSubmit={save}>
+     <label>Heading<input required maxLength={170} value={title} onChange={e=>setTitle(e.target.value)}/></label>
+     <label>Subheading<textarea maxLength={500} value={subheading} onChange={e=>setSubheading(e.target.value)} placeholder="Official content description"/></label>
+     <label>Banner thumbnail — camera roll<input type="file" accept="image/png,image/jpeg,image/webp" onChange={changeFile}/></label>
+     <p className="fineprint">Image is cropped to a wide 2:1 banner. JPEG, PNG and WebP photos are supported. Select from your phone's camera roll or computer.</p>
+     {thumbnail&&!broken&&<img className="official-edit-preview" src={thumbnail} alt="Preview of selected banner"/>}
+     <button type="submit" className="action primary full" disabled={busy}>{busy?'Saving…':'Save banner'}</button>
+    </form>
+   </div></div>}
+ </article>;
+}
+
 function OfficialAndDiary(){
  const {data,navigate}=useApp();
  const diary=data?.officialDiary?.diaries||[],official=data?.officialDiary?.officialPosts||[];
@@ -17,7 +70,7 @@ function OfficialAndDiary(){
   </section>
   <section className="react-section official-links">
    <SectionTitle title="Official Channels" action={<button className="text-link" onClick={()=>navigate('diary')}>View full feed →</button>}/>
-   <div className="official-post-strip">{official.slice(0,12).map(post=><a key={post.id} className="official-post-teaser" href={safeUrl(post.url)||'#'} target="_blank" rel="noopener noreferrer"><div>{post.thumbnailUrl?<img src={post.thumbnailUrl} loading="lazy" alt={post.title||'Official USA50 video thumbnail'}/>:<span>{post.platform==='YouTube'?'▶':post.platform==='TikTok'?'♪':'◎'}</span>}</div><strong>{post.title||'USA50 Official'}</strong><small>{post.platform||'Official'}</small></a>)}</div>
+   <div className="official-post-strip" aria-label="Slide through official channel banners">{official.slice(0,20).map(post=><ChannelBanner key={post.id} post={post} editable={['idol','admin'].includes(data?.me?.role)&&!data?.me?.mustChangePassword}/>)}</div>
    {!official.length&&<p className="muted">Official posts from connected USA50 channels will appear here.</p>}
   </section>
  </div>;
