@@ -1,6 +1,6 @@
 import React,{useMemo,useState} from 'react';
 import {useApp} from './state';
-import {Avatar,Badge,Empty,Heading,Icon,SectionTitle} from './ui';
+import {Avatar,Badge,Empty,Heading,Icon,SectionTitle,rankTone} from './ui';
 import {number} from './api';
 
 const award=rank=>rank===1?'🏆':rank===2?'🥈':rank===3?'🥉':rank<=10?'✦':'♡';
@@ -38,7 +38,7 @@ export function RankingsPage(){
    {top.length?<div className="ranking-podium">{[top[1],top[0],top[2]].filter(Boolean).map(x=><div className={'ranking-podium-card place-'+x.rank} key={x.id}>{renderEntry(x,true)}<div className="ranking-podium-base">#{x.rank} · {descriptor(x.rank)}</div></div>)}</div>:
     <Empty icon="✦" title="Rankings start with the first post" detail="Fans enter the leaderboard by sharing posts and earning Fan XP."/>}
   </section>
-  {myId&&<div className="rank-current"><span>YOUR FAN RANK</span>{current?<button onClick={()=>visit(myId)}><strong>#{current.rank}</strong><span>{number(current.xp)} XP</span><Icon name="chevron" size={17}/></button>:<strong>Unranked · Publish your first post</strong>}</div>}
+  {myId&&<div className="rank-current"><span>YOUR FAN RANK</span>{current?<button className={'rank-tone-button rank-tone-'+rankTone(current.rank)} onClick={()=>visit(myId)}><strong>#{current.rank}</strong><span>{number(current.xp)} XP</span><Icon name="chevron" size={17}/></button>:<strong>Unranked · Publish your first post</strong>}</div>}
   <SectionTitle title="Top 100 leaderboard" action={<small>{ranking.length} ranked fans</small>}/>
   <div className="rank-search"><Icon name="community" size={19}/><input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Find a username or rank" aria-label="Search rankings"/></div>
   <div className="segmented-tabs ranking-filters">{[['all','All'],['top10','Top 10'],['11to50','11–50'],['51to100','51–100']].map(([key,label])=><button key={key} className={range===key?'selected':''} onClick={()=>setRange(key)}>{label}</button>)}</div>

@@ -183,3 +183,54 @@
 
 /* A single live chat instance is shared by mobile and desktop to avoid double polling. */
 @media(max-width:800px){.live-feature-layout .live-desktop-chat{display:block}.live-feature-layout .live-side{gap:13px}}
+
+/* Fan rank awards on the profile button, Social badge and personal leaderboard shortcut. */
+.rank-badge-link .mini-badge,.social-rank-link .mini-badge,.rank-current .rank-tone-button{
+ border:1px solid transparent;transition:filter .15s ease,transform .15s ease;
+}
+.rank-badge-link.rank-tone-gold .mini-badge,.social-rank-link.rank-tone-gold .mini-badge,.rank-current .rank-tone-gold{
+ background:linear-gradient(120deg,#fff1ae 0%,#e5b349 55%,#bb8123 100%);color:#513909;border-color:#eac56c;
+}
+.rank-badge-link.rank-tone-silver .mini-badge,.social-rank-link.rank-tone-silver .mini-badge,.rank-current .rank-tone-silver{
+ background:linear-gradient(120deg,#f3f6fa 0%,#bac7d3 55%,#899bad 100%);color:#334458;border-color:#c6d0d9;
+}
+.rank-badge-link.rank-tone-bronze .mini-badge,.social-rank-link.rank-tone-bronze .mini-badge,.rank-current .rank-tone-bronze{
+ background:linear-gradient(120deg,#efd0af 0%,#c48e65 55%,#95532e 100%);color:#482916;border-color:#d9a47d;
+}
+.rank-badge-link.rank-tone-top10 .mini-badge,.social-rank-link.rank-tone-top10 .mini-badge,.rank-current .rank-tone-top10{
+ background:linear-gradient(110deg,#ac244e 0%,#ec4770 55%,#ff8ca1 100%);color:#fff;border-color:#e85c80;
+}
+.rank-badge-link.rank-tone-top100 .mini-badge,.social-rank-link.rank-tone-top100 .mini-badge,.rank-current .rank-tone-top100{
+ background:linear-gradient(110deg,#2851a3 0%,#3f8bdd 55%,#77c7f4 100%);color:#fff;border-color:#72b7e8;
+}
+.rank-badge-link:hover .mini-badge,.social-rank-link:hover .mini-badge,.rank-current .rank-tone-button:hover{filter:brightness(1.05);transform:translateY(-1px)}
+.rank-badge-link:focus-visible,.social-rank-link:focus-visible,.rank-current .rank-tone-button:focus-visible{outline:3px solid #7b54aa;outline-offset:3px}
+.social-rank-link{margin-left:auto;flex-shrink:0}
+.profile-post-image{display:block;width:100%;height:100%;position:absolute;inset:0;overflow:hidden}
+.profile-post-image img{width:100%;height:100%;object-fit:cover;display:block}
+.profile-post-fallback{width:100%;height:100%;display:grid;place-items:center;font-size:36px;color:#9362a6;background:#eedbed}
+
+/* The Social feed is edge-to-edge. Headers/actions have internal padding, media never sits in a rounded card. */
+.react-content.social-content{width:100%;max-width:none;padding-left:0;padding-right:0}
+.social-page{--social-inset:clamp(15px,3.1vw,42px);width:100%;min-width:0}
+.social-page > :not(.social-column){margin-left:var(--social-inset);margin-right:var(--social-inset)}
+.social-page .social-column{width:100%;max-width:none;margin:0;padding:0}
+.social-page .social-entry{width:100%;margin:0;border:0;border-bottom:1px solid #e3d5e9;border-radius:0;box-shadow:none;background:#fffcfe;overflow:hidden}
+.social-page .post-author,.social-page .repost-line,.social-page .post-caption,.social-page .post-footer{padding-left:var(--social-inset);padding-right:var(--social-inset)}
+.social-page .post-media{width:100%;max-width:none;margin:0;padding:0;display:block;overflow:hidden;background:#f2e3f2}
+.social-page .post-media iframe{width:100%;max-width:none;min-height:0;height:auto;display:block;border:0}
+.social-page .post-media.tiktok iframe{aspect-ratio:9/16}
+.social-page .post-media.instagram iframe{aspect-ratio:4/5;min-height:540px}
+.social-page .post-link-preview{width:100%;border-radius:0;margin:0;padding:24px var(--social-inset)}
+.social-page .post-caption{margin:0;padding-top:14px;padding-bottom:8px}
+.social-page .post-footer{padding-top:7px;padding-bottom:14px}
+.social-page .social-entry + .social-entry{border-top:0}
+.social-page .social-column > .empty-state{margin:0 var(--social-inset)}
+
+/* Two independent filters: rarity and horizontally sliding collection sets. */
+.collection-set-filters{display:flex;align-items:center;gap:9px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;scroll-behavior:smooth;scrollbar-width:none;padding:3px 1px 13px;margin:0 0 9px;touch-action:pan-x}
+.collection-set-filters::-webkit-scrollbar{display:none}
+.collection-set-filters button{flex:0 0 auto;scroll-snap-align:start;white-space:nowrap;border:1px solid #fff;background:#fff9;color:#785789;border-radius:999px;padding:9px 16px;font-size:12px;font-weight:800;transition:background .18s,color .18s}
+.collection-set-filters button.on{color:#fff;background:linear-gradient(115deg,#a976cc,#df7cbd);border-color:#c889cd;box-shadow:0 4px 12px #9b65b32a}
+.collection-set-filters button:focus-visible{outline:2px solid #8b5fb4;outline-offset:2px}
+@media(max-width:800px){.social-page{--social-inset:15px}}

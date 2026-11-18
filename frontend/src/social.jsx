@@ -1,6 +1,6 @@
 import React,{useMemo,useState} from 'react';
 import {useApp} from './state';
-import {Avatar,Badge,Empty,Heading,Icon,SectionTitle,VerifiedStar} from './ui';
+import {Avatar,Badge,Empty,Heading,Icon,SectionTitle,VerifiedStar,rankTone} from './ui';
 import {api,dateLabel,safeUrl} from './api';
 function OfficialAndDiary(){
  const {data,navigate}=useApp();
@@ -47,7 +47,7 @@ function PostCard({post,author}){
    <Avatar profile={author} size="sm"/>
    <div><button className="user-handle" onClick={()=>{setSelectedProfile(post.authorId);navigate('profile');setSelectedProfile(post.authorId);}}>@{author?.handle||'fan'} <VerifiedStar profile={author}/></button>
     <small>{dateLabel(post.createdAt)}{author?.fansite?' · Approved fansite':''}</small></div>
-   {author?.rank&&<button className="social-rank-link" onClick={()=>navigate('rankings')} title="View Fan Rankings"><Badge tone="pink">#{author.rank} Fan <Icon name="chevron" size={12}/></Badge></button>}
+   {author?.rank&&<button className={'social-rank-link rank-tone-'+rankTone(author.rank)} onClick={()=>navigate('rankings')} title="View Fan Rankings"><Badge tone="pink">#{author.rank} Fan <Icon name="chevron" size={12}/></Badge></button>}
   </header>
   {post.repostOf&&<div className="repost-line">↻ Reposted from @{post.repostAuthor}</div>}
   <Media post={post}/><p className="post-caption">{post.caption}</p>

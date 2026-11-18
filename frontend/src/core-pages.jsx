@@ -14,18 +14,30 @@ export function HomePage(){
  </main>;
 }
 export function CollectionPage(){
- const {data,navigate,message}=useApp(),[tab,setTab]=useState('albums'),[rarity,setRarity]=useState('All');
+ const {data,navigate,message}=useApp(),[tab,setTab]=useState('albums'),[rarity,setRarity]=useState('All'),[cardSet,setCardSet]=useState('all');
  const owned=data?.me?.state?.owned||{},albums=data?.albums||[],members=data?.members||[],tickets=data?.me?.state?.idolTickets||{},coupons=data?.me?.state?.merchCoupons||[];
  const cards=[...(data?.cards||[]),...Object.values(data?.packCards||{}).flat()];
  const unique=[...new Map(cards.filter(x=>x?.id).map(x=>[x.id,x])).values()];
- const displayed=unique.filter(c=>rarity==='All'||c.rarity===rarity);
+ const albumById=new Map(albums.map(album=>[String(album.id),album]));
+ const setFilters=[['all','All'],['truelove','TrueLove'],['nyc50-predebut','NYC50 Pre-Debut'],['la50-predebut','LA50 Pre-Debut']];
+ function inSet(card){
+  if(cardSet==='all')return true;
+  const album=albumById.get(String(card.albumId))||{};
+  const key=[card.albumId,album.title,album.member,album.team,album.subgroup].filter(Boolean).join(' ').toLowerCase().replace(/[^a-z0-9]/g,'');
+  if(cardSet==='truelove')return key.includes('truelove');
+  if(cardSet==='nyc50-predebut')return key.includes('nyc50')&&key.includes('predebut');
+  if(cardSet==='la50-predebut')return key.includes('la50')&&key.includes('predebut');
+  return false;
+ }
+ const displayed=unique.filter(c=>(rarity==='All'||c.rarity===rarity)&&inSet(c));
  const ticketCount=Object.values(tickets).reduce((sum,n)=>sum+Number(n||0),0);
  return <main className="view"><Heading title="Your Collection" subtitle="Photocard albums, idol tickets, and collection rewards." action={<button className="action primary" onClick={()=>navigate('drops')}>✧ Card Drops</button>}/>
   <div className="segmented-tabs"><button className={tab==='albums'?'selected':''} onClick={()=>setTab('albums')}>Albums & Cards</button><button className={tab==='inventory'?'selected':''} onClick={()=>setTab('inventory')}>🎫 Inventory ({ticketCount})</button></div>
   {tab==='albums'?<><div className="album-strip">{albums.map(a=><button key={a.id} className={'album-card '+(a.available?'':'soon')} onClick={()=>a.available?navigate('drops'):message('This album has not released yet.')}><div className="album-color"><span className="eyebrow">{a.team} · {a.member}</span><h3>{a.title}</h3><span className="album-sparkle">✧</span></div><div className="album-bottom"><strong>{a.member} Album</strong><small>{a.available?unique.filter(c=>c.albumId===a.id&&owned[c.id]).length+' / '+(a.count||12)+' collected':'Coming soon'}</small></div></button>)}</div>
    <SectionTitle title="Photocards" action={<small>{unique.filter(c=>Number(owned[c.id])>1).length} duplicates</small>}/>
    <div className="rarity-filter">{['All','R','SR','SSR','MR','UR'].map(r=><button key={r} className={rarity===r?'on':''} onClick={()=>setRarity(r)}>{r}</button>)}</div>
-   <div className="photocard-grid">{displayed.map(card=><CardPreview key={card.id} card={card} owned={Number(owned[card.id]||0)} locked={!owned[card.id]} onClick={()=>navigate('drops')}/>)}</div>
+   <div className="collection-set-filters" role="group" aria-label="Filter photocards by collection set">{setFilters.map(([key,label])=><button type="button" key={key} className={cardSet===key?'on':''} onClick={()=>setCardSet(key)} aria-pressed={cardSet===key}>{label}</button>)}</div>
+   {displayed.length?<div className="photocard-grid">{displayed.map(card=><CardPreview key={card.id} card={card} owned={Number(owned[card.id]||0)} locked={!owned[card.id]} onClick={()=>navigate('drops')}/>)}</div>:<Empty title="No cards in this set yet" detail="There are no published photocards matching these set and rarity filters."/ >}
    <div className="react-note"><strong>Collector rules</strong><p>Your last unique card is protected. The advanced card viewer, album completion and duplicate recycling remain available in the full Collector feature.</p><button className="text-link" onClick={()=>navigate('recycle')}>Recycle duplicates →</button></div>
   </>:<><div className="summary-grid"><div><strong>{number(ticketCount)}</strong><small>Idol tickets</small></div><div><strong>{number(coupons.length)}</strong><small>Merch coupons</small></div></div>
    <SectionTitle title="Idol tickets"/>{members.filter(x=>tickets[x.id]>0).length?members.filter(x=>tickets[x.id]>0).map(m=><div className="inventory-row" key={m.id}><span className="ticket-icon">🎫</span><div><strong>{m.name} Ticket</strong><small>{m.team} · Demo collectible</small></div><strong>×{number(tickets[m.id])}</strong></div>):<Empty icon="🎫" title="No tickets yet" detail="Collect idol tickets from eligible card packs." action={<button className="action secondary" onClick={()=>navigate('drops')}>Open packs</button>}/>}

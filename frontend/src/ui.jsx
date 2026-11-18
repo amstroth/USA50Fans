@@ -43,6 +43,15 @@ export function Avatar({member,profile,size='md',withAward=false}){
 }
 export function Heading({eyebrow='USA50 FAN UNIVERSE',title,subtitle,action}){return <div className="page-heading"><div><span className="eyebrow">{eyebrow}</span><h1>{title}</h1>{subtitle&&<p>{subtitle}</p>}</div>{action&&<div className="heading-action">{action}</div>}</div>;}
 export function Empty({icon='✧',title='Nothing here yet',detail,action}){return <div className="empty-state"><span>{icon}</span><strong>{title}</strong>{detail&&<p>{detail}</p>}{action}</div>;}
+// The rank badge uses a distinct award tier, independent of any selected avatar ring.
+export function rankTone(rank){
+ const n=Number(rank);
+ if(!Number.isInteger(n)||n<1||n>100)return 'unranked';
+ if(n===1)return 'gold';
+ if(n===2)return 'silver';
+ if(n===3)return 'bronze';
+ return n<=10?'top10':'top100';
+}
 export function Badge({children,tone='neutral'}){return <span className={'mini-badge '+tone}>{children}</span>;}
 const FACE_FONTS=['Georgia','Great Vibes','Arial','Times New Roman','Trebuchet MS','Verdana','Courier New'];
 function clampFace(value,min,max,fallback){return value!==null&&value!==''&&Number.isFinite(Number(value))?Math.max(min,Math.min(max,Number(value))):fallback;}

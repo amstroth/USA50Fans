@@ -1,7 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {useApp} from './state';
-import {Avatar,Badge,Empty,Heading,Icon,VerifiedStar} from './ui';
-import {dateLabel,number} from './api';
+import {Avatar,Badge,Empty,Heading,Icon,VerifiedStar,rankTone} from './ui';
+import {api,dateLabel,number} from './api';
 function resizeAvatar(file){
  return new Promise((resolve,reject)=>{
   if(!file?.size)return resolve(null);
@@ -75,6 +75,23 @@ function EditProfile({profile,close}){
   </div>
  </div>;
 }
+function PostThumbnail({post}){
+ const [thumbnail,setThumbnail]=useState(post.thumbnailUrl||null);
+ useEffect(()=>{
+  setThumbnail(post.thumbnailUrl||null);
+  if(post.thumbnailUrl||post.platform!=='TikTok')return;
+  let active=true;
+  // Reuse the original post's thumbnail, including for older short-link TikToks.
+  api('/api/social/resolve?postId='+encodeURIComponent(post.id))
+   .then(result=>{if(active&&result?.thumbnailUrl)setThumbnail(result.thumbnailUrl);})
+   .catch(()=>{});
+  return ()=>{active=false;};
+ },[post.id,post.thumbnailUrl,post.platform]);
+ return <span className="profile-post-image">
+  {thumbnail?<img src={thumbnail} alt={post.caption?'Thumbnail for '+post.caption.slice(0,80):'Post thumbnail'} loading="lazy" onError={()=>setThumbnail(null)}/>:
+   <span className="profile-post-fallback" aria-hidden="true">{post.platform==='TikTok'?'♪':'◎'}</span>}
+ </span>;
+}
 export function ProfilePage(){
  const {data,selectedProfile,setSelectedProfile,navigate,signOut,run,message}=useApp();
  const [editing,setEditing]=useState(false),[tab,setTab]=useState('posts');
@@ -98,11 +115,11 @@ export function ProfilePage(){
    </div>
   </div>
   <div className="profile-bio"><strong>{profile.displayName}</strong><p>{profile.bio||'Part of the USA50 universe ♡'}</p>
-   {!isIdol&&<div className="profile-badges"><Badge tone="pink">✦ VIP {profile.vipLevel||'Starter'}</Badge><button type="button" className="rank-badge-link" onClick={()=>navigate('rankings')} title="View the top 100 fan rankings"><Badge>♛ {profile.rank?'Rank #'+profile.rank:'Unranked'} <Icon name="chevron" size={12}/></Badge></button><Badge>{number(profile.fanXP)} Fan XP</Badge>{(profile.oshiIds||[]).map(id=><Badge key={id} tone="pink">♡ {data?.members?.find(m=>m.id===id)?.name||id} Oshi</Badge>)}</div>}
+   {!isIdol&&<div className="profile-badges"><Badge tone="pink">✦ VIP {profile.vipLevel||'Starter'}</Badge><button type="button" className={'rank-badge-link rank-tone-'+rankTone(profile.rank)} onClick={()=>navigate('rankings')} title="View the top 100 fan rankings"><Badge>♛ {profile.rank?'Rank #'+profile.rank:'Unranked'} <Icon name="chevron" size={12}/></Badge></button><Badge>{number(profile.fanXP)} Fan XP</Badge>{(profile.oshiIds||[]).map(id=><Badge key={id} tone="pink">♡ {data?.members?.find(m=>m.id===id)?.name||id} Oshi</Badge>)}</div>}
   </div>
   <div className="row-actions profile-buttons">{own?<><button className="action secondary" onClick={()=>setEditing(true)}>Edit profile / Oshi settings</button><button className="action soft" onClick={signOut}>Sign out</button></>:<button className="action primary" onClick={follow}>{profile.isFollowing?'Following':'Follow +'}</button>}</div>
   <div className="segmented-tabs">{(isIdol?[['hashtag','Hashtag'],['hearted','Hearted'],['posts','Posts']]:[['posts','Posts'],['saved','Saved']]).map(([key,name])=><button key={key} className={tab===key?'selected':''} onClick={()=>setTab(key)}>{name}</button>)}</div>
-  {items.length?<div className="profile-post-grid">{items.map(post=><button key={post.id} onClick={()=>navigate('community')}><span>{post.thumbnailUrl?<img src={post.thumbnailUrl} alt="Post thumbnail" loading="lazy"/>:post.platform==='TikTok'?'♪':'◎'}</span><small>{post.caption?.slice(0,64)}</small></button>)}</div>:<Empty title="No posts in this section" detail={isIdol&&tab==='hashtag'?'Posts with #'+profile.handle+' will appear here.':'This section is empty.'}/>}
+  {items.length?<div className="profile-post-grid">{items.map(post=><button key={post.id} onClick={()=>navigate('community')}><PostThumbnail post={post}/><small>{post.caption?.slice(0,64)}</small></button>)}</div>:<Empty title="No posts in this section" detail={isIdol&&tab==='hashtag'?'Posts with #'+profile.handle+' will appear here.':'This section is empty.'}/>}
   {editing&&own&&<EditProfile profile={profile} close={()=>setEditing(false)}/>}
  </main>;
 }
