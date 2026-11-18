@@ -15,7 +15,7 @@ function LiveChat({stream}){
  const [giftBusy,setGiftBusy]=useState(false),[busyReview,setBusyReview]=useState(null),[loadError,setLoadError]=useState('');
  const bottomRef=useRef(null),id=stream.id,me=data?.me,canHost=stream.canEdit;
  const isLive=stream.status==='live';
- const feedRef=useRef(null);
+ const giftRequest=useRef(null);
  const load=useCallback(async()=>{
   if(!me||!isLive)return;
   try{
@@ -36,12 +36,14 @@ function LiveChat({stream}){
  }
  async function gift(e){
   e.preventDefault();if(giftBusy)return;
-  const token=window.crypto?.randomUUID?.();
+  const signature=JSON.stringify({giftId,giftText,tts});
+  if(giftRequest.current?.signature!==signature)giftRequest.current={signature,token:window.crypto?.randomUUID?.()};
+  const token=giftRequest.current?.token;
   if(!token){message('A secure HTTPS browser is required for gifts.');return;}
   setGiftBusy(true);
   try{
    const reply=await api('/api/livestreams/gift',{method:'POST',body:{streamId:id,giftId,message:giftText,tts,requestId:token}});
-   setGiftForm(false);setGiftText('');setTts(false);await refresh();await load();
+   giftRequest.current=null;setGiftForm(false);setGiftText('');setTts(false);await refresh();await load();
    message(reply.status==='pending'?'Your TTS request was sent to the host for approval.':'Demo gift sent! ✦');
   }catch(err){message(err.message);}finally{setGiftBusy(false);}
  }
