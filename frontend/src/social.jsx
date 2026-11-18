@@ -123,16 +123,69 @@ export function PostCard({post,author}){
   {editPost&&<Compose post={post} close={()=>setEditPost(false)}/>}
  </article>;
 }
-function Compose({close}){
- const {run,message}=useApp(),[caption,setCaption]=useState(''),[url,setUrl]=useState(''),[category,setCategory]=useState('fan'),[busy,setBusy]=useState(false);
- async function publish(e){e.preventDefault();setBusy(true);try{const result=await run('/api/social/post',{caption,url,category});message('Post published. +'+result.fanXPAwarded+' Fan XP');close();}catch(err){message(err.message);}finally{setBusy(false);}}
- return <div className="react-modal-cover" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}><div role="dialog" aria-modal="true" aria-label="Share social post" className="react-modal">
-  <header><h2>Share a USA50 edit ♡</h2><button aria-label="Close" onClick={close}><Icon name="x"/></button></header>
-  <form className="react-form" onSubmit={publish}><label>Caption<textarea value={caption} minLength={6} maxLength={650} required placeholder="What did you love about this moment? #Arielle #NYC50" onChange={e=>setCaption(e.target.value)}/></label>
-   <label>Instagram or TikTok post link<input type="url" required value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://www.instagram.com/reel/..."/></label>
-   <label>Publish to<select value={category} onChange={e=>setCategory(e.target.value)}><option value="fan">Fan community</option><option value="fansite">Fansites (approved only)</option></select></label>
-   <p className="fineprint">Share your own public post. Links stay on the original platform. Demo XP and Pull Points may apply.</p><button className="action primary full" disabled={busy}>{busy?'Publishing…':'Publish post'}</button>
-  </form></div></div>;
+async function gridCoverData(file){
+ if(!file||!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>15_000_000)throw Error('Choose a JPG, PNG or WebP photo under 15 MB.');
+ const url=URL.createObjectURL(file);
+ try{
+  const img=new Image();img.src=url;
+  await new Promise((yes,no)=>{img.onload=yes;img.onerror=()=>no(Error('Unable to read this photo.'));});
+  let max=1200,quality=.82;
+  for(let i=0;i<10;i++){
+   const ratio=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),cv=document.createElement('canvas');
+   cv.width=Math.max(1,Math.round(img.naturalWidth*ratio));cv.height=Math.max(1,Math.round(img.naturalHeight*ratio));
+   cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+   const encoded=cv.toDataURL('image/jpeg',quality);
+   if(encoded.length<1_500_000)return encoded;
+   if(i%2===0)quality=Math.max(.43,quality-.12);else max=Math.max(440,Math.round(max*.82));
+  }
+  throw Error('Image is too large to use. Choose a smaller image.');
+ }finally{URL.revokeObjectURL(url);}
+}
+export function Compose({close,post=null}){
+ const {run,message}=useApp(),editing=!!post;
+ const [caption,setCaption]=useState(post?.caption||''),[url,setUrl]=useState(post?.url||''),[category,setCategory]=useState(post?.category||'fan');
+ const [cover,setCover]=useState(null),[clearCover,setClearCover]=useState(false),[uploading,setUploading]=useState(false),[busy,setBusy]=useState(false);
+ async function pickCover(e){
+  const file=e.target.files?.[0];e.target.value='';if(!file)return;
+  setUploading(true);
+  try{setCover(await gridCoverData(file));setClearCover(false);}catch(err){message(err.message);}
+  finally{setUploading(false);}
+ }
+ async function submit(e){
+  e.preventDefault();setBusy(true);
+  try{
+   const payload={caption,url,category,...(editing?{postId:post.id}:{}),
+    ...(cover?{thumbnailDataUrl:cover}:clearCover?{clearThumbnail:true}:{})};
+   const result=await run(editing?'/api/social/post-edit':'/api/social/post',payload);
+   message(editing?'Post updated ♡':'Post published. +'+result.fanXPAwarded+' Fan XP');
+   close();
+  }catch(err){message(err.message);}finally{setBusy(false);}
+ }
+ const preview=cover||(!clearCover?post?.thumbnailUrl:null);
+ return createPortal(<div className="react-modal-cover" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}>
+  <div role="dialog" aria-modal="true" aria-label={editing?'Edit Social post':'Share Social post'} className="react-modal social-compose-modal">
+   <header><h2>{editing?'Edit post':'Share a USA50 edit ♡'}</h2><button type="button" aria-label="Close post editor" onClick={close}><Icon name="x"/></button></header>
+   <form className="react-form" onSubmit={submit}>
+    <label>Caption<textarea value={caption} minLength={6} maxLength={650} required placeholder="What did you love about this moment? #Arielle #NYC50" onChange={e=>setCaption(e.target.value)}/></label>
+    <label>Instagram or TikTok post link<input type="url" required value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://www.instagram.com/reel/..."/></label>
+    <label>Publish to<select value={category} onChange={e=>setCategory(e.target.value)}><option value="fan">Fan community</option><option value="fansite">Fansites (approved only)</option></select></label>
+    <div className="social-compose-cover">
+     <strong>Profile-grid thumbnail <span>optional</span></strong>
+     <p>Choose a photo from your camera roll for the square on your profile grid. Your post in Social will continue to display the original Instagram or TikTok embed.</p>
+     <div className="social-compose-cover-row">
+      <div className="social-compose-cover-preview">{preview?<img src={preview} alt="Thumbnail preview"/>:<span>◎<small>Embedded preview</small></span>}</div>
+      <div className="social-compose-cover-controls">
+       <label className="action secondary">Choose thumbnail<input type="file" accept="image/png,image/jpeg,image/webp" onChange={pickCover} disabled={uploading||busy}/></label>
+       {(cover||post?.hasCustomThumbnail)&&<button type="button" className="text-link" onClick={()=>{setCover(null);setClearCover(editing);}}>Use original embed preview</button>}
+       <small>{uploading?'Preparing photo…':'If you do not choose an image, the profile grid uses the embedded/automatic preview when available.'}</small>
+      </div>
+     </div>
+    </div>
+    <button className="action primary full" disabled={busy||uploading}>{busy?'Saving…':editing?'Save changes':'Publish post'}</button>
+    <p className="fineprint">The chosen thumbnail is used only on profile grids, not as a replacement for the Social feed embed.</p>
+   </form>
+  </div>
+ </div>,document.body);
 }
 export function SocialPage(){
  const {data,navigate}=useApp(),[tab,setTab]=useState('recent'),[query,setQuery]=useState(''),[compose,setCompose]=useState(false);
