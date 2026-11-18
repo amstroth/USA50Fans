@@ -168,7 +168,7 @@ export function LivePage(){
    {active?<><section className="live-feature-heading"><div><Badge tone={active.status==='live'?'pink':'neutral'}>{active.status==='live'?'● LIVE':active.status.toUpperCase()}</Badge><h2>{active.title}</h2><p>{active.description||'An official USA50 livestream.'}</p><small>{dateTime(active.startsAt)} · {active.hostNames?.join(' + ')||'USA50'}</small></div></section>
     <VideoPlayer stream={active}/>
     {active.canEdit&&<Studio key={active.id} stream={active} onUpdate={changed}/>}
-    <div className="live-mobile-chat"><LiveChat key={active.id} stream={active}/></div>
+
    </>:<Empty icon="📹" title="No broadcasts scheduled yet" detail="When USA50 schedules a new livestream it will appear here."/>}
   </div>
   <aside className="live-side"><div className="live-desktop-chat">{active&&<LiveChat key={active.id} stream={active}/>}</div>
