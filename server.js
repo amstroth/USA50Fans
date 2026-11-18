@@ -124,7 +124,7 @@ async function api(req,res,url){
 
  if(method!=='POST')return fail(res,404,'Unknown API endpoint');
  if(url.pathname==='/api/card-studio/upload' && (!['admin','idol'].includes(userFrom(req)?.role)||userFrom(req)?.mustChangePassword))return fail(res,403,'Card Studio login required.');
- const maxPostBytes=url.pathname==='/api/card-studio/upload'?7200000:url.pathname==='/api/diary/publish'?3600000:url.pathname==='/api/official/publish'||url.pathname==='/api/official/update'?1900000:url.pathname==='/api/idol-gallery/update'?3600000:url.pathname==='/api/idol-profiles/update'?2100000:url.pathname==='/api/social/profile'?220000:url.pathname==='/api/social/post'||url.pathname==='/api/social/thumbnail'?1900000:50000;
+ const maxPostBytes=url.pathname==='/api/card-studio/upload'?7200000:url.pathname==='/api/diary/publish'?3600000:url.pathname==='/api/official/publish'||url.pathname==='/api/official/update'?1900000:url.pathname==='/api/idol-gallery/update'?3600000:url.pathname==='/api/idol-profiles/update'?2100000:url.pathname==='/api/social/profile'?220000:url.pathname==='/api/social/post'||url.pathname==='/api/social/post-edit'||url.pathname==='/api/social/thumbnail'?1900000:50000;
  let raw='';try{for await (const chunk of req){raw+=chunk;if(raw.length>maxPostBytes)return fail(res,413,'Request is too large.');}}catch{return fail(res,400,'Unreadable request.');}
  let data;try{data=raw?JSON.parse(raw):{};}catch{return fail(res,400,'Invalid JSON.');}
  const ep=url.pathname;
