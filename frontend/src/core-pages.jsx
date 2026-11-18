@@ -2,6 +2,7 @@ import React,{useState} from 'react';
 import {useApp} from './state';
 import {Avatar,Badge,CardPreview,Empty,Heading,Icon,SectionTitle,StarBundleArt} from './ui';
 import {dateLabel,number} from './api';
+import {CollectorViewer} from './collector';
 
 export function HomePage(){
  const {data,navigate,setSelectedIdolId}=useApp(),people=data?.members||[],announcement=data?.announcements?.[0];
@@ -14,7 +15,7 @@ export function HomePage(){
  </main>;
 }
 export function CollectionPage(){
- const {data,navigate,message}=useApp(),[tab,setTab]=useState('albums'),[rarity,setRarity]=useState('All'),[cardSet,setCardSet]=useState('all');
+ const {data,navigate,message}=useApp(),[tab,setTab]=useState('albums'),[rarity,setRarity]=useState('All'),[cardSet,setCardSet]=useState('all'),[viewerCard,setViewerCard]=useState(null);
  const owned=data?.me?.state?.owned||{},albums=data?.albums||[],members=data?.members||[],tickets=data?.me?.state?.idolTickets||{},coupons=data?.me?.state?.merchCoupons||[];
  const cards=[...(data?.cards||[]),...Object.values(data?.packCards||{}).flat()];
  const unique=[...new Map(cards.filter(x=>x?.id).map(x=>[x.id,x])).values()];
@@ -37,13 +38,16 @@ export function CollectionPage(){
    <SectionTitle title="Photocards" action={<small>{unique.filter(c=>Number(owned[c.id])>1).length} duplicates</small>}/>
    <div className="rarity-filter">{['All','R','SR','SSR','MR','UR'].map(r=><button key={r} className={rarity===r?'on':''} onClick={()=>setRarity(r)}>{r}</button>)}</div>
    <div className="collection-set-filters" role="group" aria-label="Filter photocards by collection set">{setFilters.map(([key,label])=><button type="button" key={key} className={cardSet===key?'on':''} onClick={()=>setCardSet(key)} aria-pressed={cardSet===key}>{label}</button>)}</div>
-   {displayed.length?<div className="photocard-grid">{displayed.map(card=><CardPreview key={card.id} card={card} owned={Number(owned[card.id]||0)} locked={!owned[card.id]} onClick={()=>navigate('drops')}/>)}</div>:<Empty title="No cards in this set yet" detail="There are no published photocards matching these set and rarity filters."/ >}
-   <div className="react-note"><strong>Collector rules</strong><p>Your last unique card is protected. The advanced card viewer, album completion and duplicate recycling remain available in the full Collector feature.</p><button className="text-link" onClick={()=>navigate('recycle')}>Recycle duplicates →</button></div>
+   {displayed.length?<div className="photocard-grid">{displayed.map(card=><CardPreview key={card.id} card={card} owned={Number(owned[card.id]||0)} locked={!owned[card.id]} onClick={()=>{
+    if(Number(owned[card.id]||0)>0)setViewerCard(card);
+    else message('Collect this card before opening its 3D viewer.');
+   }}/>)}</div>:<Empty title="No cards in this set yet" detail="There are no published photocards matching these set and rarity filters."/ >}
+   <div className="react-note"><strong>Collector rules</strong><p>Your last unique card is protected. Tap an obtained card to open its full-screen interactive 3D collector view. Duplicate recycling is available separately.</p><button className="text-link" onClick={()=>navigate('recycle')}>Recycle duplicates →</button></div>
   </>:<><div className="summary-grid"><div><strong>{number(ticketCount)}</strong><small>Idol tickets</small></div><div><strong>{number(coupons.length)}</strong><small>Merch coupons</small></div></div>
    <SectionTitle title="Idol tickets"/>{members.filter(x=>tickets[x.id]>0).length?members.filter(x=>tickets[x.id]>0).map(m=><div className="inventory-row" key={m.id}><span className="ticket-icon">🎫</span><div><strong>{m.name} Ticket</strong><small>{m.team} · Demo collectible</small></div><strong>×{number(tickets[m.id])}</strong></div>):<Empty icon="🎫" title="No tickets yet" detail="Collect idol tickets from eligible card packs." action={<button className="action secondary" onClick={()=>navigate('drops')}>Open packs</button>}/>}
    <SectionTitle title="Merch coupons"/>{coupons.length?coupons.map((c,i)=><div key={c.id||i} className="inventory-row"><span className="ticket-icon">🏷️</span><div><strong>{c.discountPercent||0}% Merch Coupon</strong><small>Not yet redeemable</small></div></div>):<p className="muted">No coupons collected yet.</p>}
    <p className="fineprint">Idol tickets are demo collectibles. They do not guarantee fancalls or improve free lottery odds.</p>
-  </>}</main>;
+  </>}{viewerCard&&<CollectorViewer card={viewerCard} owned={Number(owned[viewerCard.id]||0)} onClose={()=>setViewerCard(null)}/>}</main>;
 }
 export function ShopPage(){
  const {data,navigate,run,message}=useApp(),[busy,setBusy]=useState('');
