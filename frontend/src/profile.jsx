@@ -1,8 +1,10 @@
-import React,{useEffect,useState} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
+import {createPortal} from 'react-dom';
 import {useApp} from './state';
 import {Avatar,Badge,Empty,Heading,Icon,VerifiedStar,rankTone,VipBadge} from './ui';
 import {api,dateLabel,number} from './api';
 import {CropPhoto,preparePhoto} from './photo-crop';
+import {PostCard} from './social';
 function AccountAccess(){
  const {signIn,message}=useApp();
  const [mode,setMode]=useState('login'),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[displayName,setDisplayName]=useState(''),[busy,setBusy]=useState(false);
@@ -90,45 +92,63 @@ function PostThumbnail({post}){
  }
  return <span className="profile-post-image">
   {thumbnail?<img src={thumbnail} alt={post.caption?'Thumbnail for '+post.caption.slice(0,80):'Post thumbnail'} loading="lazy" onError={retryThumbnail}/>:
+   <ProfileEmbedPreview post={post}/>}
+ </span>;
+}
+function ProfileEmbedPreview({post}){
+ // No custom image? Show the source's own embed as the grid fallback.
+ // The React Social feed continues using the same unmodified iframe source.
+ const kind=String(post.embedKind||''),id=String(post.embedId||'');
+ const src=kind==='tiktok'&&/^\d{12,25}$/.test(id)?
+  'https://www.tiktok.com/player/v1/'+id+'?controls=0':
+  ['p','reel','tv'].includes(kind)&&/^[a-zA-Z0-9_-]{5,32}$/.test(id)?
+   'https://www.instagram.com/'+kind+'/'+id+'/embed/':null;
+ return <span className="profile-post-embed-fallback" aria-label={'Embedded '+(post.platform||'Social')+' preview'}>
+  {src?<iframe src={src} title="Original embedded post preview" tabIndex={-1} loading="lazy" aria-hidden="true" />:
    <span className="profile-post-fallback" aria-hidden="true">{post.platform==='TikTok'?'♪':'◎'}</span>}
  </span>;
 }
-function profileCoverData(file){
- return new Promise((resolve,reject)=>{
-  if(!file||!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>12_000_000)return reject(Error('Select a JPG, PNG or WebP photo under 12 MB.'));
-  const url=URL.createObjectURL(file),img=new Image();
-  img.onerror=()=>{URL.revokeObjectURL(url);reject(Error('Cannot open the photo.'));};
-  img.onload=()=>{
-   try{
-    const scale=Math.min(1,1200/img.width,1200/img.height);
-    const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
-    canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);URL.revokeObjectURL(url);
-    const result=canvas.toDataURL('image/jpeg',.76);
-    if(result.length>1550000)return reject(Error('Photo is too large after compression.'));
-    resolve(result);
-   }catch(err){URL.revokeObjectURL(url);reject(err);}
-  };
-  img.src=url;
- });
-}
-function ProfilePostTile({post,canEdit}){
- const {run,navigate,message}=useApp(),[busy,setBusy]=useState(false);
- async function setCover(e){
-  const file=e.target.files?.[0];if(!file)return;setBusy(true);
-  try{await run('/api/social/thumbnail',{postId:post.id,thumbnailDataUrl:await profileCoverData(file)});
-   message('Profile grid thumbnail updated ♡');
-  }catch(err){message(err.message);}
-  finally{e.target.value='';setBusy(false);}
- }
+function ProfilePostTile({post,onOpen}){
  return <div className="profile-post-tile">
-  <button type="button" className="profile-post-open" onClick={()=>navigate('community')} aria-label={'Open post '+(post.caption||'')}><PostThumbnail post={post}/><small>{post.caption?.slice(0,64)}</small></button>
-  {canEdit&&<label className="profile-cover-edit" title="Set the same image as this post's thumbnail"><Icon name="camera" size={13}/><span>{busy?'Saving…':'Cover'}</span><input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={setCover}/></label>}
+  <button type="button" className="profile-post-open" onClick={()=>onOpen(post.id)} aria-label={'View '+(post.caption||'post')+' in scrolling profile feed'}>
+   <PostThumbnail post={post}/><small>{post.caption?.slice(0,64)}</small>
+  </button>
  </div>;
 }
-
+function ProfilePostFeed({profile,posts,selectedPostId,onClose,profiles}){
+ const scroller=useRef(null),nodes=useRef(new Map());
+ useEffect(()=>{
+  const old=document.body.style.overflow;document.body.style.overflow='hidden';
+  const onKey=e=>{if(e.key==='Escape')onClose();};
+  window.addEventListener('keydown',onKey);
+  return ()=>{document.body.style.overflow=old;window.removeEventListener('keydown',onKey);};
+ },[onClose]);
+ useEffect(()=>{
+  const frame=window.requestAnimationFrame(()=>{
+   const item=nodes.current.get(selectedPostId);
+   if(item&&scroller.current)scroller.current.scrollTop=item.offsetTop;
+  });
+  return ()=>window.cancelAnimationFrame(frame);
+ },[selectedPostId]);
+ return createPortal(<div className="profile-feed-overlay social-page" role="dialog" aria-modal="true" aria-label={'Scrollable posts by @'+profile.handle}>
+  <header className="profile-feed-header">
+   <button className="profile-feed-back" onClick={onClose} type="button" aria-label="Back to profile grid"><Icon name="back" size={21}/></button>
+   <div><strong>@{profile.handle}</strong><small>Posts · {posts.length} total</small></div>
+   <button className="profile-feed-close" onClick={onClose} type="button" aria-label="Close profile feed"><Icon name="x" size={21}/></button>
+  </header>
+  <div className="profile-feed-scroller" ref={scroller}>
+   <div className="profile-feed-list social-column">
+    {posts.map(post=><div key={post.id} className="profile-feed-entry" ref={node=>{if(node)nodes.current.set(post.id,node);else nodes.current.delete(post.id);}}>
+     <PostCard post={post} author={profiles[post.authorId]||profile}/>
+    </div>)}
+   </div>
+   <div className="profile-feed-end">You’re all caught up ♡</div>
+  </div>
+ </div>,document.body);
+}
 export function ProfilePage(){
  const {data,selectedProfile,setSelectedProfile,navigate,signOut,run,message}=useApp();
- const [editing,setEditing]=useState(false),[tab,setTab]=useState('posts');
+ const [editing,setEditing]=useState(false),[tab,setTab]=useState('posts'),[feedStart,setFeedStart]=useState(null);
  const me=data?.me;
  if(!me)return <AccountAccess/>;
  const idolMember=selectedProfile?.startsWith('idol:')?data?.members?.find(x=>x.id===selectedProfile.slice(5)):null;
@@ -158,7 +178,8 @@ export function ProfilePage(){
   </div>
   <div className="row-actions profile-buttons">{own?<><button className="action secondary" onClick={()=>setEditing(true)}>Edit profile / Oshi settings</button><button className="action soft" onClick={signOut}>Sign out</button></>:<button className="action primary" onClick={follow}>{profile.isFollowing?'Following':'Follow +'}</button>}</div>
   <div className="segmented-tabs">{(isIdol?[['hashtag','Hashtag'],['hearted','Hearted'],['posts','Posts']]:[['posts','Posts'],['saved','Saved']]).map(([key,name])=><button key={key} className={tab===key?'selected':''} onClick={()=>setTab(key)}>{name}</button>)}</div>
-  {items.length?<div className="profile-post-grid">{items.map(post=><ProfilePostTile key={post.id} post={post} canEdit={Boolean(me&&(post.authorId===me.id||me.role==='admin'))}/>)}</div>:<Empty title="No posts in this section" detail={isIdol&&tab==='hashtag'?'Posts with #'+profile.handle+' will appear here.':'This section is empty.'}/>}
+  {items.length?<div className="profile-post-grid">{items.map(post=><ProfilePostTile key={post.id} post={post} onOpen={setFeedStart}/>)}</div>:<Empty title="No posts in this section" detail={isIdol&&tab==='hashtag'?'Posts with #'+profile.handle+' will appear here.':'This section is empty.'}/>}
+  {feedStart&&<ProfilePostFeed profile={profile} posts={items} selectedPostId={feedStart} profiles={data?.social?.profiles||{}} onClose={()=>setFeedStart(null)}/>}
   {editing&&own&&<EditProfile profile={profile} close={()=>setEditing(false)}/>}
  </main>;
 }
