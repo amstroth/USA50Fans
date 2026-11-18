@@ -7,6 +7,7 @@ export const NAV=[
  {id:'drops',name:'Card Drops',icon:'drops',legacy:true},
  {id:'community',name:'Social',icon:'community'},
  {id:'rankings',name:'Fan Rankings',icon:'trophy'},
+ {id:'idols',name:'Meet the Idols',icon:'profile'},
  {id:'messages',name:'Messages',icon:'messages',legacy:true},
  {id:'shop',name:'Shop',icon:'shop'},
  {id:'vip',name:'VIP Rewards',icon:'trophy'},
@@ -28,6 +29,7 @@ export function AppProvider({children}){
  const [loading,setLoading]=useState(true),[error,setError]=useState('');
  const [toast,setToast]=useState(''),[mailOpen,setMailOpen]=useState(false);
  const [selectedProfile,setSelectedProfile]=useState(null);
+ const [selectedIdolId,setSelectedIdolId]=useState('arielle');
  const [selectedStreamId,setSelectedStreamId]=useState(null);
  const lastToast=useRef(null),mounted=useRef(true);
  const message=useCallback(text=>{setToast(String(text));window.clearTimeout(lastToast.current);lastToast.current=window.setTimeout(()=>setToast(''),4000);},[]);
@@ -77,7 +79,7 @@ export function AppProvider({children}){
   return()=>window.clearInterval(timer);
  },[]);
  const value=useMemo(()=>({data,route,navigate,refresh,run,message,signIn,signOut,markMail,mailOpen,setMailOpen,
-  selectedProfile,setSelectedProfile,selectedStreamId,setSelectedStreamId,loading,error,setError}),[data,route,navigate,refresh,run,message,signIn,signOut,markMail,mailOpen,selectedProfile,selectedStreamId,loading,error]);
+  selectedProfile,setSelectedProfile,selectedIdolId,setSelectedIdolId,selectedStreamId,setSelectedStreamId,loading,error,setError}),[data,route,navigate,refresh,run,message,signIn,signOut,markMail,mailOpen,selectedProfile,selectedIdolId,selectedStreamId,loading,error]);
  return <Ctx.Provider value={value}>{children}{toast&&<div className="react-toast" role="status">{toast}</div>}</Ctx.Provider>;
 }
 export function useApp(){const context=useContext(Ctx);if(!context)throw Error('USA50 AppProvider missing');return context;}
