@@ -157,58 +157,88 @@ function IdolEditor({member,profile,close}){
 }
 function Fact({label,children}){return children?<div className="idol-fact"><span>{label}</span><strong>{children}</strong></div>:null;}
 export function MeetIdolsPage(){
- const {data,selectedIdolId,setSelectedIdolId,message}=useApp();
+ const {data,selectedIdolId,setSelectedIdolId}=useApp();
  const members=data?.members||[],profiles=data?.idolProfiles||{},me=data?.me;
- const [expanded,setExpanded]=useState('NYC50'),[edit,setEdit]=useState(false),[photoFailed,setPhotoFailed]=useState(false);
- const active=members.find(m=>m.id===selectedIdolId)||members[0],index=members.findIndex(m=>m.id===active?.id);
+ const [expanded,setExpanded]=useState('NYC50'),[edit,setEdit]=useState(false),[slide,setSlide]=useState(0),[photoFailed,setPhotoFailed]=useState(false);
+ const active=members.find(m=>m.id===selectedIdolId)||members[0];
  const profile=active?profiles[active.id]||BLANK:BLANK;
+ const gallery=profile.gallery||[],rounds=profile.circleGallery||[];
+ const slides=gallery.length?gallery.map(p=>p.url):
+  [profile.photoUrl||(active?.id==='arielle'?'/assets/portraits/arielle_real.webp':null)].filter(Boolean);
+ const current=slides[slide]||slides[0]||null;
+ const circle=profile.circlePhotoUrl||rounds[0]?.url||profile.photoUrl||slides[0]||null;
  const canEdit=Boolean(me&&!me.mustChangePassword&&(me.role==='admin'||(me.role==='idol'&&me.idolId===active?.id)));
- useEffect(()=>{if(active&&expanded!==active.team)setExpanded(active.team);setPhotoFailed(false);},[active?.id]);
- const photo=photoFailed?null:profile.photoUrl||(active?.id==='arielle'?'/assets/portraits/arielle_real.webp':null);
- function select(id){setSelectedIdolId(id);setPhotoFailed(false);}
- function move(delta){if(members.length)select(members[(index+delta+members.length)%members.length].id);}
+ useEffect(()=>{if(active)setExpanded(active.team);setSlide(0);setPhotoFailed(false);},[active?.id]);
+ useEffect(()=>{if(slide>=slides.length)setSlide(0);},[slides.length,slide]);
+ function select(id){setSelectedIdolId(id);setSlide(0);setPhotoFailed(false);}
+ function turn(n){if(slides.length)setSlide(i=>(i+n+slides.length)%slides.length);}
+ const zodiac=profile.zodiac||{};
+ const signs=[['☀️','Sun',zodiac.sun],['🌙','Moon',zodiac.moon],['🌅','Rising',zodiac.rising]].filter(x=>x[2]);
  return <main className="view idol-directory-page">
   <div className="idol-directory-shell">
    <nav className="idol-directory-nav" aria-label="Choose an idol">
     <div className="idol-directory-nav-title"><span>USA50</span><small>MEET THE IDOLS</small></div>
     {['NYC50','LA50'].map(team=><div key={team} className="idol-nav-team">
      <button className={'idol-team-toggle'+(expanded===team?' expanded':'')} onClick={()=>setExpanded(g=>g===team?'':team)} aria-expanded={expanded===team}>
-      <strong>{team}</strong><Icon name="chevron" size={18}/>
-     </button>
+      <strong>{team}</strong><Icon name="chevron" size={18}/></button>
      {expanded===team&&<div className="idol-nav-members">{members.filter(m=>m.team===team).map(member=><button key={member.id} className={member.id===active?.id?'chosen':''} onClick={()=>select(member.id)} aria-current={member.id===active?.id?'true':undefined}>{member.name}</button>)}</div>}
     </div>)}
    </nav>
-   <div className="idol-directory-content">
-    <div className="idol-directory-intro"><span className="eyebrow">{active?.team||'USA50'} · MEMBER PROFILE</span><h1>Meet {active?.name||'the Idols'}</h1>{canEdit&&<button type="button" className="action secondary" onClick={()=>setEdit(true)}><Icon name="settings" size={15}/> Edit profile</button>}</div>
-    {active&&<><div className="idol-profile-stage">
-      <button className="idol-stage-arrow" onClick={()=>move(-1)} aria-label="Previous idol"><Icon name="back" size={26}/></button>
-      <div className="idol-center-profile">
-       <div className="idol-feature-photo">{photo?<img src={photo} alt={active.name+' official member portrait'} onError={()=>setPhotoFailed(true)}/>:<div className="idol-empty-photo"><span>✧</span><strong>{active.name}</strong><small>Official photo coming soon</small></div>}</div>
-       <div className="idol-portrait-caption"><h2>{active.name}</h2><span>{active.team} · USA50</span></div>
+   {active&&<div className="idol-directory-content idol-editorial-content">
+    <header className="idol-directory-intro">
+     <div><span className="eyebrow">USA50 / {active.team} / MEMBER PROFILE</span><h1>Meet {active.name}</h1></div>
+     {canEdit&&<button className="action secondary" onClick={()=>setEdit(true)}><Icon name="settings" size={15}/> Edit member profile</button>}
+    </header>
+    <section className="idol-editorial-layout" aria-label={active.name+' official biography'}>
+     <div className="idol-editorial-left">
+      <div className="idol-editorial-main-image">
+       {current&&!photoFailed?<img src={current} alt={active.name+' photo '+(slide+1)} onError={()=>setPhotoFailed(true)}/>:
+        <div className="idol-empty-photo"><span>✧</span><strong>{active.name}</strong><small>Official gallery photo coming soon</small></div>}
+       {slides.length>1&&<><button type="button" className="idol-editorial-slide prev" onClick={()=>{turn(-1);setPhotoFailed(false);}} aria-label="Previous gallery photo">‹</button>
+        <button type="button" className="idol-editorial-slide next" onClick={()=>{turn(1);setPhotoFailed(false);}} aria-label="Next gallery photo">›</button>
+        <span className="idol-editorial-counter">{slide+1} / {slides.length}</span></>}
       </div>
-      <button className="idol-stage-arrow" onClick={()=>move(1)} aria-label="Next idol"><Icon name="chevron" size={26}/></button>
+      {slides.length>1&&<div className="idol-editorial-filmstrip">{slides.map((src,i)=><button type="button" key={src+i} className={i===slide?'active':''} onClick={()=>{setSlide(i);setPhotoFailed(false);}} aria-label={'Show photo '+(i+1)}><img src={src} alt=""/></button>)}</div>}
      </div>
-     <div className="idol-bio-sections">
-      <section className="idol-bio-panel"><h3>About {active.name} <span>✧</span></h3>
-       <div className="idol-facts-grid">
-        <Fact label="Birthday">{readableBirthday(profile.birthday)}</Fact>
-        <Fact label="MBTI">{profile.mbti}</Fact>
-        <Fact label="Height">{profile.height}</Fact>
-        <Fact label="Born in">{[profile.bornCity,profile.bornState].filter(Boolean).join(', ')}</Fact>
-        {['sun','moon','rising'].map(key=><Fact key={key} label={key[0].toUpperCase()+key.slice(1)+' sign'}>{profile.zodiac?.[key]}</Fact>)}
-        {profile.favoriteColors?.length>0&&<div className="idol-fact idol-favorite-colors"><span>Favorite colors</span><div className="idol-color-chips">{profile.favoriteColors.map((c,i)=><span key={i} className="idol-color-chip"><i style={{background:c.color}}/>{c.name}</span>)}</div></div>}
+     <div className="idol-editorial-right">
+      <div className="idol-editorial-name">
+       <span className="idol-editorial-overline">about {active.team.toLowerCase()}’</span>
+       <div className="idol-editorial-title-row"><div className="idol-editorial-title"><span className="idol-editorial-quote-mark">“</span><h2>{active.name.toUpperCase()}</h2></div>
+        <div className="idol-editorial-avatar">{circle?<img src={circle} alt={active.name+' round portrait'}/>:<span>✦</span>}</div>
        </div>
-       {!['birthday','mbti','height','bornCity','bornState','quote','yearGoal','idolGoal'].some(k=>profile[k])&&!profile.favoriteColors?.length&&!Object.values(profile.zodiac||{}).some(Boolean)&&<p className="idol-bio-empty">Member details will appear here when the idol or management adds them.</p>}
-      </section>
-      {profile.quote&&<section className="idol-bio-quote"><span>✧ A WORD FROM {active.name.toUpperCase()}</span><blockquote>“{profile.quote}”</blockquote></section>}
-      {(profile.yearGoal||profile.idolGoal)&&<section className="idol-bio-panel"><h3>Dreams & goals</h3>
-       {profile.yearGoal&&<div className="idol-goal"><span>THIS YEAR'S GOAL</span><p>{profile.yearGoal}</p></div>}
-       {profile.idolGoal&&<div className="idol-goal"><span>MY GOAL AS AN IDOL</span><p>{profile.idolGoal}</p></div>}
-      </section>}
+       <span className="idol-editorial-team">{active.team} ✦ USA50</span>
+      </div>
+      <div className="idol-editorial-columns">
+       <section className="idol-editorial-stat">
+        <h3>stats:</h3>
+        <InfoRow label="BIRTHDAY">{readableBirthday(profile.birthday)}</InfoRow>
+        <InfoRow label="MBTI">{profile.mbti}</InfoRow>
+        <InfoRow label="HEIGHT">{profile.height}</InfoRow>
+        <InfoRow label="BORN IN">{[profile.bornCity,profile.bornState].filter(Boolean).join(', ')}</InfoRow>
+        {profile.favoriteColors?.length>0&&<div className="idol-editorial-colors"><small>FAVORITE COLORS</small>
+         {profile.favoriteColors.map((color,i)=><span key={i}><i style={{backgroundColor:color.color}}/>{color.name}</span>)}</div>}
+        {signs.length>0&&<div className="idol-editorial-zodiac"><h4>Zodiac</h4>
+         {signs.map(([emoji,label,value])=><div key={label} title={label+' sign'}><span aria-hidden="true">{emoji}</span> {value}</div>)}
+        </div>}
+       </section>
+       <section className="idol-editorial-facts">
+        <h3>facts:</h3>
+        {profile.quote&&<div className="idol-fact-entry"><strong>Favorite quote</strong><p>“{profile.quote}”</p></div>}
+        {profile.yearGoal&&<div className="idol-fact-entry"><strong>This year's goal</strong><p>{profile.yearGoal}</p></div>}
+        {profile.idolGoal&&<div className="idol-fact-entry"><strong>Goal as an idol</strong><p>{profile.idolGoal}</p></div>}
+        {!profile.quote&&!profile.yearGoal&&!profile.idolGoal&&<p className="idol-editorial-empty">More about {active.name} will appear when they share it.</p>}
+        <h3 className="idol-editorial-more-heading">more:</h3>
+        <div className="idol-editorial-more">
+         {rounds.length>0?rounds.slice(0,4).map((p,i)=><img key={p.id} src={p.url} alt={active.name+' circular photo '+(i+1)}/>):
+          gallery.slice(0,4).map((p,i)=><button key={p.id} type="button" onClick={()=>{setSlide(i);setPhotoFailed(false);}} aria-label={'Show gallery photo '+(i+1)}><img src={p.url} alt=""/></button>)}
+         {!gallery.length&&!rounds.length&&<span className="idol-editorial-empty">More photos coming soon</span>}
+        </div>
+       </section>
+      </div>
      </div>
-    </>}
-   </div>
+    </section>
+   </div>}
   </div>
-  {edit&&canEdit&&active&&<IdolEditor key={active.id} member={active} profile={profile} close={()=>setEdit(false)}/>}
+  {edit&&canEdit&&active&&<IdolEditor member={active} profile={profile} close={()=>setEdit(false)}/>}
  </main>;
 }
