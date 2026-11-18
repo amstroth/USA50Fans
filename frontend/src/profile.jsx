@@ -104,6 +104,39 @@ function PostThumbnail({post}){
    <span className="profile-post-fallback" aria-hidden="true">{post.platform==='TikTok'?'♪':'◎'}</span>}
  </span>;
 }
+function profileCoverData(file){
+ return new Promise((resolve,reject)=>{
+  if(!file||!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>12_000_000)return reject(Error('Select a JPG, PNG or WebP photo under 12 MB.'));
+  const url=URL.createObjectURL(file),img=new Image();
+  img.onerror=()=>{URL.revokeObjectURL(url);reject(Error('Cannot open the photo.'));};
+  img.onload=()=>{
+   try{
+    const scale=Math.min(1,1200/img.width,1200/img.height);
+    const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+    canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);URL.revokeObjectURL(url);
+    const result=canvas.toDataURL('image/jpeg',.76);
+    if(result.length>1550000)return reject(Error('Photo is too large after compression.'));
+    resolve(result);
+   }catch(err){URL.revokeObjectURL(url);reject(err);}
+  };
+  img.src=url;
+ });
+}
+function ProfilePostTile({post,canEdit}){
+ const {run,navigate,message}=useApp(),[busy,setBusy]=useState(false);
+ async function setCover(e){
+  const file=e.target.files?.[0];if(!file)return;setBusy(true);
+  try{await run('/api/social/thumbnail',{postId:post.id,thumbnailDataUrl:await profileCoverData(file)});
+   message('Profile grid thumbnail updated ♡');
+  }catch(err){message(err.message);}
+  finally{e.target.value='';setBusy(false);}
+ }
+ return <div className="profile-post-tile">
+  <button type="button" className="profile-post-open" onClick={()=>navigate('community')} aria-label={'Open post '+(post.caption||'')}><PostThumbnail post={post}/><small>{post.caption?.slice(0,64)}</small></button>
+  {canEdit&&<label className="profile-cover-edit" title="Set the same image as this post's thumbnail"><Icon name="camera" size={13}/><span>{busy?'Saving…':'Cover'}</span><input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={setCover}/></label>}
+ </div>;
+}
+
 export function ProfilePage(){
  const {data,selectedProfile,setSelectedProfile,navigate,signOut,run,message}=useApp();
  const [editing,setEditing]=useState(false),[tab,setTab]=useState('posts');
@@ -136,7 +169,7 @@ export function ProfilePage(){
   </div>
   <div className="row-actions profile-buttons">{own?<><button className="action secondary" onClick={()=>setEditing(true)}>Edit profile / Oshi settings</button><button className="action soft" onClick={signOut}>Sign out</button></>:<button className="action primary" onClick={follow}>{profile.isFollowing?'Following':'Follow +'}</button>}</div>
   <div className="segmented-tabs">{(isIdol?[['hashtag','Hashtag'],['hearted','Hearted'],['posts','Posts']]:[['posts','Posts'],['saved','Saved']]).map(([key,name])=><button key={key} className={tab===key?'selected':''} onClick={()=>setTab(key)}>{name}</button>)}</div>
-  {items.length?<div className="profile-post-grid">{items.map(post=><button key={post.id} onClick={()=>navigate('community')}><PostThumbnail post={post}/><small>{post.caption?.slice(0,64)}</small></button>)}</div>:<Empty title="No posts in this section" detail={isIdol&&tab==='hashtag'?'Posts with #'+profile.handle+' will appear here.':'This section is empty.'}/>}
+  {items.length?<div className="profile-post-grid">{items.map(post=><ProfilePostTile key={post.id} post={post} canEdit={Boolean(me&&(post.authorId===me.id||me.role==='admin'))}/>)}</div>:<Empty title="No posts in this section" detail={isIdol&&tab==='hashtag'?'Posts with #'+profile.handle+' will appear here.':'This section is empty.'}/>}
   {editing&&own&&<EditProfile profile={profile} close={()=>setEditing(false)}/>}
  </main>;
 }
