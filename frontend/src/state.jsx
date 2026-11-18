@@ -6,6 +6,7 @@ export const NAV=[
  {id:'collection',name:'Collection',icon:'collection'},
  {id:'drops',name:'Card Drops',icon:'drops',legacy:true},
  {id:'community',name:'Social',icon:'community'},
+ {id:'rankings',name:'Fan Rankings',icon:'trophy'},
  {id:'messages',name:'Messages',icon:'messages',legacy:true},
  {id:'shop',name:'Shop',icon:'shop'},
  {id:'events',name:'Events',icon:'events'},
