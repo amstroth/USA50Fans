@@ -102,6 +102,12 @@ async function api(req,res,url){
  if(method==='GET'&&url.pathname==='/api/bootstrap'){const u=userFrom(req);return json(res,200,{...publicState(u),idolProfiles:Object.fromEntries(members.map(m=>[m.id,{...idolProfiles.info()[m.id],...idolGallery.one(m.id)}])),messaging:roleFeatures.info(u),social:socialHub.info(u),officialDiary:officialDiary.info(u),fancalls:fancalls.info(u),economy:economy.info(u),gacha:gacha.publicInfo(u),vipProgram:vipProgram.publicInfo(u),mailbox:notifier.info(u),liveEvents:eventStreams.info(u)});}
  if((method==='GET'||method==='HEAD')&&url.pathname.startsWith('/api/social/thumbnail/'))
    return socialHub.serveThumbnail(req,res,url.pathname.slice('/api/social/thumbnail/'.length));
+ if(method==='GET'&&url.pathname==='/api/social/comments'){
+   const postId=url.searchParams.get('postId')||'';
+   if(postId.length>128)return fail(res,400,'Invalid post ID.');
+   const result=socialHub.commentsFor(postId,userFrom(req));
+   return result?json(res,200,result):fail(res,404,'Post not found.');
+ }
  if(method==='GET'&&url.pathname==='/api/social/resolve'){const id=url.searchParams.get('postId')||'';if(id.length>128)return fail(res,400,'Invalid post ID.');const result=await socialHub.resolveEmbed(id);return result?json(res,200,result):fail(res,404,'Post not found.');}
  if(method==='GET'&&url.pathname==='/api/fancalls/session-state'){
    const user=userFrom(req);if(!user)return fail(res,401,'Sign in to view your fancall room.');
