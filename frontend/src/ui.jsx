@@ -32,7 +32,7 @@ export function VerifiedStar({profile,avatar=false}){
  </span>;
 }
 export function Avatar({member,profile,size='md',withAward=false}){
- const src=profile?.avatarUrl||(member?.id==='arielle'?'/assets/portraits/arielle_real.webp':null);
+ const src=member?.avatarUrl||profile?.avatarUrl||(member?.id==='arielle'?'/assets/portraits/arielle_real.webp':null);
  const color=profile?.verifiedIdol?profile?.idolBorderColor||'#E63A84':profile?.verifiedStaff?'#004AAD':member?.color||'#b88ad7';
  const letter=member?.emoji||profile?.displayName?.slice(0,1).toUpperCase()||'♡';
  const rank=profile?.rankBorder&&['classic','rank-auto'].includes(profile?.ring)?profile.rankBorder:null;
