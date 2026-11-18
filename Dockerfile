@@ -21,6 +21,7 @@ COPY livestream-social.js ./
 COPY web-push-service.js ./
 COPY tests/live-streams.mjs ./tests/live-streams.mjs
 COPY tests/react-smoke.mjs ./tests/react-smoke.mjs
+COPY tests/react-media-rooms.mjs ./tests/react-media-rooms.mjs
 COPY fancall-rtc.js ./
 COPY role-features.js ./
 COPY social-hub.js ./
@@ -45,6 +46,7 @@ RUN node --check server.js && node --check fancall-lottery.js && node --check ec
 RUN test -s www/react/index.html && test -d www/react/assets && node --check www/react-bridge.js
 RUN node tests/live-streams.mjs
 RUN node tests/react-smoke.mjs
+RUN node tests/react-media-rooms.mjs
 ENV NODE_ENV=production
 EXPOSE 3000
 CMD ["node", "server.js"]
