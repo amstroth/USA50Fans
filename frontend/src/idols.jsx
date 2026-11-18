@@ -176,7 +176,7 @@ export function MeetIdolsPage(){
  function select(id){setSelectedIdolId(id);setSlide(0);setPhotoFailed(false);}
  function turn(n){if(slides.length)setSlide(i=>(i+n+slides.length)%slides.length);}
  const zodiac=profile.zodiac||{};
- const signs=[['☀️','Sun',zodiac.sun],['🌙','Moon',zodiac.moon],['🌅','Rising',zodiac.rising]].filter(x=>x[2]);
+ const hasZodiac=Boolean(zodiac.sun||zodiac.moon||zodiac.rising);
  return <main className="view idol-directory-page">
   <div className="idol-directory-shell">
    <nav className="idol-directory-nav" aria-label="Choose an idol">
@@ -205,23 +205,33 @@ export function MeetIdolsPage(){
      </div>
      <div className="idol-editorial-right">
       <div className="idol-editorial-name">
-       <span className="idol-editorial-overline">about {active.team.toLowerCase()}’</span>
-       <div className="idol-editorial-title-row"><div className="idol-editorial-title"><span className="idol-editorial-quote-mark">“</span><h2>{active.name.toUpperCase()}</h2></div>
+       <div className="idol-editorial-title-row">
         <div className="idol-editorial-avatar">{circle?<img src={circle} alt={active.name+' round portrait'}/>:<span>✦</span>}</div>
+        <div className="idol-editorial-title">
+         <h2>{active.name.toUpperCase()}</h2>
+         <span className="idol-editorial-team">{active.team} ✦ USA50</span>
+        </div>
        </div>
-       <span className="idol-editorial-team">{active.team} ✦ USA50</span>
       </div>
       <div className="idol-editorial-columns">
        <section className="idol-editorial-stat">
-        <h3>stats:</h3>
+        <h3>profile:</h3>
         <InfoRow label="BIRTHDAY">{readableBirthday(profile.birthday)}</InfoRow>
         <InfoRow label="MBTI">{profile.mbti}</InfoRow>
         <InfoRow label="HEIGHT">{profile.height}</InfoRow>
         <InfoRow label="BORN IN">{[profile.bornCity,profile.bornState].filter(Boolean).join(', ')}</InfoRow>
         {profile.favoriteColors?.length>0&&<div className="idol-editorial-colors"><small>FAVORITE COLORS</small>
-         {profile.favoriteColors.map((color,i)=><span key={i}><i style={{backgroundColor:color.color}}/>{color.name}</span>)}</div>}
-        {signs.length>0&&<div className="idol-editorial-zodiac"><h4>Zodiac</h4>
-         {signs.map(([emoji,label,value])=><div key={label} title={label+' sign'}><span aria-hidden="true">{emoji}</span> {value}</div>)}
+         <div className="idol-editorial-color-row">{profile.favoriteColors.map((color,i)=>
+          <span className="idol-editorial-color-choice" key={i}><i style={{backgroundColor:color.color}}/><span>{color.name}</span></span>)}</div>
+        </div>}
+        {hasZodiac&&<div className="idol-editorial-zodiac"><h4>Zodiac</h4>
+         <div className="idol-zodiac-triangle">
+          {zodiac.sun&&<div className="idol-zodiac-sun" title="Sun sign"><span aria-hidden="true">☀️</span><strong>{zodiac.sun}</strong></div>}
+          {(zodiac.moon||zodiac.rising)&&<div className="idol-zodiac-base">
+           {zodiac.moon&&<div title="Moon sign"><span aria-hidden="true">🌙</span><strong>{zodiac.moon}</strong></div>}
+           {zodiac.rising&&<div title="Rising sign"><span aria-hidden="true">🌅</span><strong>{zodiac.rising}</strong></div>}
+          </div>}
+         </div>
         </div>}
        </section>
        <section className="idol-editorial-facts">

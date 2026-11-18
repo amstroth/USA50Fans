@@ -639,3 +639,78 @@
 
 /* Crop preview dims only outside the selected circular image. */
 .crop-outline{box-shadow:0 0 0 400px #17121b88;}
+
+/* Meet the Idols readability refresh: the larger cropped portrait now leads the
+   biography header, with the member name on the right. */
+.idol-editorial-content .idol-directory-intro .eyebrow{font-size:12px;letter-spacing:1.6px}
+.idol-editorial-content .idol-directory-intro h1{font-size:clamp(28px,3.1vw,38px)}
+.idol-directory-nav-title small{font-size:11px}
+.idol-nav-team .idol-team-toggle{font-size:16px}
+.idol-nav-members button{font-size:15px;line-height:1.35}
+.idol-editorial-name{min-height:0;display:flex;align-items:center;padding:5px 0 19px}
+.idol-editorial-title-row{display:flex;align-items:center;justify-content:space-between;width:100%;gap:clamp(14px,2.1vw,27px)}
+.idol-editorial-name .idol-editorial-avatar{
+  flex:0 0 clamp(130px,15vw,205px);width:clamp(130px,15vw,205px);
+  height:clamp(130px,15vw,205px);border-width:5px;
+}
+.idol-editorial-name .idol-editorial-title{flex:1;min-width:0;padding:0;text-align:center;display:grid;align-content:center;justify-items:center;gap:13px}
+.idol-editorial-name .idol-editorial-title h2{
+  font:400 clamp(29px,3.7vw,53px)/1.08 Georgia,'Times New Roman',serif;
+  letter-spacing:1px;overflow-wrap:anywhere;text-align:center;margin:0;
+}
+.idol-editorial-name .idol-editorial-team{
+  display:inline-block;max-width:none;margin:0;font-size:12px;
+  line-height:1.3;padding:8px 13px;letter-spacing:1.5px;
+}
+.idol-editorial-stat h3,.idol-editorial-facts h3{font-size:15px;padding:8px 10px;letter-spacing:2px}
+.idol-layout-row{font-size:14px;line-height:1.45;padding:12px 2px;gap:8px}
+.idol-layout-row span{flex-basis:43%;font-size:12px;line-height:1.5}
+.idol-layout-row strong{font-size:14px;line-height:1.5}
+.idol-editorial-colors{padding:17px 0;gap:12px}
+.idol-editorial-colors small{font-size:13px;letter-spacing:.5px}
+.idol-editorial-color-row{display:flex;flex-flow:row wrap;gap:14px;align-items:flex-start}
+.idol-editorial-colors .idol-editorial-color-choice{display:flex;flex:1 1 78px;min-width:0;align-items:center;gap:9px;font-size:13px;font-weight:650;line-height:1.35;overflow-wrap:anywhere}
+.idol-editorial-colors .idol-editorial-color-choice i{display:block;width:34px;height:34px;flex:0 0 34px;border-radius:50%;border:2px solid #fff;outline:1px solid #b2a5b1;box-shadow:0 2px 5px #5d456333}
+.idol-editorial-zodiac{display:block;padding:19px 2px 8px}
+.idol-editorial-zodiac h4{font-size:16px;text-align:center;margin:0 0 14px;color:#654463}
+.idol-zodiac-triangle{display:flex;flex-direction:column;gap:13px;width:100%;font-size:14px}
+.idol-zodiac-triangle strong{font-size:14px;font-weight:750;overflow-wrap:anywhere}
+.idol-zodiac-sun{display:flex;align-items:center;gap:7px;justify-content:center;text-align:center;min-width:0}
+.idol-zodiac-base{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-items:start;justify-content:space-between}
+.idol-zodiac-base>div{display:flex;flex-direction:column;gap:3px;text-align:center;align-items:center;min-width:0}
+.idol-zodiac-base>div:only-child{grid-column:1 / -1}
+.idol-zodiac-base span{font-size:19px;line-height:1.2}
+.idol-zodiac-sun span{font-size:21px;line-height:1.2}
+.idol-fact-entry{font-size:14px;line-height:1.55}
+.idol-fact-entry strong{font-size:14px;margin-bottom:5px}
+.idol-fact-entry p{font-size:14px;line-height:1.6}
+.idol-editorial-empty{font-size:14px;line-height:1.6}
+.idol-editorial-stat,.idol-editorial-facts{min-width:0}
+.idol-editorial-counter{font-size:13px}
+.idol-photo-manager-top small,.idol-photo-manager-item>small,.idol-photo-from-gallery small{font-size:12px}
+@media (max-width:1100px){
+ .idol-editorial-name .idol-editorial-avatar{flex-basis:clamp(116px,14vw,170px);width:clamp(116px,14vw,170px);height:clamp(116px,14vw,170px)}
+ .idol-editorial-name .idol-editorial-title h2{font-size:clamp(27px,3.6vw,43px)}
+ .idol-editorial-columns{gap:14px}
+ .idol-layout-row{font-size:13px}
+}
+@media (max-width:920px){
+ .idol-editorial-name .idol-editorial-avatar{flex:0 0 clamp(145px,24vw,205px);width:clamp(145px,24vw,205px);height:clamp(145px,24vw,205px)}
+ .idol-editorial-name .idol-editorial-title h2{font-size:clamp(31px,5vw,53px)}
+}
+@media (max-width:750px){
+ .idol-editorial-right{padding:19px 17px}
+ .idol-editorial-name .idol-editorial-avatar{flex:0 0 clamp(108px,27vw,160px);width:clamp(108px,27vw,160px);height:clamp(108px,27vw,160px)}
+ .idol-editorial-name .idol-editorial-title h2{font-size:clamp(24px,5vw,38px)}
+ .idol-editorial-name .idol-editorial-team{font-size:11px}
+ .idol-editorial-stat h3,.idol-editorial-facts h3{font-size:14px}
+ .idol-layout-row,.idol-layout-row strong,.idol-fact-entry p{font-size:14px}
+}
+@media (max-width:430px){
+ .idol-editorial-name .idol-editorial-avatar{flex:0 0 clamp(100px,28vw,135px);width:clamp(100px,28vw,135px);height:clamp(100px,28vw,135px)}
+ .idol-editorial-name .idol-editorial-title h2{font-size:clamp(21px,6vw,32px)}
+ .idol-editorial-name .idol-editorial-team{font-size:10px;letter-spacing:.8px}
+ .idol-zodiac-triangle strong{font-size:15px}
+ .idol-editorial-color-row{gap:10px}
+ .idol-editorial-colors .idol-editorial-color-choice{flex:1 1 112px}
+}
