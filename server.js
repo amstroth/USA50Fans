@@ -80,7 +80,7 @@ const eventStreams=require('./event-streams.js')({db,save,id,now,json,fail,userF
 liveSocial=require('./livestream-social.js')({db,save,id,now,json,fail,userFrom,expandHosts:eventStreams.expandHosts});
 const rtc=require('./fancall-rtc.js')({db,userFrom,json,fail});
 const roleFeatures=require('./role-features.js')({db,save,id,hashPass,checkPass,userFrom,adminFrom,bodyText,now,json,fail,notify:notifier.push});
-const socialHub=require('./social-hub.js')({db,save,id,bodyText,now,json,fail,userFrom,notify:notifier.push,rankNotice:notifier.rank});
+const socialHub=require('./social-hub.js')({db,save,id,bodyText,now,json,fail,userFrom,dataDir:DATA_DIR,notify:notifier.push,rankNotice:notifier.rank});
 const officialDiary=require('./official-diary.js')({db,save,id,now,json,fail,userFrom,dataDir:DATA_DIR});
 const cardStudio=require('./card-studio.js')({db,save,id,now,bodyText,json,fail,userFrom,dataDir:DATA_DIR,baseCards:cards,baseAlbums:albums,rarityWeights:RARITY_WEIGHTS,packCost:PACK_COST,hardPity:HARD_PITY,baseAlbumId:ALBUM_ID,notify:notifier.push});
 const hits=new Map();function rateLimit(req){let key=req.socket.remoteAddress+':auth',e=hits.get(key)||{at:Date.now(),n:0};if(Date.now()-e.at>60000)e={at:Date.now(),n:0};e.n++;hits.set(key,e);return e.n>12;}
@@ -93,6 +93,8 @@ async function api(req,res,url){
    return officialDiary.photoThumbnail(req,res,url.pathname.slice('/api/official/thumbnail/'.length));
  if(method==='GET'&&url.pathname==='/api/health')return json(res,200,{ok:true,service:'USA50 web-first development preview',persistence:process.env.DATA_DIR?'configured volume/local directory':'local directory (Railway ephemeral unless DATA_DIR points at volume)'});
  if(method==='GET'&&url.pathname==='/api/bootstrap'){const u=userFrom(req);return json(res,200,{...publicState(u),messaging:roleFeatures.info(u),social:socialHub.info(u),officialDiary:officialDiary.info(u),fancalls:fancalls.info(u),economy:economy.info(u),gacha:gacha.publicInfo(u),vipProgram:vipProgram.publicInfo(u),mailbox:notifier.info(u),liveEvents:eventStreams.info(u)});}
+ if((method==='GET'||method==='HEAD')&&url.pathname.startsWith('/api/social/thumbnail/'))
+   return socialHub.serveThumbnail(req,res,url.pathname.slice('/api/social/thumbnail/'.length));
  if(method==='GET'&&url.pathname==='/api/social/resolve'){const id=url.searchParams.get('postId')||'';if(id.length>128)return fail(res,400,'Invalid post ID.');const result=await socialHub.resolveEmbed(id);return result?json(res,200,result):fail(res,404,'Post not found.');}
  if(method==='GET'&&url.pathname==='/api/fancalls/session-state'){
    const user=userFrom(req);if(!user)return fail(res,401,'Sign in to view your fancall room.');
@@ -115,7 +117,7 @@ async function api(req,res,url){
 
  if(method!=='POST')return fail(res,404,'Unknown API endpoint');
  if(url.pathname==='/api/card-studio/upload' && (!['admin','idol'].includes(userFrom(req)?.role)||userFrom(req)?.mustChangePassword))return fail(res,403,'Card Studio login required.');
- const maxPostBytes=url.pathname==='/api/card-studio/upload'?7200000:url.pathname==='/api/diary/publish'?3600000:url.pathname==='/api/official/publish'||url.pathname==='/api/official/update'?1900000:url.pathname==='/api/social/profile'?220000:50000;
+ const maxPostBytes=url.pathname==='/api/card-studio/upload'?7200000:url.pathname==='/api/diary/publish'?3600000:url.pathname==='/api/official/publish'||url.pathname==='/api/official/update'?1900000:url.pathname==='/api/social/profile'?220000:url.pathname==='/api/social/post'||url.pathname==='/api/social/thumbnail'?1900000:50000;
  let raw='';try{for await (const chunk of req){raw+=chunk;if(raw.length>maxPostBytes)return fail(res,413,'Request is too large.');}}catch{return fail(res,400,'Unreadable request.');}
  let data;try{data=raw?JSON.parse(raw):{};}catch{return fail(res,400,'Invalid JSON.');}
  const ep=url.pathname;
