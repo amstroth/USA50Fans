@@ -831,3 +831,49 @@
 .social-delete-final-button{background:#b43e5e;color:white;border:0;border-radius:11px;padding:12px 16px;font-size:13px}
 .social-delete-final-button:hover{background:#902e4c}
 @media(max-width:560px){.social-comments{padding:13px 12px}.social-comment-author time{flex-basis:100%;margin-left:0}.social-comment-composer{gap:6px}.social-comment-composer input{padding:9px 11px}.social-delete-confirm-dialog{padding:24px 17px}}
+
+
+/* Add Post is a real edge-to-edge screen, not a small dialog inside the feed. */
+.social-compose-fullscreen-overlay.react-modal-cover{
+ position:fixed;inset:0;z-index:9500;display:block;padding:0;margin:0;
+ width:100vw;height:100dvh;background:#f8f0f9;overflow:hidden;
+}
+.social-compose-fullscreen-overlay .social-compose-modal.social-compose-fullscreen{
+ width:100vw;max-width:none;height:100dvh;max-height:none;min-height:100dvh;
+ margin:0;border:0;border-radius:0;box-shadow:none;overflow-y:auto;
+ overscroll-behavior:contain;padding:0 0 max(30px,env(safe-area-inset-bottom));
+ background:linear-gradient(155deg,#f7edf9 0%,#fffafd 65%,#f4e9f7 100%);
+ display:flex;flex-direction:column;
+}
+.social-compose-fullscreen .react-form{
+ width:min(100% - 32px,780px);margin:clamp(22px,5vh,60px) auto 45px;
+ display:flex;flex-direction:column;gap:23px;
+ background:rgba(255,255,255,.93);border:1px solid #fff;
+ border-radius:22px;padding:clamp(20px,4vw,38px);
+ box-shadow:0 14px 46px #a17aa11a;
+}
+.social-compose-fullscreen>header{
+ flex:0 0 auto;width:100%;position:sticky;top:0;z-index:5;
+ display:flex;align-items:center;justify-content:space-between;gap:18px;
+ min-height:80px;margin:0;padding:15px clamp(18px,5vw,65px);
+ background:#fff9fded;border-bottom:1px solid #eddaef;backdrop-filter:blur(16px);
+}
+.social-compose-fullscreen>header h2{font-size:clamp(22px,3vw,35px);margin:0}
+.social-compose-fullscreen .react-form>label{font-size:15px;font-weight:800;gap:10px}
+.social-compose-fullscreen .react-form textarea{min-height:150px}
+.social-compose-fullscreen .social-compose-cover{padding:21px}
+.social-post-ownership-warning{
+ font-size:clamp(14px,1.4vw,16px);font-weight:750;line-height:1.65;
+ padding:16px 18px;border-radius:13px;border:1px solid #efd7e7;
+ background:#fff0f6;color:#8b426b;margin:0;
+}
+@media(max-width:600px){
+ .social-compose-fullscreen>header{min-height:66px;padding:12px 18px}
+ .social-compose-fullscreen .react-form{
+  width:calc(100% - 20px);border-radius:16px;
+  margin:15px auto 30px;padding:18px 14px;gap:17px;
+ }
+ .social-compose-fullscreen .react-form textarea{min-height:125px}
+ .social-post-ownership-warning{font-size:14px;padding:13px 14px}
+}
+

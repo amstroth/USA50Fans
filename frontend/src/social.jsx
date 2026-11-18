@@ -200,6 +200,15 @@ async function gridCoverData(file){
 }
 export function Compose({close,post=null}){
  const {run,message}=useApp(),editing=!!post;
+ // A full-screen editor must block the underlying Social/Profile page from
+ // scrolling, while keeping the form independently scrollable.
+ useEffect(()=>{
+  const prior=document.body.style.overflow;
+  document.body.style.overflow='hidden';
+  const escape=e=>{if(e.key==='Escape')close();};
+  window.addEventListener('keydown',escape);
+  return ()=>{document.body.style.overflow=prior;window.removeEventListener('keydown',escape);};
+ },[close]);
  const [caption,setCaption]=useState(post?.caption||''),[url,setUrl]=useState(post?.url||''),[category,setCategory]=useState(post?.category||'fan');
  const [cover,setCover]=useState(null),[thumbnailMode,setThumbnailMode]=useState(post?.hasCustomThumbnail?'custom':'auto'),[uploading,setUploading]=useState(false),[busy,setBusy]=useState(false),[confirmDelete,setConfirmDelete]=useState(false),[deleting,setDeleting]=useState(false);
  async function pickCover(e){
@@ -228,12 +237,13 @@ export function Compose({close,post=null}){
   }catch(err){message(err.message);setDeleting(false);}
  }
  const preview=thumbnailMode==='custom'?(cover||post?.thumbnailUrl):!post?.hasCustomThumbnail?post?.thumbnailUrl:null;
- return createPortal(<div className="react-modal-cover social-compose-cover-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}>
-  <div role="dialog" aria-modal="true" aria-label={editing?'Edit Social post':'Share Social post'} className="react-modal social-compose-modal">
+ return createPortal(<div className={'react-modal-cover social-compose-cover-overlay'+(!editing?' social-compose-fullscreen-overlay':'')} role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}>
+  <div role="dialog" aria-modal="true" aria-label={editing?'Edit Social post':'Share Social post'} className={'react-modal social-compose-modal'+(!editing?' social-compose-fullscreen':'')}>
    <header><h2>{editing?'Edit post':'Share a USA50 edit ♡'}</h2><button type="button" aria-label="Close post editor" onClick={close}><Icon name="x"/></button></header>
    <form className="react-form" onSubmit={submit}>
     <label>Caption<textarea value={caption} minLength={6} maxLength={650} required placeholder="What did you love about this moment? #Arielle #NYC50" onChange={e=>setCaption(e.target.value)}/></label>
-    <label>Instagram or TikTok post link<input type="url" required value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://www.instagram.com/reel/..."/></label>
+    <p className="social-post-ownership-warning" id="social-post-ownership-warning">Please only add posts you've created here. If you're found to be in violation of this you may be banned from posting :(</p>
+    <label>Instagram or TikTok post link<input type="url" aria-describedby="social-post-ownership-warning" required value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://www.instagram.com/reel/..."/></label>
     <label>Publish to<select value={category} onChange={e=>setCategory(e.target.value)}><option value="fan">Fan community</option><option value="fansite">Fansites (approved only)</option></select></label>
     <div className="social-compose-cover">
      <strong>Profile-grid thumbnail <span>optional</span></strong>
