@@ -79,11 +79,11 @@ function PostThumbnail({post}){
  const [thumbnail,setThumbnail]=useState(post.thumbnailUrl||null);
  useEffect(()=>{
   setThumbnail(post.thumbnailUrl||null);
-  if(post.thumbnailUrl||post.platform!=='TikTok')return;
+  if(String(post.thumbnailUrl||'').startsWith('/api/social/thumbnail/'))return;
   let active=true;
   // Reuse the original post's thumbnail, including for older short-link TikToks.
   api('/api/social/resolve?postId='+encodeURIComponent(post.id))
-   .then(result=>{if(active&&result?.thumbnailUrl)setThumbnail(result.thumbnailUrl);})
+   .then(result=>{if(active)setThumbnail(result?.thumbnailUrl||null);})
    .catch(()=>{});
   return ()=>{active=false;};
  },[post.id,post.thumbnailUrl,post.platform]);
