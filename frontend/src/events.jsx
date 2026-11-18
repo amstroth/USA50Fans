@@ -2,6 +2,7 @@ import React,{useMemo,useState} from 'react';
 import {useApp} from './state';
 import {Badge,Empty,Heading,Icon,SectionTitle} from './ui';
 import {dateTime,safeUrl} from './api';
+import {LivePushSettings} from './push';
 function RoomOverlay({session,close}){
  return <div className="react-modal-cover room-cover" role="presentation"><div className="react-room-dialog" role="dialog" aria-modal="true" aria-label="USA50 fancall room"><header><div><span className="eyebrow">PRIVATE FANCALL ROOM</span><h2>{session.title}</h2></div><button className="icon-round" onClick={close} aria-label="Close call room"><Icon name="x"/></button></header><iframe src={'/index.html?embed=1&screen=events&room='+encodeURIComponent(session.id)} title="USA50 moderated fancall waiting room" allow="camera; microphone; fullscreen"/></div></div>;
 }
@@ -67,6 +68,7 @@ export function EventsPage(){
  async function streamStatus(id,status){try{await run('/api/livestreams/status',{streamId:id,status});}catch(err){message(err.message);}}
  return <main className="view events-page">
   <Heading eyebrow="USA50 EVENTS" title="Events & Fancalls" subtitle="Find upcoming experiences, live broadcasts, and free-entry fancall drawings."/>
+  <LivePushSettings/>
   <SectionTitle title="Admission and events"/>{events.length?events.map(e=><EventCard event={e} key={e.id} admin={staff} onStatus={status}/>):<Empty icon="🎫" title="No admissions announced yet" detail="Upcoming events and official ticket listings will appear here."/>}
   <SectionTitle title="Free fancall lotteries"/>{draws.length?draws.map(d=><FancallLottery key={d.id} draw={d} onChange={change} onRoom={setRoom} admin={staff}/>):<Empty icon="💌" title="No lotteries open yet" detail="Management can publish a free-entry fancall lottery."/>}
   {sessions.filter(s=>s.status!=='complete'&&!room).length>0&&<div className="room-queue-list"><SectionTitle title="Your call waiting rooms"/>{sessions.filter(s=>s.status!=='complete').map(s=><button className="inventory-row room-shortcut" key={s.id} onClick={()=>setRoom(s)}><span className="ticket-icon">📹</span><div><strong>{s.title}</strong><small>{s.status} · {s.queue.length} winners</small></div><Icon name="chevron"/></button>)}</div>}
