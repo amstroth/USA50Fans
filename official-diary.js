@@ -38,7 +38,7 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
  }
  function publicOfficial(p){
    const {thumbnailFile,thumbnailMime,thumbnailExt,thumbnailAttemptedAt,...display}=p;
-   return {...display,thumbnailUrl:thumbnailFile?'/api/official/thumbnail/'+p.id:
+   return {...display,thumbnailUrl:thumbnailFile?'/api/official/thumbnail/'+p.id+'?v='+encodeURIComponent(p.thumbnailUpdatedAt||p.publishedAt||'1'):
        p.platform==='YouTube'?'https://i.ytimg.com/vi/'+p.externalId+'/hqdefault.jpg':null};
  }
  function writeThumb(p,buf,mime){
@@ -46,7 +46,7 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
    const ext=mimeExt[mime],file=p.id+ext;
    fs.writeFileSync(path.join(previewDir,file),buf);
    if(p.thumbnailFile&&p.thumbnailFile!==file)try{fs.unlinkSync(path.join(previewDir,p.thumbnailFile));}catch{}
-   p.thumbnailFile=file;p.thumbnailExt=ext;p.thumbnailMime=mime;save();
+   p.thumbnailFile=file;p.thumbnailExt=ext;p.thumbnailMime=mime;p.thumbnailUpdatedAt=now();save();
  }
  function thumbnailFromData(p,dataUrl){
    const m=/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl||''));
@@ -181,6 +181,12 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
      if(['youtube.com','www.youtube.com','youtu.be'].includes(h)){const m=h==='youtu.be'?u.pathname.slice(1):u.searchParams.get('v')||u.pathname.match(/^\/shorts\/([\w-]{11})/)?.[1];if(!/^[\w-]{11}$/.test(m||''))return null;return {platform:'YouTube',url:'https://www.youtube.com/watch?v='+m,externalId:m};}
      if(['www.instagram.com','instagram.com'].includes(h)){const m=u.pathname.match(/^\/(p|reel)\/([\w-]{5,32})/);if(!m)return null;return {platform:'Instagram',url:'https://www.instagram.com/'+m[1]+'/'+m[2]+'/',externalId:m[2]};}
      if(['www.tiktok.com','tiktok.com'].includes(h)){const m=u.pathname.match(/^\/@[\w.]+\/video\/(\d{12,25})/);if(!m)return null;return {platform:'TikTok',url:'https://www.tiktok.com'+u.pathname.replace(/\/$/,'') ,externalId:m[1]};}
+     if(['discord.gg','discord.com','www.discord.com'].includes(h)){
+       const match=h==='discord.gg'?u.pathname.match(/^\/([a-zA-Z0-9-]{2,60})\/?$/):u.pathname.match(/^\/(?:invite\/([a-zA-Z0-9-]{2,60})|channels\/(\d{10,25})\/(\d{10,25}))\/?$/);
+       if(!match)return null;
+       const path=h==='discord.gg'?'/'+match[1]:u.pathname.replace(/\/$/,'');
+       return {platform:'Discord',url:'https://'+(h==='discord.gg'?'discord.gg':'discord.com')+path,externalId:'discord-'+(match[1]||match[2]+'-'+match[3])};
+     }
    }catch{}return null;
  };
  function addOfficial(input,autoEnrich=true){
@@ -215,6 +221,22 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
      await enrichOfficial(p).catch(err=>console.warn('USA50 official preview:',err.message));
    }
    return json(res,201,{ok:true,post:publicOfficial(p)});
+ }
+ function updateOfficial(req,res,data){
+   const user=userFrom(req);
+   if(!user||!['admin','idol'].includes(user.role)||user.mustChangePassword)return fail(res,403,'Idol or management account required.');
+   const p=state.officialPosts.find(x=>x.id===String(data.id||''));
+   if(!p)return fail(res,404,'Official channel post not found.');
+   const title=typeof data.title==='string'?data.title.trim():p.title;
+   const caption=typeof data.caption==='string'?data.caption.trim():p.caption;
+   if(!title||title.length>170||caption.length>500)return fail(res,400,'Title must be 1–170 characters and subheading at most 500.');
+   if(data.thumbnailDataUrl!==undefined){
+     if(typeof data.thumbnailDataUrl!=='string'||data.thumbnailDataUrl.length>1800000)return fail(res,413,'Thumbnail exceeds the 1.2 MB image limit.');
+     try{if(!thumbnailFromData(p,data.thumbnailDataUrl))return fail(res,400,'Choose a valid JPEG, PNG or WebP thumbnail.');}
+     catch(err){return fail(res,400,err.message);}
+   }
+   p.title=title;p.caption=caption;p.updatedAt=now();save();
+   return json(res,200,{ok:true,post:publicOfficial(p)});
  }
  function deleteOfficial(req,res,data){
    const user=userFrom(req);
@@ -282,5 +304,5 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
    const result=await autoSync.sync();
    return json(res,200,{ok:true,...result});
  }
- return {info,createDiary,deleteDiary,photo,photoThumbnail,publishOfficial,deleteOfficial,refreshPreviews,ingestOfficial,setSources,pollYouTube,syncOfficial,pollAutomatic:()=>autoSync.sync()};
+ return {info,createDiary,deleteDiary,photo,photoThumbnail,publishOfficial,updateOfficial,deleteOfficial,refreshPreviews,ingestOfficial,setSources,pollYouTube,syncOfficial,pollAutomatic:()=>autoSync.sync()};
 };

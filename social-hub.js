@@ -1,4 +1,5 @@
 'use strict';
+const vipProgram=require('./vip-program.js');
 /**
  * USA50 Social Hub development module.
  * Web preview only: reward credits, event perks and entry tickets are not redeemable.
@@ -56,14 +57,14 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,n
     const following=(state.follows[uid]||[]).length;
     const stat=ranking.find(x=>x.id===uid);
     const isIdol=role(u)==='idol';const isStaff=['admin','management','staff'].includes(role(u));
-    const newRankAward=!isIdol?(stat?.rank===1?'gold':stat?.rank===2?'silver':stat?.rank===3?'bronze':stat?.rank&&stat.rank<=10?'top10':null):null;
+    const newRankAward=!isIdol?(stat?.rank===1?'diamond':stat?.rank===2?'gold':stat?.rank===3?'rose-gold':stat?.rank&&stat.rank<=10?'silver':stat?.rank&&stat.rank<=50?'top50':stat?.rank&&stat.rank<=100?'top100':null):null;
     if(!isIdol&&p.lastRankAward!==newRankAward){
       if(newRankAward)p.ring='rank-auto';
       p.lastRankAward=newRankAward;save();
     }
-    const oshiCount=isIdol?Object.entries(state.profiles).filter(([id,x])=>role(account(id))==='fan'&&Array.isArray(x.oshiIds)&&x.oshiIds.includes(String(u.displayName||'').toLowerCase())).length:0;
+    const oshiCount=isIdol?Object.entries(state.profiles).filter(([id,x])=>role(account(id))==='fan'&&Array.isArray(x.oshiIds)&&x.oshiIds.includes(String(u.idolId||'').toLowerCase())).length:0;
     const equippedRing=p.ring||'classic';
-    return {id:uid,displayName:u.displayName,handle:p.handle,verifiedIdol:isIdol,verifiedStaff:isStaff,oshiCount,oshiIds:p.oshiIds||[],idolBorderColor:p.idolBorderColor||'#E63A84',rankBorder:newRankAward,bio:p.bio,avatarUrl:p.avatarUrl||null,ring:equippedRing,unlockedRings:u.state?.unlockedRings||['classic'],vipLevel:u.state?.vipLevel||'Starter',followers,following,postsCount:state.posts.filter(post=>post.authorId===uid&&!post.hidden).length,fanXP:Math.max(0,p.xp||0),rank:stat?.rank||null,tier:stat?.tier||'Fan',fansite:approvedFansite(uid),isFollowing:Boolean(viewerId&&(state.follows[viewerId]||[]).includes(uid))};
+    return {id:uid,displayName:u.displayName,handle:p.handle,verifiedIdol:isIdol,verifiedStaff:isStaff,idolId:u.idolId||null,oshiCount,oshiIds:p.oshiIds||[],idolBorderColor:p.idolBorderColor||'#E63A84',rankBorder:newRankAward,bio:p.bio,avatarUrl:p.avatarUrl||null,ring:equippedRing,unlockedRings:u.state?.unlockedRings||['classic'],vipLevel:vipProgram.publicInfo(u).label,vipRank:vipProgram.publicInfo(u).level,followers,following,postsCount:state.posts.filter(post=>post.authorId===uid&&!post.hidden).length,fanXP:Math.max(0,p.xp||0),rank:stat?.rank||null,tier:stat?.tier||'Fan',fansite:approvedFansite(uid),isFollowing:Boolean(viewerId&&(state.follows[viewerId]||[]).includes(uid))};
   }
   function info(user){
     const uid=user?.id||null,ranking=ranks();
