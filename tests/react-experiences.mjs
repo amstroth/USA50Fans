@@ -19,13 +19,19 @@ assert.ok(drops.includes('createPortal('),'Draw animation must use a full-screen
 for(const term of ['/api/diary/publish','placedItems:items.map','onPointerDown','setPointerCapture','data-resize','onPointerMove','onPointerCancel','photos:photos.map','scale:','rotation:']){
  assert.ok(diary.includes(term),'Missing native diary editor feature: '+term);
 }
-for(const term of ['createPortal(','/collector-three-v12.js','/card-face-text.js','USA50ThreeCard','instance.destroy()','onSide','onWarning']){
+for(const term of ['createPortal(','/collector-three-v12.js','/card-face-text.js','USA50ThreeCard','instance.destroy()','onSide','onWarning',"import('three')",'USA50ReactThreeRuntime','activateImmersiveBackground']){
  assert.ok(collector.includes(term),'Missing 3D collector lifecycle feature: '+term);
 }
 assert.match(read('frontend/src/core-pages.jsx'),/setViewerCard\(card\)/,'Owned card should open 3D viewer');
+assert.match(read('frontend/src/core-pages.jsx'),/Checkout · Add /,'Every signed-in account should see demo STAR checkout');
 assert.match(css,/\.pull-fullscreen\{position:fixed;inset:0;z-index:10000/);
 assert.match(css,/\.react-collector-fullscreen\{position:fixed;inset:0;z-index:11000/);
 assert.match(css,/\.react-diary-decoration\{[^}]*touch-action:none/);
+assert.match(css,/\.pull-fullscreen\{[^}]*background:#000/,'Card pulls need a truly black fullscreen backdrop');
+assert.match(css,/\.react-collector-fullscreen\{[^}]*background:#000/,'3D collector needs a truly black fullscreen backdrop');
+const immersive=read('frontend/src/immersive-theme.js');
+assert.match(immersive,/theme-color/,'Immersive mode must darken the mobile status bar theme');
+assert.match(immersive,/black-translucent/,'Immersive mode should use a dark transparent iOS status bar');
 // Profile grid post navigation is its own scrollable, author-scoped React feed.
 const social=read('frontend/src/social.jsx'),profile=read('frontend/src/profile.jsx'),appCSS=read('frontend/src/app.css');
 assert.doesNotMatch(state,/name:'Recycle'/,'Recycle must be removed from React navigation');

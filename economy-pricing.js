@@ -31,12 +31,12 @@ function info(u){
 function handlePost(req,res,endpoint,data,{userFrom,save,json,fail}){
  if(endpoint!=='/api/economy/demo-purchase')return false;
  const u=userFrom(req);
- if(!u||u.role!=='admin'){fail(res,403,'Developer demo grants are restricted to admin accounts.');return true;}
+ if(!u){fail(res,401,'Sign in to receive demo STARS.');return true;}
  if(u.mustChangePassword){fail(res,403,'Change your temporary password first.');return true;}
  const pack=quote(u,String(data.sku||''));
  if(!pack){fail(res,400,'Unknown STAR bundle.');return true;}
  u.state ||= {};u.state.economyDemoPurchases ||= [];
- if(u.state.economyDemoPurchases.length>=30){fail(res,429,'Developer demo grant limit reached.');return true;}
+ if(u.state.economyDemoPurchases.length>=30){fail(res,429,'Demo checkout limit reached for this account.');return true;}
  u.state.stars=Number(u.state.stars||0)+pack.totalStars;
  u.state.economyDemoPurchases.push({id:crypto.randomUUID(),sku:pack.sku,month:monthKey(),baseStars:pack.stars,monthlyBonus:pack.monthlyBonus,usdCentsSimulated:pack.usdCents,createdAt:new Date().toISOString(),status:'DEMO_NO_PAYMENT'});
  save();

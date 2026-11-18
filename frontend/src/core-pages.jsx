@@ -52,11 +52,20 @@ export function CollectionPage(){
 export function ShopPage(){
  const {data,navigate,run,message}=useApp(),[busy,setBusy]=useState('');
  const bundles=data?.economy?.bundles||[];
- async function grant(sku){setBusy(sku);try{const response=await run('/api/economy/demo-purchase',{sku});message('Developer demo grant: +'+number(response.creditedDemoStars)+' STARS');}catch(err){message(err.message);}finally{setBusy('');}}
+ async function grant(sku){
+  if(!data?.me){navigate('profile');message('Sign in to receive demo STARS.');return;}
+  setBusy(sku);
+  try{
+   const response=await run('/api/economy/demo-purchase',{sku});
+   message('Demo checkout complete! +'+number(response.creditedDemoStars)+' STARS added. No payment was charged.');
+  }catch(err){message(err.message);}finally{setBusy('');}
+ }
  return <main className="view"><Heading eyebrow="USA50 STAR SHOP" title="Fill your sky with STARS ✦" subtitle="Browse STAR bundles for the photocard universe." action={<button className="action secondary" onClick={()=>navigate('drops')}>Open Card Drops</button>}/>
   <div className="balance-banner"><span className="balance-sparkle">✦</span><div><span>Current balance</span><strong>{number(data?.me?.state?.stars||0)} STARS</strong></div><Badge tone="pink">Preview</Badge></div>
-  <div className="shop-grid">{bundles.map(b=><article className="shop-bundle" key={b.sku}><StarBundleArt sku={b.sku}/><h3>{b.name}</h3><strong>{number(b.stars)} STARS</strong>{b.monthlyBonus>0&&<span className="bonus-tag">+{number(b.monthlyBonus)} bonus</span>}<span className="shop-price">{'$'+(b.usdCents/100).toFixed(2)}</span>{data?.me?.role==='admin'?<button className="action primary full" disabled={Boolean(busy)} onClick={()=>grant(b.sku)}>{busy===b.sku?'Loading…':'Grant demo STARS'}</button>:<button className="action soft full" disabled>Checkout not enabled</button>}</article>)}</div>
-  <div className="react-note"><strong>STAR Shop is a development preview.</strong><p>No payment is collected here. Developer demo grants are restricted to management accounts that are authorized as admins.</p></div></main>;
+  <div className="shop-grid">{bundles.map(b=><article className="shop-bundle" key={b.sku}><StarBundleArt sku={b.sku}/><h3>{b.name}</h3><strong>{number(b.stars)} STARS</strong>{b.monthlyBonus>0&&<span className="bonus-tag">+{number(b.monthlyBonus)} bonus</span>}<span className="shop-price">{'$'+(b.usdCents/100).toFixed(2)}</span><button className="action primary full" disabled={Boolean(busy)||Boolean(data?.me?.mustChangePassword)} onClick={()=>grant(b.sku)}>
+ {busy===b.sku?'Adding STARS…':data?.me?'Checkout · Add '+number(b.totalStars)+' demo STARS':'Sign in for demo checkout'}
+ </button></article>)}</div>
+  <div className="react-note"><strong>Demo checkout · No real payment.</strong><p>For now, the checkout buttons instantly credit the selected bundle's demo STARS to your signed-in account. The displayed dollar prices are reference prices only; no card details or payment are collected. Monthly bonus STARS apply to your first demo checkout of the month.</p></div></main>;
 }
 export function LegacyPage({route}){
  const titles={drops:'Card Drops',messages:'Messages',live:'Livestream Studio',fansites:'Fansites',admin:'Management',diary:'Diary Entries'};

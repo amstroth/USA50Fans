@@ -4,6 +4,7 @@ import {useApp} from './state';
 import {CardPreview,Empty,Heading,Icon} from './ui';
 import {number} from './api';
 import {CollectorViewer} from './collector';
+import {activateImmersiveBackground} from './immersive-theme';
 
 function RewardCard({reward,index,onCard}){
  if(reward.type==='card'&&reward.card)return <button className={'pull-result-card rarity-'+String(reward.card.rarity||'R').toLowerCase()} type="button" onClick={()=>onCard(reward.card)}>
@@ -24,10 +25,10 @@ function FullscreenPull({results,onClose}){
  const [phase,setPhase]=useState('opening'),[focused,setFocused]=useState(null);
  const rewards=Array.isArray(results?.rewards)?results.rewards:results?.card?[{type:'card',card:results.card}]:[];
  useEffect(()=>{
-  const previous=document.body.style.overflow;document.body.style.overflow='hidden';
+  const cleanup=activateImmersiveBackground();
   const escape=e=>{if(e.key==='Escape'&&phase==='results')onClose();};
   window.addEventListener('keydown',escape);
-  return()=>{document.body.style.overflow=previous;window.removeEventListener('keydown',escape);};
+  return()=>{cleanup();window.removeEventListener('keydown',escape);};
  },[phase,onClose]);
  useEffect(()=>{
   if(phase!=='opening')return;

@@ -35,7 +35,7 @@
 .drops-odds-columns>div>div{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #f2e4f0;font-size:12px;color:#80668d}
 .drops-odds-columns>div b{color:#684781}
 /* Full-screen card unwrapping; no embedded window or side navigation. */
-.pull-fullscreen{position:fixed;inset:0;z-index:10000;min-height:100dvh;width:100vw;background:#170e29;color:white;overflow:auto;isolation:isolate}
+.pull-fullscreen{position:fixed;inset:0;z-index:10000;min-height:100dvh;width:100vw;background:#000;color:white;overflow:auto;isolation:isolate}
 .pull-aura{position:fixed;width:52vmin;height:52vmin;border-radius:50%;filter:blur(55px);opacity:.36;pointer-events:none;z-index:-1;animation:pull-aura-drift 5s ease-in-out infinite alternate}
 .pull-aura.a{left:-18vmin;top:4vmin;background:#b85de4}
 .pull-aura.b{right:-15vmin;bottom:5vmin;background:#ed659e;animation-delay:.7s}
@@ -83,7 +83,7 @@
 @keyframes pull-aura-drift{from{transform:translate(-4%,3%)}to{transform:translate(6%,-7%)}}
 @keyframes pull-reward-appear{from{opacity:0;transform:translateY(65px) rotateY(115deg) scale(.7)}to{opacity:1;transform:translateY(0) rotateY(0) scale(1)}}
 /* Dedicated full-screen 3D, with the legacy renderer mounted inside React. */
-.react-collector-fullscreen{position:fixed;inset:0;z-index:11000;width:100vw;height:100dvh;min-height:0;background:radial-gradient(ellipse at 50% 55%,#724b99 0%,#2e1b4e 46%,#130b22 100%);display:grid;grid-template-rows:auto minmax(0,1fr) auto;color:#fff;isolation:isolate;overflow:hidden}
+.react-collector-fullscreen{position:fixed;inset:0;z-index:11000;width:100vw;height:100dvh;min-height:0;background:#000;display:grid;grid-template-rows:auto minmax(0,1fr) auto;color:#fff;isolation:isolate;overflow:hidden}
 .react-collector-glow{position:fixed;pointer-events:none;filter:blur(95px);z-index:-1;opacity:.35;border-radius:50%;background:#e577d4;width:40vw;height:40vw}
 .react-collector-glow.one{left:-20vw;top:8vh}
 .react-collector-glow.two{right:-16vw;bottom:-8vh;background:#8384eb}

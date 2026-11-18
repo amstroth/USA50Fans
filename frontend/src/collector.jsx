@@ -2,6 +2,7 @@ import React,{useEffect,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
 import {CardPreview,Icon} from './ui';
 import {number} from './api';
+import {activateImmersiveBackground} from './immersive-theme';
 
 // The React viewer reuses the exact authenticated physical-card Three.js
 // renderer, foil masks and card-back logic from the legacy collector.
@@ -19,17 +20,22 @@ function loadLocalScript(src,globalName){
  return loadedScripts.get(src);
 }
 async function getThreeViewer(){
+ // Vite bundles this import and its dependencies into same-origin /react/assets
+ // chunks, instead of requiring the browser to import a separate /vendor module.
+ // The shared legacy renderer retains the exact physical/foil card presentation.
+ const THREE=await import('three');
+ window.USA50ReactThreeRuntime=THREE;
  await loadLocalScript('/card-face-text.js?v=10','USA50CardFace');
- return loadLocalScript('/collector-three-v12.js?v=15','USA50ThreeCard');
+ return loadLocalScript('/collector-three-v12.js?v=16','USA50ThreeCard');
 }
 export function CollectorViewer({card,owned,onClose}){
  const target=useRef(null),engine=useRef(null),[side,setSide]=useState('FRONT');
  const [loading,setLoading]=useState(true),[error,setError]=useState(''),[warning,setWarning]=useState('');
  useEffect(()=>{
-  const oldOverflow=document.body.style.overflow;document.body.style.overflow='hidden';
+  const cleanup=activateImmersiveBackground();
   const key=e=>{if(e.key==='Escape')onClose();};
   document.addEventListener('keydown',key);
-  return()=>{document.body.style.overflow=oldOverflow;document.removeEventListener('keydown',key);};
+  return()=>{cleanup();document.removeEventListener('keydown',key);};
  },[onClose]);
  useEffect(()=>{
   let alive=true;

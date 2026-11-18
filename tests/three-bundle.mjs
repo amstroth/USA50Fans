@@ -12,6 +12,7 @@ assert.match(docker, /cp\s+node_modules\/three\/build\/three\.module\.js\s+www\/
 assert.match(docker, /cp\s+node_modules\/three\/build\/three\.core\.js\s+www\/vendor\/three\.core\.js/);
 assert.match(docker, /test -s www\/vendor\/three\.core\.js/);
 assert.match(docker, /node --check www\/vendor\/three\.core\.js/);
-assert.match(viewer, /import\(['"]\/vendor\/three\.module\.js/);
+assert.match(viewer, /window\.USA50ReactThreeRuntime/,'The React 3D renderer must accept Vite-bundled Three.js first');
+assert.match(viewer, /import\(['"]\/vendor\/three\.module\.js/,'Legacy collector keeps its standalone fallback');
 assert.equal(pkg.dependencies.three, '0.187.0');
 console.log('Three.js Docker bundle contract passed: module and core files are copied and checked.');
