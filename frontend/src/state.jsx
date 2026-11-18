@@ -10,7 +10,7 @@ export const NAV=[
  {id:'messages',name:'Messages',icon:'messages',legacy:true},
  {id:'shop',name:'Shop',icon:'shop'},
  {id:'events',name:'Events',icon:'events'},
- {id:'live',name:'Livestreams',icon:'live',legacy:true},
+ {id:'live',name:'Livestreams',icon:'live'},
  {id:'profile',name:'My Page',icon:'profile'},
  {id:'diary',name:'Diary Entries',icon:'collection',legacy:true},
  {id:'fansites',name:'Fansites',icon:'camera',legacy:true},
