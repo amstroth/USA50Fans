@@ -1,6 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {useApp} from './state';
 import {Icon} from './ui';
+import {CropPhoto,preparePhoto} from './photo-crop';
 
 const SIGNS=['','Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const BLANK={birthday:'',zodiac:{sun:'',moon:'',rising:''},mbti:'',height:'',bornCity:'',bornState:'',
@@ -31,11 +32,68 @@ function profileImage(file){
   img.src=url;
  });
 }
+
+function PhotoManager({member,kind,onCrop}){
+ const {data,run,message}=useApp(),[busy,setBusy]=useState(false),[dragged,setDragged]=useState(null);
+ const profile=data?.idolProfiles?.[member.id]||BLANK;
+ const photos=kind==='gallery'?(profile.gallery||[]):(profile.circleGallery||[]);
+ const max=kind==='gallery'?12:8;
+ async function send(payload){return run('/api/idol-gallery/update',{idolId:member.id,kind,...payload});}
+ async function guarded(job){if(busy)return;setBusy(true);try{await job();}catch(err){message(err.message);}finally{setBusy(false);}}
+ async function receiveFiles(fileList,replaceId=null){
+  const files=Array.from(fileList||[]);if(!files.length)return;
+  await guarded(async()=>{
+   for(const file of files.slice(0,replaceId?1:Math.max(0,max-photos.length))){
+    const originalDataUrl=await preparePhoto(file,{maxChars:1450000});
+    if(kind==='circle'){onCrop({source:originalDataUrl,originalDataUrl,replaceId});break;}
+    await send({action:replaceId?'replace':'upload',id:replaceId,originalDataUrl});
+   }
+  });
+ }
+ async function move(from,to){
+  if(from===to||to<0||to>=photos.length)return;
+  await guarded(async()=>{const order=photos.map(p=>p.id);const moved=order.splice(from,1)[0];order.splice(to,0,moved);await send({action:'reorder',ids:order});});
+ }
+ async function remove(p){
+  if(!window.confirm('Remove this photo from the '+kind+' gallery?'))return;
+  await guarded(()=>send({action:'delete',id:p.id}));
+ }
+ return <section className="idol-photo-manager">
+  <div className="idol-photo-manager-top"><div><strong>{kind==='gallery'?'Main gallery':'Circular profile pictures'}</strong>
+   <small>{photos.length}/{max} · Drag or use arrows to reorder. The first photo is featured.</small></div>
+   {photos.length<max&&<label className="action secondary idol-photo-upload">+ Add photo{kind==='gallery'?'s':''}
+    <input type="file" accept="image/jpeg,image/png,image/webp" multiple={kind==='gallery'} disabled={busy} onChange={e=>{const files=e.target.files;e.target.value='';receiveFiles(files);}}/>
+   </label>}
+  </div>
+  <div className="idol-photo-manager-items">
+   {photos.map((p,i)=><div className="idol-photo-manager-item" key={p.id}
+    draggable={!busy} onDragStart={e=>{setDragged(i);e.dataTransfer.effectAllowed='move';}}
+    onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();if(dragged!==null)move(dragged,i);setDragged(null);}} onDragEnd={()=>setDragged(null)}>
+    <img src={p.url} className={kind==='circle'?'round':''} alt={'Gallery photo '+(i+1)}/>
+    <small>{i===0?'★ Featured':'Photo '+(i+1)}</small>
+    <div className="idol-photo-manager-actions">
+     <button type="button" disabled={busy||i===0} onClick={()=>move(i,i-1)} title="Move earlier">←</button>
+     <button type="button" disabled={busy||i===photos.length-1} onClick={()=>move(i,i+1)} title="Move later">→</button>
+     {kind==='circle'&&<button type="button" onClick={()=>onCrop({source:p.originalUrl,replaceId:p.id,recrop:true})}>Crop</button>}
+     <label>Replace<input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e=>{const files=e.target.files;e.target.value='';receiveFiles(files,p.id);}}/></label>
+     <button type="button" onClick={()=>remove(p)} disabled={busy} title="Remove photo">×</button>
+    </div>
+   </div>)}
+   {!photos.length&&<p className="fineprint">No official photos have been added yet.</p>}
+  </div>
+  {kind==='circle'&&photos.length<max&&profile.gallery?.length>0&&<div className="idol-photo-from-gallery">
+   <small>Make a circular photo from the gallery:</small>
+   {profile.gallery.map(p=><button key={p.id} type="button" onClick={()=>onCrop({source:p.originalUrl,fromGallery:true})} title="Crop this gallery photo as a circle">
+    <img src={p.url} alt="Gallery source"/></button>)}
+  </div>}
+ </section>;
+}
+
 function IdolEditor({member,profile,close}){
  const {run,message}=useApp();
  const [draft,setDraft]=useState(()=>({...BLANK,...profile,zodiac:{...BLANK.zodiac,...profile.zodiac},
   favoriteColors:(profile.favoriteColors||[]).map(c=>({...c}))}));
- const [newPhoto,setNewPhoto]=useState(null),[busy,setBusy]=useState(false);
+ const [cropJob,setCropJob]=useState(null),[busy,setBusy]=useState(false);
  const set=(key,value)=>setDraft(d=>({...d,[key]:value}));
  const zodiac=(key,value)=>setDraft(d=>({...d,zodiac:{...d.zodiac,[key]:value}}));
  const colors=(index,key,value)=>setDraft(d=>({...d,favoriteColors:d.favoriteColors.map((c,i)=>i===index?{...c,[key]:value}:c)}));
@@ -45,17 +103,19 @@ function IdolEditor({member,profile,close}){
    await run('/api/idol-profiles/update',{idolId:member.id,
     birthday:draft.birthday,zodiac:draft.zodiac,mbti:draft.mbti,height:draft.height,
     bornCity:draft.bornCity,bornState:draft.bornState,favoriteColors:draft.favoriteColors,
-    quote:draft.quote,yearGoal:draft.yearGoal,idolGoal:draft.idolGoal,
-    ...(newPhoto?{photoDataUrl:newPhoto}:{})});
+    quote:draft.quote,yearGoal:draft.yearGoal,idolGoal:draft.idolGoal});
    message('Member profile saved ♡');close();
   }catch(err){message(err.message);}finally{setBusy(false);}
  }
  return <div className="react-modal-cover" role="presentation" onMouseDown={e=>e.target===e.currentTarget&&close()}>
   <div className="react-modal idol-editor" role="dialog" aria-modal="true" aria-label={'Edit '+member.name+' member profile'}>
    <header><div><span className="eyebrow">{member.team} · MEMBERS</span><h2>Edit {member.name}'s Profile</h2></div><button aria-label="Close editor" onClick={close}><Icon name="x"/></button></header>
+   <div className="idol-editor-media">
+    <PhotoManager member={member} kind="gallery" onCrop={setCropJob}/>
+    <PhotoManager member={member} kind="circle" onCrop={setCropJob}/>
+    <p className="fineprint">Photo uploads and ordering save immediately. Biography changes save using the button below.</p>
+   </div>
    <form className="react-form" onSubmit={save}>
-    <label>Official member photo<input type="file" accept="image/jpeg,image/png,image/webp" onChange={async e=>{const f=e.target.files?.[0];if(!f)return;try{setNewPhoto(await profileImage(f));}catch(err){message(err.message);}}}/></label>
-    {(newPhoto||profile.photoUrl)&&<img src={newPhoto||profile.photoUrl} className="idol-editor-photo" alt="Member portrait preview"/>}
     <div className="idol-form-grid">
      <label>Birthday (month and day)<input type="text" placeholder="MM-DD" pattern="(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])" maxLength={5} value={draft.birthday} onChange={e=>set('birthday',e.target.value)}/></label>
      <label>MBTI<input maxLength={8} placeholder="INFP-T" value={draft.mbti} onChange={e=>set('mbti',e.target.value.toUpperCase())}/></label>
@@ -81,6 +141,18 @@ function IdolEditor({member,profile,close}){
     <button className="action primary full" type="submit" disabled={busy}>{busy?'Saving profile…':'Save member profile'}</button>
    </form>
   </div>
+  {cropJob&&<CropPhoto source={cropJob.source} title={'Crop '+member.name+' circle photo'} onCancel={()=>setCropJob(null)}
+   onSave={async cropped=>{
+    const body={idolId:member.id,kind:'circle',action:cropJob.recrop?'crop':cropJob.replaceId?'replace':'upload',
+     ...(cropJob.replaceId?{id:cropJob.replaceId}:{}),
+     ...(cropJob.recrop?{}:{originalDataUrl:cropJob.originalDataUrl||await (async()=>{
+      const response=await fetch(cropJob.source,{credentials:'same-origin'});
+      if(!response.ok)throw Error('Could not load the source photo.');
+      return preparePhoto(new File([await response.blob()],'gallery.jpg',{type:'image/jpeg'}),{maxChars:1450000});
+     })()}),
+     cropDataUrl:cropped};
+    await run('/api/idol-gallery/update',body);setCropJob(null);message('Circle photo saved ♡');
+   }}/>}
  </div>;
 }
 function Fact({label,children}){return children?<div className="idol-fact"><span>{label}</span><strong>{children}</strong></div>:null;}
