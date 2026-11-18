@@ -71,6 +71,26 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
    if(input.thumbnailUrl){
      try{if(await fetchThumb(p,input.thumbnailUrl))return;}catch(err){console.warn('USA50 official thumbnail:',err.message);}
    }
+   if(p.platform==='Instagram'){
+     // Public Instagram posts sometimes expose OG imagery even when oEmbed is
+     // unavailable. Use only a canonical Instagram URL and approved image CDNs.
+     try{
+       const u=new URL(p.url);
+       if(u.protocol!=='https:'||u.hostname!=='www.instagram.com')return;
+       const response=await fetch(u.toString(),{redirect:'error',signal:AbortSignal.timeout(5000),
+         headers:{Accept:'text/html','User-Agent':'Mozilla/5.0 (compatible; USA50Preview/1.0)'}});
+       if(!response.ok||Number(response.headers?.get?.('content-length')||0)>900000)return;
+       const html=(await response.text()).slice(0,900000);
+       for(const match of html.matchAll(/<meta\b[^>]*>/gi)){
+         const tag=match[0],prop=tag.match(/\b(?:property|name)\s*=\s*["']([^"']+)["']/i)?.[1];
+         if(!['og:image','og:image:secure_url','twitter:image','twitter:image:src'].includes(String(prop||'').toLowerCase()))continue;
+         const src=tag.match(/\bcontent\s*=\s*["']([^"']+)["']/i)?.[1]?.replace(/&amp;/g,'&').replace(/&#38;/g,'&');
+         if(src&&await fetchThumb(p,src))break;
+       }
+     }catch(err){console.warn('USA50 Instagram preview:',err.message);}
+     finally{p.thumbnailAttemptedAt=now();save();}
+     return;
+   }
    if(p.platform!=='TikTok')return;
    try{
      // TikTok oEmbed may supply a cover URL for public videos. The provider can omit it.
@@ -247,8 +267,8 @@ module.exports=function createOfficialDiary({db,save,id,now,json,fail,userFrom,d
    return json(res,200,{ok:true});
  }
  async function refreshPreviews(){
-   const stale=state.officialPosts.filter(p=>p.platform==='TikTok'&&!p.thumbnailFile&&
-     (!p.thumbnailAttemptedAt||Date.now()-Date.parse(p.thumbnailAttemptedAt)>6*3600000)).slice(-6);
+   const stale=state.officialPosts.filter(p=>['TikTok','Instagram'].includes(p.platform)&&!p.thumbnailFile&&
+     (!p.thumbnailAttemptedAt||Date.now()-Date.parse(p.thumbnailAttemptedAt)>6*3600000)).slice(-12);
    for(const p of stale)await enrichOfficial(p).catch(()=>{});
  }
  async function pollYouTube(){
