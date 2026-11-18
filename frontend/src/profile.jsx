@@ -98,7 +98,7 @@ export function ProfilePage(){
    </div>
   </div>
   <div className="profile-bio"><strong>{profile.displayName}</strong><p>{profile.bio||'Part of the USA50 universe ♡'}</p>
-   {!isIdol&&<div className="profile-badges"><Badge tone="pink">✦ VIP {profile.vipLevel||'Starter'}</Badge><Badge>♛ {profile.rank?'Rank #'+profile.rank:'Unranked'}</Badge><Badge>{number(profile.fanXP)} Fan XP</Badge>{(profile.oshiIds||[]).map(id=><Badge key={id} tone="pink">♡ {data?.members?.find(m=>m.id===id)?.name||id} Oshi</Badge>)}</div>}
+   {!isIdol&&<div className="profile-badges"><Badge tone="pink">✦ VIP {profile.vipLevel||'Starter'}</Badge><button type="button" className="rank-badge-link" onClick={()=>navigate('rankings')} title="View the top 100 fan rankings"><Badge>♛ {profile.rank?'Rank #'+profile.rank:'Unranked'} <Icon name="chevron" size={12}/></Badge></button><Badge>{number(profile.fanXP)} Fan XP</Badge>{(profile.oshiIds||[]).map(id=><Badge key={id} tone="pink">♡ {data?.members?.find(m=>m.id===id)?.name||id} Oshi</Badge>)}</div>}
   </div>
   <div className="row-actions profile-buttons">{own?<><button className="action secondary" onClick={()=>setEditing(true)}>Edit profile / Oshi settings</button><button className="action soft" onClick={signOut}>Sign out</button></>:<button className="action primary" onClick={follow}>{profile.isFollowing?'Following':'Follow +'}</button>}</div>
   <div className="segmented-tabs">{(isIdol?[['hashtag','Hashtag'],['hearted','Hearted'],['posts','Posts']]:[['posts','Posts'],['saved','Saved']]).map(([key,name])=><button key={key} className={tab===key?'selected':''} onClick={()=>setTab(key)}>{name}</button>)}</div>
