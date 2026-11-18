@@ -1,6 +1,8 @@
 'use strict';
 const vipProgram=require('./vip-program.js');
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+const FAN_DAILY_POST_LIMIT=5;
+const FAN_DAILY_POST_LIMIT_MESSAGE="Woah slow down there. Only 5 posts are allowed per day. Make sure you're only posting your own content. <#3";
 /**
  * USA50 Social Hub development module.
  * Web preview only: reward credits, event perks and entry tickets are not redeemable.
@@ -12,7 +14,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
   const state=db.social;
   const mediaDir=dataDir?path.join(dataDir,'social-thumbnails'):null;
   if(mediaDir)fs.mkdirSync(mediaDir,{recursive:true});
-  for(const k of ['posts','profiles','votes','follows','reports','bans','ticketMilestones','dailyCredits','idolHearts','notifications','comments']){
+  for(const k of ['posts','profiles','votes','follows','reports','bans','ticketMilestones','dailyCredits','idolHearts','notifications','comments','postDailyCounts']){
     if(!state[k])state[k]=['posts','reports'].includes(k)?[]:{};
   }
   // Repair legacy hidden previews: removing an uploaded cover must never blank
@@ -22,6 +24,24 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
     save();
   }
   function account(uid){return db.users[uid]||null;}
+  // Count successful fan publications against a UTC calendar day. Persist the
+  // counter independently of the posts so deleting a post cannot reset quota.
+  // A missing counter is initialized using today's existing posts for seamless
+  // migration from the previous active-post-based limiter.
+  function fanPostCounter(u,day){
+    if(role(u)!=='fan')return null;
+    const existing=state.posts.reduce((total,p)=>total+(p.authorId===u.id&&String(p.createdAt||'').slice(0,10)===day?1:0),0);
+    const stored=state.postDailyCounts[u.id];
+    return {day,count:stored?.day===day?Math.max(Number(stored.count)||0,existing):existing};
+  }
+  function fanPostLimitReached(u,day){
+    const counter=fanPostCounter(u,day);
+    return Boolean(counter&&counter.count>=FAN_DAILY_POST_LIMIT);
+  }
+  function recordFanPost(u,day){
+    const counter=fanPostCounter(u,day);
+    if(counter)state.postDailyCounts[u.id]={day,count:counter.count+1};
+  }
   function approvedFansite(uid){return db.fansites.some(f=>f.userId===uid&&f.status==='approved');}
   function role(u){return u?.role||'fan';}
   function profileFor(uid){
@@ -389,7 +409,7 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
       if(category==='fansite'&&!approvedFansite(u.id))return fail(res,403,'Fansite publishing requires management approval.'),true;
       if(state.posts.some(p=>p.authorId===u.id&&p.url===source.url&&!p.hidden))return fail(res,409,'You already shared this post.'),true;
       const day=now().slice(0,10);
-      if(state.posts.filter(p=>p.authorId===u.id&&p.createdAt.slice(0,10)===day).length>=5)return fail(res,429,'Limit 5 submissions per day in this development preview.'),true;
+      if(fanPostLimitReached(u,day))return fail(res,429,FAN_DAILY_POST_LIMIT_MESSAGE),true;
       if(data.hideThumbnail===true&&Object.hasOwn(data,'thumbnailDataUrl'))return fail(res,400,'Choose either a thumbnail or its removal.'),true;
       // Omitting a custom cover always leaves the original embedded preview visible.
       const post={id:id(),authorId:u.id,category,caption,url:source.url,platform:source.platform,embedKind:source.embedKind,embedId:source.embedId,thumbnailUrl:null,baseXP:15,createdAt:now(),hidden:false};
@@ -406,6 +426,10 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
         try{saveImageFromData(post,data.thumbnailDataUrl);post.thumbnailManual=true;}
         catch(err){return fail(res,400,err.message),true;}
       }
+      // Recheck after async provider metadata fetch so concurrent requests
+      // cannot both spend the same last daily slot.
+      if(fanPostLimitReached(u,day))return fail(res,429,FAN_DAILY_POST_LIMIT_MESSAGE),true;
+      recordFanPost(u,day);
       state.posts.push(post);
       const credit=state.dailyCredits[u.id]||{day,count:0};if(credit.day!==day){credit.day=day;credit.count=0;}
       let pointsAwarded=0;
@@ -565,9 +589,9 @@ module.exports=function makeSocial({db,save,id,bodyText,now,json,fail,userFrom,d
       if(original.authorId===u.id)return fail(res,400,'You cannot repost your own post.'),true;
       if(state.posts.some(p=>p.authorId===u.id&&p.repostOf===original.id&&!p.hidden))return fail(res,409,'Already reposted.'),true;
       const day=now().slice(0,10);
-      if(state.posts.filter(p=>p.authorId===u.id&&p.createdAt.slice(0,10)===day).length>=5)return fail(res,429,'Daily posting limit reached.'),true;
+      if(fanPostLimitReached(u,day))return fail(res,429,FAN_DAILY_POST_LIMIT_MESSAGE),true;
       const post={id:id(),authorId:u.id,category:'fan',caption:original.caption,url:original.url,platform:original.platform,embedKind:original.embedKind,embedId:original.embedId,repostOf:original.id,repostAuthor:profileFor(original.authorId)?.handle||'USA50 fan',thumbnailUrl:original.thumbnailUrl||null,baseXP:5,createdAt:now(),hidden:false};
-      state.posts.push(post);profileFor(u.id).xp+=5;save();
+      recordFanPost(u,day);state.posts.push(post);profileFor(u.id).xp+=5;save();
       return json(res,201,{ok:true,postId:post.id}),true;
     }
     if(ep==='/api/social/bio'){
