@@ -4,7 +4,7 @@ const Ctx=createContext(null);
 export const NAV=[
  {id:'home',name:'Home',icon:'home'},
  {id:'collection',name:'Collection',icon:'collection'},
- {id:'drops',name:'Card Drops',icon:'drops',legacy:true},
+ {id:'drops',name:'Card Drops',icon:'drops'},
  {id:'community',name:'Social',icon:'community'},
  {id:'rankings',name:'Fan Rankings',icon:'trophy'},
  {id:'idols',name:'Meet the Idols',icon:'profile'},
@@ -14,7 +14,7 @@ export const NAV=[
  {id:'events',name:'Events',icon:'events'},
  {id:'live',name:'Livestreams',icon:'live'},
  {id:'profile',name:'My Page',icon:'profile'},
- {id:'diary',name:'Diary Entries',icon:'collection',legacy:true},
+ {id:'diary',name:'Diary Entries',icon:'collection'},
  {id:'fansites',name:'Fansites',icon:'camera',legacy:true},
  {id:'recycle',name:'Recycle',icon:'collection',legacy:true},
  {id:'studio',name:'Creator Studio',icon:'camera',legacy:true},

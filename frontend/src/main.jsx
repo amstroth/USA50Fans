@@ -11,6 +11,8 @@ import {LivePage} from './live';
 import {VIPPage} from './vip';
 import {MessagesPage} from './messages';
 import {MeetIdolsPage} from './idols';
+import {DropsPage} from './drops';
+import {DiaryPage} from './diary';
 import {dateTime,number} from './api';
 import './app.css';
 function Mailbox(){
@@ -65,8 +67,8 @@ function AppShell(){
      <button className="round-icon mail-button" onClick={()=>setMailOpen(true)} aria-label={'Open mail, '+mailCount+' unread'}><Icon name="mail" size={20}/>{mailCount>0&&<span className="mail-number">{mailCount>99?'99+':mailCount}</span>}</button>
     </div>
    </header>}
-   <div className={'react-content '+(route==='community'?'social-content ':'')+(route==='messages'?'message-content ':'')+(['drops','fansites','recycle','studio','admin'].includes(route)?'compat-content':'')}>
-    {route==='home'?<HomePage/>:route==='collection'?<CollectionPage/>:route==='shop'?<ShopPage/>:route==='community'?<SocialPage/>:route==='rankings'?<RankingsPage/>:route==='events'?<EventsPage/>:route==='live'?<LivePage/>:route==='profile'?<ProfilePage/>:route==='idols'?<MeetIdolsPage/>:route==='vip'?<VIPPage/>:route==='messages'?<MessagesPage/>:<LegacyPage route={route}/>}
+   <div className={'react-content '+(route==='community'?'social-content ':'')+(route==='messages'?'message-content ':'')+(['fansites','recycle','studio','admin'].includes(route)?'compat-content':'')}>
+    {route==='home'?<HomePage/>:route==='collection'?<CollectionPage/>:route==='drops'?<DropsPage/>:route==='diary'?<DiaryPage/>:route==='shop'?<ShopPage/>:route==='community'?<SocialPage/>:route==='rankings'?<RankingsPage/>:route==='events'?<EventsPage/>:route==='live'?<LivePage/>:route==='profile'?<ProfilePage/>:route==='idols'?<MeetIdolsPage/>:route==='vip'?<VIPPage/>:route==='messages'?<MessagesPage/>:<LegacyPage route={route}/>}
    </div>
   </div>
   <nav className="react-bottom-nav" aria-label="Bottom navigation">{BOTTOM.map(id=>{const entry=NAV.find(x=>x.id===id);return <button key={id} className={route===id?'active':''} onClick={()=>switchTo(id)} aria-current={route===id?'page':undefined}><Icon name={entry.icon} size={21}/><small>{entry.name==='Collection'?'Collection':entry.name==='My Page'?'My Page':entry.name}</small></button>;})}</nav>
