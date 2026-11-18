@@ -1,4 +1,4 @@
-import React,{useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useState} from 'react';
 import {createPortal} from 'react-dom';
 import {useApp} from './state';
 import {Avatar,Badge,Empty,Heading,Icon,SectionTitle,VerifiedStar,rankTone} from './ui';
@@ -82,9 +82,64 @@ function Media({post}){
  if(['p','reel','tv'].includes(post.embedKind)&&/^[a-zA-Z0-9_-]{5,32}$/.test(post.embedId||''))return <div className="post-media instagram"><iframe src={'https://www.instagram.com/'+post.embedKind+'/'+post.embedId+'/embed/'} title="Instagram shared content" loading="lazy"/></div>;
  return link?<a href={link} target="_blank" rel="noopener noreferrer" className="post-link-preview"><span>{post.platform==='TikTok'?'♪':'◎'}</span><div><strong>Open shared {post.platform} post</strong><small>View original content</small></div><Icon name="external" size={18}/></a>:null;
 }
+
+function CommentSection({postId}){
+ const {data,run,navigate,message}=useApp(),me=data?.me;
+ const [items,setItems]=useState([]),[total,setTotal]=useState(0),[loading,setLoading]=useState(true);
+ const [comment,setComment]=useState(''),[busy,setBusy]=useState(false);
+ async function refreshComments(){
+  const result=await api('/api/social/comments?postId='+encodeURIComponent(postId));
+  setItems(result.comments||[]);setTotal(result.total||0);
+ }
+ useEffect(()=>{
+  let open=true;
+  api('/api/social/comments?postId='+encodeURIComponent(postId))
+   .then(r=>{if(open){setItems(r.comments||[]);setTotal(r.total||0);}})
+   .catch(e=>{if(open)message(e.message);})
+   .finally(()=>{if(open)setLoading(false);});
+  return()=>{open=false;};
+ },[postId]);
+ async function publish(e){
+  e.preventDefault();if(!comment.trim())return;
+  if(!me){navigate('profile');return;}
+  setBusy(true);
+  try{
+   await run('/api/social/comment',{postId,text:comment.trim()});
+   setComment('');await refreshComments();
+  }catch(err){message(err.message);}finally{setBusy(false);}
+ }
+ async function remove(item){
+  if(!window.confirm('Delete this comment permanently?'))return;
+  setBusy(true);
+  try{await run('/api/social/comment-delete',{postId,commentId:item.id});await refreshComments();}
+  catch(err){message(err.message);}finally{setBusy(false);}
+ }
+ return <section className="social-comments" aria-label="Post comments">
+  <header><strong>Comments</strong><span>{total} total</span></header>
+  {loading?<p className="social-comments-empty">Loading comments…</p>:
+   items.length?<div className="social-comment-list">
+    {items.map(item=><div key={item.id} className="social-comment">
+     <Avatar profile={item.author} size="sm"/>
+     <div className="social-comment-body">
+      <div className="social-comment-author"><strong>@{item.author.handle}</strong><VerifiedStar profile={item.author}/>
+       <time>{dateLabel(item.createdAt)}</time></div>
+      <p>{item.text}</p>
+     </div>
+     {item.canDelete&&<button type="button" className="social-comment-delete" disabled={busy} onClick={()=>remove(item)} aria-label={'Delete comment by '+item.author.handle}>×</button>}
+    </div>)}
+    {total>items.length&&<p className="fineprint">Displaying the most recent {items.length} comments.</p>}
+   </div>:<p className="social-comments-empty">No comments yet. Start the conversation ♡</p>}
+  {me?<form onSubmit={publish} className="social-comment-composer">
+   <Avatar profile={data?.social?.myProfile} size="sm"/>
+   <input value={comment} onChange={e=>setComment(e.target.value)} maxLength={500} placeholder="Add a comment…" aria-label="Add a comment" disabled={busy}/>
+   <button type="submit" disabled={busy||!comment.trim()}>Post</button>
+  </form>:<button className="social-comment-signin" type="button" onClick={()=>navigate('profile')}>Sign in to comment ♡</button>}
+ </section>;
+}
+
 export function PostCard({post,author}){
  const {data,run,message,navigate,setSelectedProfile}=useApp();
- const [busy,setBusy]=useState(''),[editPost,setEditPost]=useState(false);
+ const [busy,setBusy]=useState(''),[editPost,setEditPost]=useState(false),[showComments,setShowComments]=useState(false);
  const me=data?.me,own=me?.id===post.authorId,saved=(data?.social?.savedPostIds||[]).includes(post.id);
  const canHeart=me?.role==='idol'&&!own;
  async function interact(action,endpoint,payload){
@@ -110,6 +165,7 @@ export function PostCard({post,author}){
     <button disabled={Boolean(busy)} className={post.myVote===1?'selected':''} onClick={()=>interact('up','/api/social/vote',{postId:post.id,vote:1})}>▲ {post.upvotes||0}</button>
     <button disabled={Boolean(busy)} className={post.myVote===-1?'selected':''} onClick={()=>interact('down','/api/social/vote',{postId:post.id,vote:-1})}>▼ {post.downvotes||0}</button>
     {canHeart&&<button className={'heart-button '+(post.myHeart?'hearted':'')} disabled={Boolean(busy)||post.myHeart} onClick={()=>interact('heart','/api/social/heart',{postId:post.id})} aria-label="Give official idol heart">♥</button>}
+    <button className="social-show-comments" type="button" onClick={()=>setShowComments(v=>!v)} aria-expanded={showComments} aria-label="View post comments">💬 {post.commentCount||0}</button>
     <button onClick={()=>interact('save','/api/social/save',{postId:post.id})} disabled={Boolean(busy)}>{saved?'🔖 Saved':'▯ Save'}</button>
     {!own&&<button onClick={()=>interact('repost','/api/social/repost',{postId:post.id})} disabled={Boolean(busy)}>↻ Repost</button>}
    </div>
@@ -120,6 +176,7 @@ export function PostCard({post,author}){
     {!own&&<button className="quiet-button" onClick={()=>{const reason=window.prompt('Reason for reporting this post (optional):');if(reason===null)return;interact('report','/api/social/report',{postId:post.id,reason});}}>Report</button>}
    </div>
   </footer>
+  {showComments&&<CommentSection postId={post.id}/>}
   {editPost&&<Compose post={post} close={()=>setEditPost(false)}/>}
  </article>;
 }
@@ -144,7 +201,7 @@ async function gridCoverData(file){
 export function Compose({close,post=null}){
  const {run,message}=useApp(),editing=!!post;
  const [caption,setCaption]=useState(post?.caption||''),[url,setUrl]=useState(post?.url||''),[category,setCategory]=useState(post?.category||'fan');
- const [cover,setCover]=useState(null),[thumbnailMode,setThumbnailMode]=useState(post?.hasCustomThumbnail?'custom':'auto'),[uploading,setUploading]=useState(false),[busy,setBusy]=useState(false);
+ const [cover,setCover]=useState(null),[thumbnailMode,setThumbnailMode]=useState(post?.hasCustomThumbnail?'custom':'auto'),[uploading,setUploading]=useState(false),[busy,setBusy]=useState(false),[confirmDelete,setConfirmDelete]=useState(false),[deleting,setDeleting]=useState(false);
  async function pickCover(e){
   const file=e.target.files?.[0];e.target.value='';if(!file)return;
   setUploading(true);
@@ -160,6 +217,15 @@ export function Compose({close,post=null}){
    message(editing?'Post updated ♡':'Post published. +'+result.fanXPAwarded+' Fan XP');
    close();
   }catch(err){message(err.message);}finally{setBusy(false);}
+ }
+ async function deletePost(){
+  if(!editing||!confirmDelete||deleting)return;
+  setDeleting(true);
+  try{
+   const result=await run('/api/social/delete',{postId:post.id,confirm:true});
+   message('Post permanently deleted. '+result.removedHearts+' idol hearts and '+result.removedFanXP+' Fan XP reversed.');
+   setConfirmDelete(false);close();
+  }catch(err){message(err.message);setDeleting(false);}
  }
  const preview=thumbnailMode==='custom'?(cover||post?.thumbnailUrl):!post?.hasCustomThumbnail?post?.thumbnailUrl:null;
  return createPortal(<div className="react-modal-cover social-compose-cover-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}>
@@ -184,7 +250,19 @@ export function Compose({close,post=null}){
     <button className="action primary full" disabled={busy||uploading}>{busy?'Saving…':editing?'Save changes':'Publish post'}</button>
     <p className="fineprint">The chosen thumbnail is used only on profile grids, not as a replacement for the Social feed embed.</p>
    </form>
+   {editing&&<button className="social-delete-post-button" type="button" onClick={()=>setConfirmDelete(true)} disabled={busy||deleting}>Delete post permanently</button>}
   </div>
+  {confirmDelete&&<div className="social-delete-confirm-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!deleting)setConfirmDelete(false);}}>
+   <section className="social-delete-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-post-title" aria-describedby="delete-post-explanation">
+    <div className="social-delete-warning-icon" aria-hidden="true"><Icon name="alert-triangle" size={25}/></div>
+    <h2 id="delete-post-title">Are you sure you want to delete this post?</h2>
+    <p id="delete-post-explanation"><strong>This action is permanent and cannot be undone.</strong> The post and all its comments will be deleted. All idol hearts on the post, the Fan XP earned from publishing and votes, and <strong>all XP awarded from those hearts</strong> will be permanently removed from your account. Any reposts of this post will also be removed.</p>
+    <div className="social-delete-confirm-actions">
+     <button type="button" className="action secondary" disabled={deleting} onClick={()=>setConfirmDelete(false)}>Cancel — Keep Post</button>
+     <button type="button" className="social-delete-final-button" disabled={deleting} onClick={deletePost}>{deleting?'Deleting…':'Yes, permanently delete'}</button>
+    </div>
+   </section>
+  </div>}
  </div>,document.body);
 }
 export function SocialPage(){
