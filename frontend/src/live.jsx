@@ -23,7 +23,7 @@ function LiveChat({stream}){
    setFeed(current);setLoadError('');
   }catch(err){setLoadError(err.message);}
  },[id,me?.id,isLive]);
- useEffect(()=>{setFeed(null);feedRef.current=null;setGiftForm(false);load();
+ useEffect(()=>{setFeed(null);setGiftForm(false);load();
   if(!me||!isLive)return;
   const timer=window.setInterval(()=>{if(!document.hidden)load();},3500);
   return()=>window.clearInterval(timer);
