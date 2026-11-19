@@ -5,9 +5,12 @@ const root=path.resolve(import.meta.dirname,'..');
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const main=read('frontend/src/main.jsx'),state=read('frontend/src/state.jsx');
 const drops=read('frontend/src/drops.jsx'),diary=read('frontend/src/diary.jsx');
-const collector=read('frontend/src/collector.jsx'),live=read('frontend/src/live.jsx'),css=read('frontend/src/experience.css');
+const collector=read('frontend/src/collector.jsx'),live=read('frontend/src/live.jsx'),css=read('frontend/src/experience.css'),serverSource=read('server.js');
 const photoCode=read('frontend/src/photo-crop.jsx'),profileCode=read('frontend/src/profile.jsx'),idolCode=read('frontend/src/idols.jsx');
 assert.match(photoCode,/import\('heic-to\/csp'\)/,'Missing HEIC fallback conversion for iPhone files');
+assert.match(main,/react-top-quick vip/,'VIP shortcut must be in the top navigation');
+assert.match(main,/react-top-quick rank/,'Fan Rank shortcut must be in the top navigation');
+assert.match(diary,/DiaryAuthorPhoto/,'Diary entries must show the posting idol profile photo');
 assert.match(photoCode,/PROFILE_IMAGE_ACCEPT/,'Profile uploader must include mobile image formats');
 assert.match(photoCode,/validatePhoto\(file\)/,'Photo type is checked before normalization');
 assert.doesNotMatch(photoCode,/file\.size>15_000_000/,'Do not reject large mobile photos before attempting compression');
@@ -35,6 +38,9 @@ assert.match(drops,/card\.backArtUrl/,'High rarity spin must use published card 
 assert.match(drops,/function RevealStep\(/,'Reveals must progress by step');
 assert.match(drops,/stepIndex>=steps.length/,'All steps end at the result grid');
 assert.match(drops,/Pull again x10/,'Ten-pull results should repeat the same count');
+assert.match(drops,/Fancall Ticket/,'Drawn idol Fancall Tickets must be clearly labelled');
+assert.match(serverSource,/ticketPool:pullTicketPool\(data.albumId\)/,'Ten-pulls must select the correct idol ticket pool');
+assert.match(serverSource,/ticketPool:pullTicketPool\(albumId\)/,'Single paid pulls must select the correct idol ticket pool');
 assert.match(drops,/Pull again/,'Single-pull results should expose a repeat action');
 assert.match(drops,/onRepeat=\{\(\)=>pull\(result.mode,result.albumId\)\}/,
  'The repeat action must use the original mode and pack, not the current selector');

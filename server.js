@@ -211,11 +211,19 @@ async function api(req,res,url){
    }
    return unlocked;
  }
- function grantPullRewards(u,source='stars'){
+ function pullTicketPool(albumId){
+  // Tickets are still a 6% outcome on paid pulls. Previously every pack
+  // hard-coded Arielle, so tickets did not match the pack being opened.
+  // An unlabelled collection safely falls back to the USA50 idol pool.
+  const album=cardStudio.publicAlbums().find(p=>p.id===String(albumId||'')&&p.available);
+  const pool=gacha.ticketPoolForPack(album);
+  return pool.length?pool:gacha.ticketPoolForPack({team:'USA50'});
+ }
+ function grantPullRewards(u,source='stars',albumId){
   const free=source!=='stars',cost=PACK_COST;
   if(free?(u.state.pullPoints||0)<cost:(u.state.stars||0)<cost)return {error:'Insufficient demo '+(free?'Pull Points':'STARS')+'.'};
   if(free)u.state.pullPoints-=cost;else u.state.stars-=cost;
-   const result=gacha.rollRewards({u,count:1,free,drawCard:()=>cardForRarity(drawRarity()),ticketPool:['arielle']});
+   const result=gacha.rollRewards({u,count:1,free,drawCard:()=>cardForRarity(drawRarity()),ticketPool:pullTicketPool(albumId)});
   const guaranteed=[];
   if(!free){
    u.state.paidPulls=(u.state.paidPulls||0)+1;
@@ -232,7 +240,7 @@ async function api(req,res,url){
  if(ep==='/api/cards/pull10'){
   if((u.state.stars||0)<TEN_PULL_COST)return fail(res,400,'You need '+TEN_PULL_COST.toLocaleString('en-US')+' demo STARS for ten draws.');
   u.state.stars-=TEN_PULL_COST;
-  const result=gacha.rollRewards({u,count:10,free:false,drawCard:()=>cardForRarity(drawRarity()),ticketPool:['arielle']});
+  const result=gacha.rollRewards({u,count:10,free:false,drawCard:()=>cardForRarity(drawRarity()),ticketPool:pullTicketPool(data.albumId)});
   const guaranteed=[];
   for(let i=0;i<10;i++){
    u.state.paidPulls=(u.state.paidPulls||0)+1;
@@ -245,8 +253,8 @@ async function api(req,res,url){
   return json(res,200,{...result,stars:u.state.stars,guaranteed,ringsUnlocked,paidPulls:u.state.paidPulls,
    albumComplete:complete(u),pityAchieved:u.state.pityAchieved});
  }
- if(ep==='/api/cards/pull'){ const result=grantPullRewards(u,'stars'); if(result.error)return fail(res,400,result.error); return json(res,200,result); }
- if(ep==='/api/cards/pull-points'){ const result=grantPullRewards(u,'points'); if(result.error)return fail(res,400,result.error); return json(res,200,result); }
+ if(ep==='/api/cards/pull'){ const result=grantPullRewards(u,'stars',data.albumId); if(result.error)return fail(res,400,result.error); return json(res,200,result); }
+ if(ep==='/api/cards/pull-points'){ const result=grantPullRewards(u,'points',data.albumId); if(result.error)return fail(res,400,result.error); return json(res,200,result); }
  if(ep==='/api/daily/claim'){ let task=bodyText(data.task,40)||'task'; if(!['checkin','share','message'].includes(task))return fail(res,400,'Invalid daily task.'); let today=new Date().toISOString().slice(0,10); if(!u.state.dailyClaimed)u.state.dailyClaimed={}; if(u.state.dailyClaimed[task]===today)return fail(res,400,'Task already claimed today.'); u.state.dailyClaimed[task]=today; u.state.pullPoints=(u.state.pullPoints||0)+100; save(); return json(res,200,{ok:true,pullPoints:u.state.pullPoints,pullPointsAwarded:100}); }
  if(ep==='/api/cards/redeem'){
    if(u.state.demoClaimed||bodyText(data.code,40)!==u.state.demoClaimCode)return fail(res,400,'Code is invalid or has already been redeemed.');

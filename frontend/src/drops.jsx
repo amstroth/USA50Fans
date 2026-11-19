@@ -10,7 +10,7 @@ import {arrangePullRewards,buildPullRevealSteps,isShowcaseReward} from './pull-s
 const REWARD_ICONS={pullPoints:'✦',idolTicket:'🎟️',merchCoupon:'🎀'};
 function rewardLabel(reward){
  if(reward.type==='pullPoints')return number(reward.amount)+' Pull Points';
- if(reward.type==='idolTicket')return (reward.idolName||'Idol')+' Ticket';
+ if(reward.type==='idolTicket')return (reward.idolName||'Idol')+' Fancall Ticket';
  if(reward.type==='merchCoupon')return (reward.discountPercent||10)+'% Merch Coupon';
  return 'Bonus reward';
 }
@@ -118,7 +118,8 @@ function FullscreenPull({results,onClose,onRepeat,repeating=false,canRepeat=true
     <div className={'pull-results-grid '+(single?'single':'batch')}>
      {ordered.map(({reward,drawIndex})=><div key={drawIndex} className={'pull-reward-reveal '+(isShowcaseReward(reward)?'rare':'')}><RewardCard reward={reward} onCard={setFocused}/></div>)}
     </div>
-    {Boolean(results?.guaranteed?.length||results?.ringsUnlocked?.length)&&<div className="pull-extra-prizes">
+    {Boolean(results?.guaranteed?.length||results?.ringsUnlocked?.length||results?.ticketsAwarded>0)&&<div className="pull-extra-prizes">
+     {results.ticketsAwarded>0&&<span>🎟️ +{results.ticketsAwarded} idol Fancall Ticket{results.ticketsAwarded===1?'':'s'} added to Collection → Inventory</span>}
      {results.guaranteed?.length>0&&<span>✧ Pity milestone: {results.guaranteed.length} additional album card(s) unlocked</span>}
      {results.ringsUnlocked?.length>0&&<span>✦ New avatar borders: {results.ringsUnlocked.join(', ')}</span>}
     </div>}
@@ -181,7 +182,7 @@ export function DropsPage(){
       </div>
       {!isAuthenticated&&<button className="text-link" onClick={()=>navigate('profile')}>Sign in to open packs →</button>}
       {isAuthenticated&&stars<single&&<p className="fineprint">Not enough demo STARS. Check your wallet in the STAR Shop.</p>}
-      <p className="fineprint">Ten pulls guarantee at least one photocard. Additional rewards can include Pull Points, idol tickets or nonredeemable demo coupons. Free fancall lotteries are not affected.</p>
+      <p className="fineprint">Ten pulls guarantee at least one photocard. Paid STARS draws have a {Number(rewardOdds.idolTicket||0)}% chance per draw of an idol Fancall Ticket (demo collectible). They are random, not guaranteed, and do not count as entries in free fancall lotteries.</p>
      </div>
     </div>
    </section>
@@ -189,7 +190,7 @@ export function DropsPage(){
     <div className="drops-preview-grid">{catalogue.slice(0,12).map(card=><CardPreview key={card.id} card={card} owned={Number(owned[card.id]||0)} locked={!owned[card.id]} onClick={()=>navigate('collection')}/>)}</div>
    </section>
    <section className="react-section drops-odds"><h2>Published odds</h2><p>Each draw first determines a reward type. If the reward is a card, its rarity is drawn using the pack's rarity distribution.</p>
-    <div className="drops-odds-columns"><div><strong>Reward type (STARS)</strong>{Object.entries(rewardOdds).map(([key,value])=><div key={key}><span>{({card:'Photocard',pullPoints:'Pull Points',idolTicket:'Idol Ticket',merchCoupon:'Merch Coupon'})[key]||key}</span><b>{value}%</b></div>)}</div>
+    <div className="drops-odds-columns"><div><strong>Reward type (STARS)</strong>{Object.entries(rewardOdds).map(([key,value])=><div key={key}><span>{({card:'Photocard',pullPoints:'Pull Points',idolTicket:'Fancall Ticket',merchCoupon:'Merch Coupon'})[key]||key}</span><b>{value}%</b></div>)}</div>
      <div><strong>Rarity when a card drops</strong>{Object.entries(odds).map(([key,value])=><div key={key}><span>{key}</span><b>{value}%</b></div>)}</div>
     </div>
    </section>
