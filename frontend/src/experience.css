@@ -311,3 +311,20 @@ html.usa50-immersive .react-collector-fullscreen{background:#000!important}
 @media(prefers-reduced-motion:reduce){
  .pull-showcase-rotator,.pull-showcase-aura,.pull-sequence-shine,.pull-sequence-symbol{animation:none!important}
 }
+
+/* Link every diary to the posting idol's official round portrait/account photo. */
+.react-diary-sheet-person,.react-diary-reader-author{display:flex;align-items:center;gap:11px;min-width:0}
+.react-diary-sheet-person>div{min-width:0}
+.react-diary-sheet-person .member-pic{width:48px;height:48px;flex:0 0 48px}
+.react-diary-sheet-person h3{margin:4px 0}
+.react-diary-archive button:not(.action){flex-direction:row;align-items:center;gap:10px}
+.react-diary-archive button:not(.action)>.member-pic{flex:0 0 43px}
+.react-diary-archive-label{display:flex;flex-direction:column;align-items:flex-start;min-width:0;gap:3px}
+.react-diary-archive-label>strong,.react-diary-archive-label>span,.react-diary-archive-label>small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.react-diary-reader-author strong{font-size:15px}
+@media(max-width:440px){
+ .react-diary-sheet-person{gap:7px}
+ .react-diary-sheet-person .member-pic{width:40px;height:40px;flex-basis:40px}
+ .react-diary-sheet-person small{font-size:9px;letter-spacing:.5px}
+ .react-diary-sheet-person h3{font-size:23px}
+}

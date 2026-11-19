@@ -896,3 +896,37 @@
  border:1px solid #f7c6e6;font-size:44px}
 .social-daily-limit-dialog .action{margin-top:6px;font-size:14px;min-height:46px}
 
+
+/* VIP and Rank shortcuts remain directly accessible in the upper navigation. */
+.react-top-quick{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+ padding:9px 12px;min-height:38px;border-radius:999px;
+ background:rgba(255,255,255,.78);border:1px solid #fffc;
+ box-shadow:0 4px 15px #a379c91a;color:#765391;white-space:nowrap}
+.react-top-quick strong{font-size:12px;font-weight:900}
+.react-top-quick.vip{color:#98559d}
+.react-top-quick.rank{color:#75559d}
+.react-top-quick.active{background:#efd8f3;border-color:#daa9e4}
+.react-top-quick:hover{background:#f5e6fa}
+@media(max-width:720px){
+ .react-topbar .breadcrumb{display:none}
+ .react-topbar .react-brand{display:none}
+ .react-top-actions{gap:5px}
+ .react-top-quick{min-height:33px;padding:7px 8px;gap:3px}
+ .react-top-quick strong{font-size:11px}
+ .react-top-quick svg{width:13px;height:13px}
+ .react-top-actions .star-balance{padding:7px 8px;gap:3px}
+ .react-top-actions .star-balance strong{font-size:12px}
+ .react-top-actions .star-balance small{display:none}
+ .react-top-actions .star-balance>span{font-size:17px}
+ .react-top-actions .round-icon{width:33px;height:33px}
+}
+@media(max-width:380px){
+ .react-topbar{gap:4px;padding:0 7px}
+ .react-top-actions{gap:3px}
+ .react-top-quick{padding:6px}
+ .react-top-quick strong{font-size:10px}
+ .react-top-quick.rank svg{display:none}
+ .react-top-actions .star-balance{padding:6px}
+ .react-top-actions .round-icon{width:30px;height:30px}
+}
+

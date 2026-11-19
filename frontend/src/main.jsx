@@ -63,6 +63,8 @@ function AppShell(){
     <div className="react-brand"><strong>USA50</strong><small>FAN CLUB</small></div>
     <span className="breadcrumb">✧ Fan Universe / {titles[route]}</span>
     <div className="react-top-actions">
+     <button className={'react-top-quick vip'+(route==='vip'?' active':'')} type="button" onClick={()=>switchTo('vip')} aria-label={'VIP level '+Number(data?.vipProgram?.level||0)+'. View VIP rewards'} title="VIP Rewards">✦ <strong>VIP {Number(data?.vipProgram?.level||0)}</strong></button>
+     <button className={'react-top-quick rank'+(route==='rankings'?' active':'')} type="button" onClick={()=>switchTo('rankings')} aria-label={'Fan rank '+(data?.social?.myProfile?.rank?'number '+data.social.myProfile.rank:'unranked')+'. View Fan Rankings'} title="Fan Rankings"><Icon name="trophy" size={16}/><strong>Rank {data?.social?.myProfile?.rank?'#'+data.social.myProfile.rank:'—'}</strong></button>
      <button className="star-balance" onClick={()=>switchTo('shop')} title="Open STAR Shop"><span>✦</span><strong>{number(me?.state?.stars||0)}</strong><small>STARS</small></button>
      <button className="round-icon events-button" onClick={()=>switchTo('events')} aria-label="Events and fancall lotteries"><Icon name="events" size={20}/>{eventCount>0&&<span className="top-dot" title={eventCount+' new events'}/>}</button>
      <button className="round-icon mail-button" onClick={()=>setMailOpen(true)} aria-label={'Open mail, '+mailCount+' unread'}><Icon name="mail" size={20}/>{mailCount>0&&<span className="mail-number">{mailCount>99?'99+':mailCount}</span>}</button>

@@ -1,6 +1,6 @@
 import React,{useRef,useState} from 'react';
 import {useApp} from './state';
-import {Empty,Heading} from './ui';
+import {Avatar,Empty,Heading} from './ui';
 import {dateLabel} from './api';
 
 const EMOJI=['♡','✦','☆','☁️','🌷','🐰','🎀','💌','🫧','🦋','🍒','⭐','🪼','🍀','🦄','✨','💗','🌸'];
@@ -33,11 +33,19 @@ async function compress(file){
   throw Error('The photo is still too large. Choose a smaller image.');
  }finally{URL.revokeObjectURL(url);}
 }
+function DiaryAuthorPhoto({entry,size='sm'}){
+ const {data}=useApp();
+ const author=data?.social?.profiles?.[entry?.authorId]||null;
+ const members=data?.members||[];
+ const member=members.find(m=>m.id===author?.idolId)||
+  members.find(m=>m.name?.trim().toLowerCase()===String(entry?.author||'').trim().toLowerCase());
+ return <Avatar member={member} profile={author||{displayName:entry?.author||'USA50 Idol'}} size={size}/>;
+}
 function Sheet({entry,editing=false,items=[],photos=[],selected=-1,onDown,onMove,onUp,onKey,onSelect}){
  const decorations=editing?items:(entry.placedItems||[]);
  const pictures=editing?photos:(entry.photos||[]);
  return <article className={'react-diary-sheet '+(editing?'editing':'published')} style={sheetStyle(entry)}>
-  <header className="react-diary-sheet-head"><div><small>USA50 IDOL DIARY · {entry.author||'USA50'}</small><h3>{editing?'Entry preview':'Entry '+String(entry.number).padStart(3,'0')}</h3></div><time>{dateLabel(entry.publishedAt||new Date().toISOString())}</time></header>
+  <header className="react-diary-sheet-head"><div className="react-diary-sheet-person"><DiaryAuthorPhoto entry={entry}/><div><small>USA50 IDOL DIARY · {entry.author||'USA50'}</small><h3>{editing?'Entry preview':'Entry '+String(entry.number).padStart(3,'0')}</h3></div></div><time>{dateLabel(entry.publishedAt||new Date().toISOString())}</time></header>
   <p className="react-diary-sheet-text">{entry.text||'Dear diary…'}</p>
   <div className="react-diary-decors">{decorations.map((item,i)=><div key={item.uid||i}
    className={'react-diary-decoration '+(item.kind==='photo'?'photo':'sticker')+(selected===i&&editing?' selected':'')}
@@ -155,8 +163,9 @@ export function DiaryPage(){
   <Heading eyebrow="USA50 IDOL DIARIES" title="Dear diary… ♡" subtitle="Little moments and memories shared by USA50 idols." action={canPost?<button className="action primary" onClick={()=>setCreating(s=>!s)}>{creating?'Close editor':'✦ Write an entry'}</button>:null}/>
   {creating&&canPost?<Editor done={entry=>{setCreating(false);if(entry)setSelectedId(entry.id);}}/>:
    <div className="react-diary-reading"><aside className="react-diary-archive"><h2>Diary archive</h2><p>{entries.length} entries</p><div>{entries.map(e=><button className={chosen?.id===e.id?'selected':''} key={e.id} onClick={()=>setSelectedId(e.id)}>
-    <strong>✧ Entry {String(e.number).padStart(3,'0')}</strong><span>{e.author}</span><small>{dateLabel(e.publishedAt)}</small></button>)}</div>
+    <DiaryAuthorPhoto entry={e}/>
+    <span className="react-diary-archive-label"><strong>✧ Entry {String(e.number).padStart(3,'0')}</strong><span>{e.author}</span><small>{dateLabel(e.publishedAt)}</small></span></button>)}</div>
     {canPost&&<button className="action secondary" onClick={()=>setCreating(true)}>+ New entry</button>}
-   </aside><section className="react-diary-reader">{chosen?<><div className="react-diary-reader-top"><strong>{chosen.author}'s diary</strong>{(me?.id===chosen.authorId||me?.role==='admin')&&<button className="action soft" onClick={()=>remove(chosen)}>Delete entry</button>}</div><Sheet entry={chosen}/></>:<Empty title="No diary entries yet" detail="Idol diaries will appear here as soon as they're published."/>}</section></div>}
+   </aside><section className="react-diary-reader">{chosen?<><div className="react-diary-reader-top"><div className="react-diary-reader-author"><DiaryAuthorPhoto entry={chosen}/><strong>{chosen.author}'s diary</strong></div>{(me?.id===chosen.authorId||me?.role==='admin')&&<button className="action soft" onClick={()=>remove(chosen)}>Delete entry</button>}</div><Sheet entry={chosen}/></>:<Empty title="No diary entries yet" detail="Idol diaries will appear here as soon as they're published."/>}</section></div>}
  </main>;
 }
