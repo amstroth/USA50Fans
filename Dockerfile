@@ -27,6 +27,7 @@ COPY tests/social-images.mjs ./tests/social-images.mjs
 COPY tests/social-delete-comments.mjs ./tests/social-delete-comments.mjs
 COPY tests/social-daily-limit.mjs ./tests/social-daily-limit.mjs
 COPY tests/economy-demo-checkout.mjs ./tests/economy-demo-checkout.mjs
+COPY tests/gacha-ticket-pools.mjs ./tests/gacha-ticket-pools.mjs
 COPY tests/idol-profiles.mjs ./tests/idol-profiles.mjs
 COPY tests/idol-gallery.mjs ./tests/idol-gallery.mjs
 COPY tests/official-channels.mjs ./tests/official-channels.mjs
@@ -63,6 +64,7 @@ RUN node tests/social-images.mjs
 RUN node tests/social-delete-comments.mjs
 RUN node tests/social-daily-limit.mjs
 RUN node tests/economy-demo-checkout.mjs
+RUN node tests/gacha-ticket-pools.mjs
 RUN node tests/official-channels.mjs
 RUN node tests/react-smoke.mjs
 RUN node tests/react-media-rooms.mjs
