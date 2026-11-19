@@ -3,7 +3,7 @@ import {createPortal} from 'react-dom';
 import {useApp} from './state';
 import {Avatar,Badge,Empty,Heading,Icon,VerifiedStar,rankTone,VipBadge} from './ui';
 import {api,dateLabel,number} from './api';
-import {CropPhoto,preparePhoto} from './photo-crop';
+import {CropPhoto,preparePhoto,PROFILE_IMAGE_ACCEPT} from './photo-crop';
 import {PostCard} from './social';
 function AccountAccess(){
  const {signIn,message}=useApp();
@@ -26,7 +26,7 @@ function EditProfile({profile,close}){
  const isIdol=profile.verifiedIdol,staff=profile.verifiedStaff;
  const [handle,setHandle]=useState(profile.handle||''),[bio,setBio]=useState(profile.bio||''),[oshi,setOshi]=useState(profile.oshiIds||[]);
  const [ring,setRing]=useState(profile.ring||'classic'),[color,setColor]=useState(profile.idolBorderColor||'#E63A84');
- const [avatarUrl,setAvatarUrl]=useState(null),[cropSource,setCropSource]=useState(null),[busy,setBusy]=useState(false);
+ const [avatarUrl,setAvatarUrl]=useState(null),[cropSource,setCropSource]=useState(null),[busy,setBusy]=useState(false),[preparing,setPreparing]=useState(false);
  const members=data?.members||[];
  function toggleOshi(id){setOshi(arr=>arr.includes(id)?arr.filter(x=>x!==id):[...arr,id]);}
  async function save(e){
@@ -45,11 +45,16 @@ function EditProfile({profile,close}){
   <div className="react-modal" role="dialog" aria-modal="true" aria-label="Edit your profile">
    <header><h2>Edit profile</h2><button aria-label="Close" onClick={close}><Icon name="x"/></button></header>
    <form className="react-form" onSubmit={save}>
-    <label>Profile picture (drag and zoom to crop into a circle)
-     <input type="file" accept="image/png,image/jpeg,image/webp" onChange={async e=>{
+    <label>Profile picture (automatically converts and compresses large photos; drag and zoom to crop)
+     <input type="file" accept={PROFILE_IMAGE_ACCEPT} disabled={preparing||busy} onChange={async e=>{
       const file=e.target.files?.[0];e.target.value='';if(!file)return;
-      try{setCropSource(await preparePhoto(file,{maxChars:950000}));}catch(err){message(err.message);}
+      setPreparing(true);
+      try{setCropSource(await preparePhoto(file,{maxChars:950000}));}
+      catch(err){message(err.message||'This photo could not be converted. Please choose another image.');}
+      finally{setPreparing(false);}
      }}/>
+     <small>iPhone HEIC/HEIF, JPEG, PNG, WebP, AVIF and other compatible photos are resized and converted automatically.</small>
+     {preparing&&<span className="profile-photo-preparing" role="status">Preparing and compressing photo…</span>}
     </label>
     {(avatarUrl||profile.avatarUrl)&&<div className="profile-avatar-preview"><img src={avatarUrl||profile.avatarUrl} alt="Profile photo preview"/></div>}
     {isIdol?<><p className="fineprint">Official verified username: @{profile.handle}</p><label>Idol border color<input type="color" value={color} onChange={e=>setColor(e.target.value)}/></label></>:
@@ -59,7 +64,7 @@ function EditProfile({profile,close}){
     {!isIdol&&!staff&&<label>Profile picture border<select value={ring} onChange={e=>setRing(e.target.value)}>
      <option value="classic">Classic</option><option value="rank-auto">Automatic fan-rank award</option>{(profile.unlockedRings||[]).filter(x=>x!=='classic').map(r=><option key={r} value={r}>{r.replaceAll('-',' ')}</option>)}
     </select></label>}
-    <button disabled={busy} className="action primary full">{busy?'Saving…':'Save profile'}</button>
+    <button disabled={busy||preparing} className="action primary full">{preparing?'Preparing photo…':busy?'Saving…':'Save profile'}</button>
    </form>
   </div>
   {cropSource&&<CropPhoto source={cropSource} title="Crop your profile picture" outputSize={300} maxChars={182000}
