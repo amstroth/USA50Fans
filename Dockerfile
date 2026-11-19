@@ -4,6 +4,7 @@ WORKDIR /app
 COPY package.json ./
 COPY vite.config.mjs ./
 COPY frontend ./frontend
+COPY server.js ./server.js
 COPY tests/react-experiences.mjs ./tests/react-experiences.mjs
 COPY tests/pull-sequence.mjs ./tests/pull-sequence.mjs
 RUN npm install --ignore-scripts --no-audit --no-fund
